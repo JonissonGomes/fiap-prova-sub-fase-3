@@ -39,7 +39,7 @@ services:
       - KEYCLOAK_URL=http://keycloak:8080
       - KEYCLOAK_REALM=vehicle-sales
       - KEYCLOAK_CLIENT_ID=vehicle-sales-app
-      - KEYCLOAK_CLIENT_SECRET=T14LidpfzazUfpvn6GsrlDyGooT8p0s6
+      - KEYCLOAK_CLIENT_SECRET=BCzhpesgtiAQENgLRuO2tlsLBdUPPMTv
       - MONGODB_URL=mongodb://auth-mongodb:27017
       - MONGODB_DB_NAME=auth_db
       - MONGODB_COLLECTION=users

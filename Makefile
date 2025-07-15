@@ -437,6 +437,12 @@ else
 	@./scripts/setup-complete.sh
 endif
 
+# Sincronizar client_secret do Keycloak
+sync-keycloak-env:
+	@echo "🔄 Sincronizando variáveis de ambiente do Keycloak..."
+	@chmod +x scripts/setup-env-from-keycloak.sh
+	@./scripts/setup-env-from-keycloak.sh
+
 setup-complete-fast:
 	@echo "🚀 Configuração rápida do sistema..."
 	@chmod +x scripts/setup-complete-fast.sh
