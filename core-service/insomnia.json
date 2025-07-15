@@ -1,0 +1,94 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2024-03-20T12:00:00.000Z",
+  "__export_source": "insomnia.desktop.app:v2023.5.8",
+  "resources": [
+    {
+      "_id": "req_core_vehicles",
+      "parentId": "fld_core_vehicles",
+      "name": "List Vehicles",
+      "url": "http://localhost:8000/vehicles",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": 1
+    },
+    {
+      "_id": "req_core_vehicle_create",
+      "parentId": "fld_core_vehicles",
+      "name": "Create Vehicle",
+      "url": "http://localhost:8000/vehicles",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"brand\": \"Toyota\",\n  \"model\": \"Corolla\",\n  \"year\": 2023,\n  \"color\": \"Silver\",\n  \"price\": 120000.00\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 2
+    },
+    {
+      "_id": "req_core_vehicle_get",
+      "parentId": "fld_core_vehicles",
+      "name": "Get Vehicle",
+      "url": "http://localhost:8000/vehicles/{{vehicle_id}}",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": 3
+    },
+    {
+      "_id": "req_core_vehicle_update",
+      "parentId": "fld_core_vehicles",
+      "name": "Update Vehicle",
+      "url": "http://localhost:8000/vehicles/{{vehicle_id}}",
+      "method": "PUT",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"brand\": \"Toyota\",\n  \"model\": \"Corolla\",\n  \"year\": 2024,\n  \"color\": \"Black\",\n  \"price\": 125000.00\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 4
+    },
+    {
+      "_id": "req_core_vehicle_delete",
+      "parentId": "fld_core_vehicles",
+      "name": "Delete Vehicle",
+      "url": "http://localhost:8000/vehicles/{{vehicle_id}}",
+      "method": "DELETE",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": 5
+    }
+  ],
+  "environments": [
+    {
+      "_id": "env_core",
+      "name": "Core Service",
+      "data": {
+        "base_url": "http://localhost:8000",
+        "vehicle_id": "65f8a1b2c3d4e5f6a7b8c9d0"
+      }
+    }
+  ]
+} 
