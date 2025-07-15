@@ -1,0 +1,138 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Sales Service API",
+    "description": "API para gerenciamento de vendas",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8001",
+      "description": "Servidor local de desenvolvimento"
+    }
+  ],
+  "paths": {
+    "/api/v1/sales": {
+      "get": {
+        "summary": "Listar vendas",
+        "description": "Retorna uma lista de todas as vendas",
+        "responses": {
+          "200": {
+            "description": "Lista de vendas retornada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Sale"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Criar nova venda",
+        "description": "Cria uma nova venda",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaleCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Venda criada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Sale"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sales/{sale_id}": {
+      "get": {
+        "summary": "Obter venda por ID",
+        "description": "Retorna os detalhes de uma venda específica",
+        "parameters": [
+          {
+            "name": "sale_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Venda encontrada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Sale"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Venda não encontrada"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Sale": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "customer_id": {
+            "type": "integer"
+          },
+          "product_id": {
+            "type": "integer"
+          },
+          "quantity": {
+            "type": "integer"
+          },
+          "total_amount": {
+            "type": "number",
+            "format": "float"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "SaleCreate": {
+        "type": "object",
+        "required": ["customer_id", "product_id", "quantity"],
+        "properties": {
+          "customer_id": {
+            "type": "integer"
+          },
+          "product_id": {
+            "type": "integer"
+          },
+          "quantity": {
+            "type": "integer"
+          }
+        }
+      }
+    }
+  }
+} 
