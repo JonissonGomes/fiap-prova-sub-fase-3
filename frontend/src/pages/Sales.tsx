@@ -17,7 +17,7 @@ import {
   Select,
   Alert,
   Snackbar,
-  SelectChangeEvent
+  Autocomplete
 } from '@mui/material';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
@@ -28,6 +28,8 @@ import InputMask from 'react-input-mask';
 const Sales: React.FC = () => {
   const [sales, setSales] = useState<Sale[]>([]);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [availableVehicles, setAvailableVehicles] = useState<Vehicle[]>([]);
+  const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
   const [openDialog, setOpenDialog] = useState(false);
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
   const [formData, setFormData] = useState<Partial<Sale>>({
@@ -64,6 +66,10 @@ const Sales: React.FC = () => {
         throw new Error('Dados de veículos não retornados em formato esperado');
       }
       setVehicles(data);
+      
+      // Filtrar apenas veículos disponíveis para o autocomplete
+      const available = data.filter(vehicle => vehicle.status === VehicleStatus.AVAILABLE);
+      setAvailableVehicles(available);
     } catch (error) {
       setSnackbar({
         open: true,
@@ -71,6 +77,7 @@ const Sales: React.FC = () => {
         severity: 'error'
       });
       setVehicles([]);
+      setAvailableVehicles([]);
     }
   };
 
@@ -78,8 +85,13 @@ const Sales: React.FC = () => {
     if (sale) {
       setSelectedSale(sale);
       setFormData(sale);
+      
+      // Encontrar o veículo selecionado para o autocomplete
+      const vehicle = vehicles.find(v => v.id === sale.vehicle_id);
+      setSelectedVehicle(vehicle || null);
     } else {
       setSelectedSale(null);
+      setSelectedVehicle(null);
       setFormData({
         vehicle_id: '',
         buyer_cpf: '',
@@ -93,6 +105,7 @@ const Sales: React.FC = () => {
   const handleCloseDialog = () => {
     setOpenDialog(false);
     setSelectedSale(null);
+    setSelectedVehicle(null);
     setFormData({
       vehicle_id: '',
       buyer_cpf: '',
@@ -101,14 +114,12 @@ const Sales: React.FC = () => {
     });
   };
 
-  const handleVehicleChange = (event: SelectChangeEvent<string>) => {
-    const vehicleId = event.target.value;
-    const selectedVehicle = vehicles.find(v => v.id === vehicleId);
-    
+  const handleVehicleChange = (event: any, newValue: Vehicle | null) => {
+    setSelectedVehicle(newValue);
     setFormData(prev => ({
       ...prev,
-      vehicle_id: vehicleId,
-      sale_price: selectedVehicle ? selectedVehicle.price : 0
+      vehicle_id: newValue?.id || '',
+      sale_price: newValue ? newValue.price : 0
     }));
   };
 
@@ -140,8 +151,8 @@ const Sales: React.FC = () => {
     if (!formData.sale_price || formData.sale_price <= 0) {
       newErrors.sale_price = 'Preço deve ser maior que zero';
     } else {
-      const selectedVehicle = vehicles.find(v => v.id === formData.vehicle_id);
-      if (selectedVehicle && formData.sale_price < selectedVehicle.price) {
+      const selectedVehicleData = vehicles.find(v => v.id === formData.vehicle_id);
+      if (selectedVehicleData && formData.sale_price < selectedVehicleData.price) {
         newErrors.sale_price = 'Preço não pode ser menor que o preço do veículo';
       }
     }
@@ -417,27 +428,52 @@ const Sales: React.FC = () => {
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 1 }}>
             <Grid item xs={12}>
-              <FormControl fullWidth>
-                <InputLabel>Veículo</InputLabel>
-                <Select
-                  value={formData.vehicle_id}
-                  onChange={handleVehicleChange}
-                  label="Veículo"
-                  required
-                >
-                  {vehicles && vehicles.length > 0 ? (
-                    vehicles
-                      .filter(vehicle => vehicle.status === VehicleStatus.AVAILABLE)
-                      .map(vehicle => (
-                        <MenuItem key={vehicle.id} value={vehicle.id}>
-                          {`${vehicle.brand} ${vehicle.model} - ${vehicle.year}`}
-                        </MenuItem>
-                      ))
-                  ) : (
-                    <MenuItem disabled>Nenhum veículo disponível</MenuItem>
-                  )}
-                </Select>
-              </FormControl>
+              <Autocomplete
+                value={selectedVehicle}
+                onChange={handleVehicleChange}
+                options={availableVehicles}
+                getOptionLabel={(option) => `${option.brand} ${option.model} - ${option.year} (${formatCurrency(option.price)})`}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Veículo"
+                    error={!!errors.vehicle_id}
+                    helperText={errors.vehicle_id}
+                    required
+                    placeholder="Digite para buscar um veículo..."
+                  />
+                )}
+                renderOption={(props, option) => (
+                  <Box component="li" {...props}>
+                    <Box>
+                      <Typography variant="body1">
+                        {option.brand} {option.model} - {option.year}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Cor: {option.color} | Preço: {formatCurrency(option.price)}
+                      </Typography>
+                    </Box>
+                  </Box>
+                )}
+                filterOptions={(options, { inputValue }) => {
+                  const filtered = options.filter((option) => {
+                    const searchText = inputValue.toLowerCase();
+                    return (
+                      option.brand.toLowerCase().includes(searchText) ||
+                      option.model.toLowerCase().includes(searchText) ||
+                      option.year.toString().includes(searchText) ||
+                      option.color.toLowerCase().includes(searchText)
+                    );
+                  });
+                  return filtered;
+                }}
+                noOptionsText="Nenhum veículo disponível encontrado"
+                loadingText="Carregando veículos..."
+                clearText="Limpar"
+                closeText="Fechar"
+                openText="Abrir"
+                sx={{ width: '100%' }}
+              />
             </Grid>
             <Grid item xs={12}>
               <InputMask
