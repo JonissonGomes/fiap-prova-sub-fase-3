@@ -23,22 +23,24 @@ if [ -z "$(docker-compose ps -q)" ]; then
     sleep 30
     
     # Aguardar Keycloak especificamente
-    echo "⏳ Aguardando Keycloak inicializar..."
-    timeout=300
+    echo "⏳ Aguardando Keycloak inicializar (pode demorar até 2 minutos)..."
+    timeout=120
     elapsed=0
     
     while [ $elapsed -lt $timeout ]; do
-        if curl -s -f "http://localhost:8080/health" > /dev/null 2>&1; then
+        # Testa se o Keycloak está respondendo na página principal
+        if curl -s --connect-timeout 5 "http://localhost:8080/" > /dev/null 2>&1; then
             echo "✅ Keycloak está disponível!"
             break
         fi
-        sleep 5
-        elapsed=$((elapsed + 5))
-        echo "⏳ Keycloak ainda inicializando... (${elapsed}s)"
+        sleep 10
+        elapsed=$((elapsed + 10))
+        echo "⏳ Keycloak ainda inicializando... (${elapsed}s/120s)"
     done
     
     if [ $elapsed -ge $timeout ]; then
         echo "❌ Keycloak não iniciou a tempo. Verifique os logs: docker-compose logs keycloak"
+        echo "💡 Dica: O Keycloak pode demorar mais na primeira execução. Tente novamente."
         exit 1
     fi
 else
@@ -86,17 +88,19 @@ timeout=60
 elapsed=0
 
 while [ $elapsed -lt $timeout ]; do
-    if curl -s -f "http://localhost:8002/health" > /dev/null 2>&1; then
+    # Testa se o auth-service está respondendo
+    if curl -s --connect-timeout 5 "http://localhost:8002/" > /dev/null 2>&1; then
         echo "✅ Auth-service está disponível!"
         break
     fi
     sleep 5
     elapsed=$((elapsed + 5))
-    echo "⏳ Auth-service ainda inicializando... (${elapsed}s)"
+    echo "⏳ Auth-service ainda inicializando... (${elapsed}s/60s)"
 done
 
 if [ $elapsed -ge $timeout ]; then
     echo "❌ Auth-service não respondeu a tempo. Verifique os logs: docker-compose logs auth-service"
+    echo "💡 Dica: Tente executar 'make setup-complete' novamente."
     exit 1
 fi
 

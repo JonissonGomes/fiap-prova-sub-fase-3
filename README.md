@@ -95,6 +95,7 @@ make restart        # Reiniciar serviços
 make clean          # Limpar containers e volumes
 make test-compatibility  # Testar compatibilidade do sistema
 make quick-test     # Teste rápido da solução de problemas
+make setup-complete-fast  # Configuração rápida otimizada
 ```
 
 ## 🔐 Credenciais de Acesso
@@ -247,6 +248,19 @@ make status
 docker-compose ps
 ```
 
+#### "Keycloak está demorando muito para inicializar"
+**Solução**: Keycloak pode demorar 1-2 minutos para inicializar. Use:
+```bash
+# Método 1: Configuração rápida otimizada
+make setup-complete-fast  # Mais tolerante a delays
+
+# Método 2: Verificar logs do Keycloak
+docker-compose logs keycloak
+
+# Método 3: Aguardar e tentar novamente
+make setup-complete  # Timeout aumentado para 2 minutos
+```
+
 ## 🔧 Comandos de Manutenção
 
 ### 🔍 Diagnóstico e Compatibilidade
@@ -260,6 +274,7 @@ make test-compatibility   # Testa compatibilidade entre SOs
 make setup-admin           # Configura usuário admin
 make fix-keycloak         # Corrige configuração do Keycloak
 make setup-complete       # Configuração completa (todos os SOs)
+make setup-complete-fast  # Configuração rápida otimizada (para Keycloak lento)
 ```
 
 ### 📊 População de Dados

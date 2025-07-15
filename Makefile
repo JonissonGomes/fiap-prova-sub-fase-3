@@ -1,4 +1,4 @@
-.PHONY: setup install up down test test-core test-sales test-auth test-customer logs clean run stop mongodb mongodb-logs core sales auth customer frontend core-logs sales-logs auth-logs customer-logs frontend-logs keycloak keycloak-logs lint type-check rebuild status restart clean-sales-db clean-core-db clean-auth-db clean-customer-db coverage coverage-core coverage-sales coverage-auth coverage-customer coverage-report setup-env validate-env docs redis redis-logs redis-cli clean-redis test-rate-limiting test-frontend populate-data populate-data-clean test-populate-data frontend-build frontend-test frontend-lint frontend-format check-dependencies test-compatibility test-setup-complete quick-test
+.PHONY: setup install up down test test-core test-sales test-auth test-customer logs clean run stop mongodb mongodb-logs core sales auth customer frontend core-logs sales-logs auth-logs customer-logs frontend-logs keycloak keycloak-logs lint type-check rebuild status restart clean-sales-db clean-core-db clean-auth-db clean-customer-db coverage coverage-core coverage-sales coverage-auth coverage-customer coverage-report setup-env validate-env docs redis redis-logs redis-cli clean-redis test-rate-limiting test-frontend populate-data populate-data-clean test-populate-data frontend-build frontend-test frontend-lint frontend-format check-dependencies test-compatibility test-setup-complete quick-test setup-complete-fast
 
 # Detectar sistema operacional
 UNAME_S := $(shell uname -s 2>/dev/null || echo Windows)
@@ -436,6 +436,11 @@ ifeq ($(OS_TYPE),windows)
 else
 	@./scripts/setup-complete.sh
 endif
+
+setup-complete-fast:
+	@echo "🚀 Configuração rápida do sistema..."
+	@chmod +x scripts/setup-complete-fast.sh
+	@./scripts/setup-complete-fast.sh
 
 # Verificação de dependências e compatibilidade
 check-dependencies:
