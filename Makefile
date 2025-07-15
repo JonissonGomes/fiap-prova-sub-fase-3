@@ -1,4 +1,4 @@
-.PHONY: setup install up down test test-core test-sales test-auth test-customer logs clean run stop mongodb mongodb-logs core sales auth customer frontend core-logs sales-logs auth-logs customer-logs frontend-logs keycloak keycloak-logs lint type-check rebuild status restart clean-sales-db clean-core-db clean-auth-db clean-customer-db coverage coverage-core coverage-sales coverage-auth coverage-customer coverage-report setup-env validate-env docs redis redis-logs redis-cli clean-redis test-rate-limiting test-frontend populate-data populate-data-clean test-populate-data frontend-build frontend-test frontend-lint frontend-format check-dependencies test-compatibility
+.PHONY: setup install up down test test-core test-sales test-auth test-customer logs clean run stop mongodb mongodb-logs core sales auth customer frontend core-logs sales-logs auth-logs customer-logs frontend-logs keycloak keycloak-logs lint type-check rebuild status restart clean-sales-db clean-core-db clean-auth-db clean-customer-db coverage coverage-core coverage-sales coverage-auth coverage-customer coverage-report setup-env validate-env docs redis redis-logs redis-cli clean-redis test-rate-limiting test-frontend populate-data populate-data-clean test-populate-data frontend-build frontend-test frontend-lint frontend-format check-dependencies test-compatibility test-setup-complete quick-test
 
 # Detectar sistema operacional
 UNAME_S := $(shell uname -s 2>/dev/null || echo Windows)
@@ -447,4 +447,14 @@ test-compatibility:
 	@echo "Sistema detectado: $(OS_TYPE)"
 	@echo "Echo flag: $(ECHO_FLAG)"
 	@echo "Script extension: $(SCRIPT_EXT)"
-	@python3 scripts/check-dependencies.py 
+	@python3 scripts/check-dependencies.py
+
+test-setup-complete:
+	@echo "🧪 Testando correção do setup-complete..."
+	@chmod +x scripts/test-setup-complete.sh
+	@./scripts/test-setup-complete.sh
+
+quick-test:
+	@echo "🔧 Teste rápido da solução..."
+	@chmod +x scripts/quick-test.sh
+	@./scripts/quick-test.sh 

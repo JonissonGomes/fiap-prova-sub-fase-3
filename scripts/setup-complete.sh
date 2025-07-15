@@ -7,6 +7,44 @@ set -e
 echo "🚀 Configuração Completa do Sistema de Vendas de Veículos"
 echo "=" * 60
 
+# Verificar se Docker está rodando
+if ! docker info > /dev/null 2>&1; then
+    echo "❌ Docker não está rodando!"
+    echo "🔧 Inicie o Docker Desktop e tente novamente"
+    exit 1
+fi
+
+# Verificar se os containers estão rodando
+if [ -z "$(docker-compose ps -q)" ]; then
+    echo "🔧 Containers não estão rodando. Iniciando serviços..."
+    docker-compose up -d
+    
+    echo "⏳ Aguardando serviços iniciarem..."
+    sleep 30
+    
+    # Aguardar Keycloak especificamente
+    echo "⏳ Aguardando Keycloak inicializar..."
+    timeout=300
+    elapsed=0
+    
+    while [ $elapsed -lt $timeout ]; do
+        if curl -s -f "http://localhost:8080/health" > /dev/null 2>&1; then
+            echo "✅ Keycloak está disponível!"
+            break
+        fi
+        sleep 5
+        elapsed=$((elapsed + 5))
+        echo "⏳ Keycloak ainda inicializando... (${elapsed}s)"
+    done
+    
+    if [ $elapsed -ge $timeout ]; then
+        echo "❌ Keycloak não iniciou a tempo. Verifique os logs: docker-compose logs keycloak"
+        exit 1
+    fi
+else
+    echo "✅ Containers já estão rodando!"
+fi
+
 # Passo 1: Configurar usuário admin no Keycloak
 echo "🔧 Passo 1: Configurando usuário admin no Keycloak..."
 ./scripts/setup-admin.sh
@@ -17,6 +55,51 @@ echo "🔧 Passo 2: Corrigindo configuração do client no Keycloak..."
 
 echo ""
 echo "🔧 Passo 3: Sincronizando usuário admin no MongoDB..."
+
+# Verificar se auth-service está rodando
+if ! docker-compose ps auth-service | grep -q "Up"; then
+    echo "❌ Auth-service não está rodando!"
+    echo "🔧 Aguardando auth-service inicializar..."
+    
+    timeout=60
+    elapsed=0
+    
+    while [ $elapsed -lt $timeout ]; do
+        if docker-compose ps auth-service | grep -q "Up"; then
+            echo "✅ Auth-service está rodando!"
+            break
+        fi
+        sleep 5
+        elapsed=$((elapsed + 5))
+        echo "⏳ Auth-service ainda inicializando... (${elapsed}s)"
+    done
+    
+    if [ $elapsed -ge $timeout ]; then
+        echo "❌ Auth-service não iniciou a tempo. Verifique os logs: docker-compose logs auth-service"
+        exit 1
+    fi
+fi
+
+# Aguardar auth-service estar disponível
+echo "⏳ Aguardando auth-service estar disponível..."
+timeout=60
+elapsed=0
+
+while [ $elapsed -lt $timeout ]; do
+    if curl -s -f "http://localhost:8002/health" > /dev/null 2>&1; then
+        echo "✅ Auth-service está disponível!"
+        break
+    fi
+    sleep 5
+    elapsed=$((elapsed + 5))
+    echo "⏳ Auth-service ainda inicializando... (${elapsed}s)"
+done
+
+if [ $elapsed -ge $timeout ]; then
+    echo "❌ Auth-service não respondeu a tempo. Verifique os logs: docker-compose logs auth-service"
+    exit 1
+fi
+
 docker-compose exec -T auth-service bash -c "
     pip install motor passlib --quiet
     cat > /tmp/sync_admin.py << 'EOF'

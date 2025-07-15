@@ -94,6 +94,7 @@ make logs           # Ver logs de todos os serviços
 make restart        # Reiniciar serviços
 make clean          # Limpar containers e volumes
 make test-compatibility  # Testar compatibilidade do sistema
+make quick-test     # Teste rápido da solução de problemas
 ```
 
 ## 🔐 Credenciais de Acesso
@@ -229,6 +230,21 @@ docker-compose restart keycloak
 **Solução**: Execute a população de dados:
 ```bash
 make populate-data  # Funciona em todos os SOs
+```
+
+#### "service 'auth-service' is not running container"
+**Solução**: Os containers não estão rodando. Corrija com:
+```bash
+# Método 1: Iniciar containers primeiro
+make up
+make setup-complete
+
+# Método 2: O script agora inicia automaticamente
+make setup-complete  # Já inclui inicialização automática
+
+# Método 3: Verificar status
+make status
+docker-compose ps
 ```
 
 ## 🔧 Comandos de Manutenção
