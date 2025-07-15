@@ -67,6 +67,22 @@ async def create_sale(
         # Salva a venda
         created_sale = await service.create_sale(domain_sale)
         
+        # Notifica o core-service sobre a mudança de status do veículo
+        async with httpx.AsyncClient() as client:
+            try:
+                await client.post(
+                    "http://core-service:8000/vehicles/sale-status",
+                    json={
+                        "vehicle_id": created_sale.vehicle_id,
+                        "status": "PENDENTE"
+                    }
+                )
+                logger.info(f"Notificação enviada para core-service: veículo {created_sale.vehicle_id} marcado como RESERVADO")
+            except Exception as e:
+                logger.error(f"Erro ao notificar o core-service: {e}")
+                # Não interrompe o fluxo se falhar a notificação
+                pass
+        
         # Converte para o schema de resposta
         return SaleResponse.from_domain(created_sale)
     except ValueError as e:
@@ -276,6 +292,38 @@ async def mark_sale_as_paid(
         raise
     except Exception as e:
         logger.error(f"Erro ao marcar venda como pago: {e}")
+        raise HTTPException(status_code=500, detail="Erro interno do servidor")
+
+@router.patch("/{sale_id}/payment/confirm", response_model=SaleResponse)
+async def confirm_payment(
+    sale_id: str,
+    current_user: dict = Depends(require_role(["ADMIN", "SALES"])),
+    service: SaleServiceImpl = Depends(get_service)
+):
+    """Confirma o pagamento de uma venda."""
+    try:
+        updated_sale = await service.update_payment_status(sale_id, PaymentStatus.PAID)
+        if not updated_sale:
+            raise HTTPException(status_code=404, detail="Venda não encontrada")
+        
+        # Notifica o serviço principal sobre a mudança de status
+        async with httpx.AsyncClient() as client:
+            try:
+                await client.post(
+                    "http://core-service:8000/vehicles/sale-status",
+                    json={
+                        "vehicle_id": updated_sale.vehicle_id,
+                        "status": "PAGO"
+                    }
+                )
+            except Exception as e:
+                logger.error(f"Erro ao notificar o serviço principal: {e}")
+        
+        return SaleResponse.from_domain(updated_sale)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Erro ao confirmar pagamento: {e}")
         raise HTTPException(status_code=500, detail="Erro interno do servidor")
 
 @router.post("/webhook/payment", response_model=SaleResponse)

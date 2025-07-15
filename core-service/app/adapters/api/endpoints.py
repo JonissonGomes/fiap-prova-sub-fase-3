@@ -1,9 +1,15 @@
 from fastapi import APIRouter, HTTPException, status, Depends, Query
 from typing import List, Optional
+from pydantic import BaseModel
 
 from app.domain.vehicle import Vehicle, VehicleCreate, VehicleUpdate, VehicleStatus
 from app.domain.vehicle_service import VehicleService
 from app.adapters.api.dependencies import get_vehicle_service
+
+# Schema para receber notificações do sales-service
+class SaleStatusUpdate(BaseModel):
+    vehicle_id: str
+    status: str
 
 router = APIRouter(
     tags=["veículos"],
@@ -182,6 +188,96 @@ async def mark_vehicle_as_reserved(vehicle_id: str, vehicle_service: VehicleServ
 async def mark_vehicle_as_sold(vehicle_id: str, vehicle_service: VehicleService = Depends(get_vehicle_service)):
     try:
         return await vehicle_service.update_vehicle_status(vehicle_id, VehicleStatus.SOLD)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Erro interno do servidor")
+
+@router.patch(
+    "/{vehicle_id}/status",
+    response_model=Vehicle,
+    summary="Atualizar status do veículo",
+    description="Atualiza o status de um veículo. Valores aceitos: DISPONÍVEL, RESERVADO, VENDIDO.",
+    responses={
+        200: {"description": "Status do veículo atualizado com sucesso"},
+        404: {"description": "Veículo não encontrado"},
+        400: {"description": "Status inválido ou operação não permitida"}
+    }
+)
+async def update_vehicle_status_direct(
+    vehicle_id: str,
+    status_data: dict,
+    vehicle_service: VehicleService = Depends(get_vehicle_service)
+):
+    """Atualiza o status de um veículo diretamente."""
+    try:
+        status_value = status_data.get("status")
+        if not status_value:
+            raise HTTPException(status_code=400, detail="Campo 'status' é obrigatório")
+        
+        # Mapeia os valores de status
+        status_mapping = {
+            "DISPONÍVEL": VehicleStatus.AVAILABLE,
+            "RESERVADO": VehicleStatus.RESERVED,
+            "VENDIDO": VehicleStatus.SOLD
+        }
+        
+        vehicle_status = status_mapping.get(status_value)
+        if not vehicle_status:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Status inválido: {status_value}. Valores aceitos: DISPONÍVEL, RESERVADO, VENDIDO"
+            )
+        
+        return await vehicle_service.update_vehicle_status(vehicle_id, vehicle_status)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Erro interno do servidor")
+
+@router.post(
+    "/sale-status",
+    response_model=dict,
+    summary="Atualizar status do veículo via sales-service",
+    description="Endpoint para receber notificações do sales-service sobre mudanças de status de veículos.",
+    responses={
+        200: {"description": "Status do veículo atualizado com sucesso"},
+        404: {"description": "Veículo não encontrado"},
+        400: {"description": "Status inválido ou operação não permitida"}
+    }
+)
+async def update_vehicle_sale_status(
+    sale_status: SaleStatusUpdate,
+    vehicle_service: VehicleService = Depends(get_vehicle_service)
+):
+    """Atualiza o status de um veículo baseado na notificação do sales-service."""
+    try:
+        # Mapeia os status do sales-service para os status do veículo
+        status_mapping = {
+            "PAGO": VehicleStatus.SOLD,
+            "PENDENTE": VehicleStatus.RESERVED,
+            "CANCELADO": VehicleStatus.AVAILABLE
+        }
+        
+        vehicle_status = status_mapping.get(sale_status.status)
+        if not vehicle_status:
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Status inválido: {sale_status.status}. Valores aceitos: PAGO, PENDENTE, CANCELADO"
+            )
+        
+        # Atualiza o status do veículo
+        updated_vehicle = await vehicle_service.update_vehicle_status(
+            sale_status.vehicle_id, 
+            vehicle_status
+        )
+        
+        return {
+            "message": "Status do veículo atualizado com sucesso",
+            "vehicle_id": sale_status.vehicle_id,
+            "new_status": vehicle_status.value,
+            "sale_status": sale_status.status
+        }
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
