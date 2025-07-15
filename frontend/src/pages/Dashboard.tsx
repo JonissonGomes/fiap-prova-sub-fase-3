@@ -60,14 +60,14 @@ const Dashboard: React.FC = () => {
           soldVehicles: vehicles.filter((v: { status: VehicleStatus }) => v.status === VehicleStatus.SOLD).length,
           totalSales: sales.length,
           pendingSales: sales.filter((s: { payment_status: PaymentStatus }) => s.payment_status === PaymentStatus.PENDING).length,
-          paidSales: sales.filter((s: { payment_status: PaymentStatus }) => s.payment_status === PaymentStatus.APPROVED).length,
-          cancelledSales: sales.filter((s: { payment_status: PaymentStatus }) => s.payment_status === PaymentStatus.REJECTED).length,
+          paidSales: sales.filter((s: { payment_status: PaymentStatus }) => s.payment_status === PaymentStatus.PAID).length,
+          cancelledSales: sales.filter((s: { payment_status: PaymentStatus }) => s.payment_status === PaymentStatus.CANCELLED).length,
           totalRevenue: sales.reduce((sum: number, s: { sale_price: number }) => sum + s.sale_price, 0),
           // Dados de pagamentos
           totalPayments: payments.length,
           pendingPayments: payments.filter((p: { status: PaymentStatus }) => p.status === PaymentStatus.PENDING).length,
-          paidPayments: payments.filter((p: { status: PaymentStatus }) => p.status === PaymentStatus.APPROVED).length,
-          cancelledPayments: payments.filter((p: { status: PaymentStatus }) => p.status === PaymentStatus.REJECTED).length
+          paidPayments: payments.filter((p: { status: PaymentStatus }) => p.status === PaymentStatus.PAID).length,
+          cancelledPayments: payments.filter((p: { status: PaymentStatus }) => p.status === PaymentStatus.CANCELLED).length
         });
       } catch (error) {
         console.error('Error fetching dashboard stats:', error);

@@ -246,11 +246,11 @@ const Sales: React.FC = () => {
           await salesApi.updateStatus(id, 'PENDING');
           await vehiclesApi.updateStatus(sale.vehicle_id, 'DISPONÍVEL');
           break;
-        case PaymentStatus.APPROVED:
+        case PaymentStatus.PAID:
           await salesApi.confirmPayment(id);
           await vehiclesApi.updateStatus(sale.vehicle_id, 'VENDIDO');
           break;
-        case PaymentStatus.REJECTED:
+        case PaymentStatus.CANCELLED:
           await salesApi.cancelPayment(id);
           await vehiclesApi.updateStatus(sale.vehicle_id, 'DISPONÍVEL');
           break;
@@ -272,46 +272,59 @@ const Sales: React.FC = () => {
     }
   };
 
+  const getStatusText = (status: PaymentStatus) => {
+    switch (status) {
+      case PaymentStatus.PENDING:
+        return 'Pendente';
+      case PaymentStatus.PAID:
+        return 'Pago';
+      case PaymentStatus.CANCELLED:
+        return 'Cancelado';
+      default:
+        return status;
+    }
+  };
+
   const columns: GridColDef[] = [
-    {
-      field: 'vehicle_id',
-      headerName: 'Veículo',
+    { field: 'id', headerName: 'ID', width: 100 },
+    { 
+      field: 'vehicle_id', 
+      headerName: 'Veículo', 
       width: 200,
-      valueGetter: (params) => {
-        const vehicle = vehicles.find(v => v.id === params.row.vehicle_id);
-        return vehicle ? `${vehicle.brand} ${vehicle.model}` : params.row.vehicle_id;
+      renderCell: (params) => {
+        const vehicle = vehicles.find(v => v.id === params.value);
+        return vehicle ? `${vehicle.brand} ${vehicle.model} (${vehicle.year})` : params.value;
       }
     },
-    { field: 'buyer_cpf', headerName: 'CPF do Cliente', width: 150 },
-    {
-      field: 'sale_price',
-      headerName: 'Preço',
-      width: 150,
-      valueFormatter: (params) =>
-        new Intl.NumberFormat('pt-BR', {
-          style: 'currency',
-          currency: 'BRL'
-        }).format(params.value)
+    { field: 'buyer_cpf', headerName: 'CPF do Comprador', width: 150 },
+    { 
+      field: 'sale_price', 
+      headerName: 'Preço', 
+      width: 120,
+      renderCell: (params) => formatCurrency(params.value)
     },
-    { field: 'payment_code', headerName: 'Código de Pagamento', width: 200 },
-    {
-      field: 'payment_status',
-      headerName: 'Status da venda',
-      width: 250,
+    { field: 'payment_code', headerName: 'Código de Pagamento', width: 150 },
+    { 
+      field: 'payment_status', 
+      headerName: 'Status', 
+      width: 120,
       renderCell: (params) => {
         const statusColors = {
           [PaymentStatus.PENDING]: '#ed6c02',
-          [PaymentStatus.APPROVED]: '#2e7d32',
-          [PaymentStatus.REJECTED]: '#d32f2f'
+          [PaymentStatus.PAID]: '#2e7d32',
+          [PaymentStatus.CANCELLED]: '#d32f2f'
         };
         return (
-          <Box>
-            <Typography sx={{ color: statusColors[params.value as PaymentStatus] }}>
-              {params.value}
-            </Typography>
-            <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
-              Atualizado em: {new Date(params.row.updated_at).toLocaleString('pt-BR')}
-            </Typography>
+          <Box
+            sx={{
+              backgroundColor: statusColors[params.value as PaymentStatus],
+              color: 'white',
+              padding: '4px 8px',
+              borderRadius: '4px',
+              fontSize: '0.75rem'
+            }}
+          >
+            {getStatusText(params.value)}
           </Box>
         );
       }
@@ -322,24 +335,24 @@ const Sales: React.FC = () => {
       width: 200,
       renderCell: (params) => {
         // Não mostrar ações para vendas pagas ou canceladas
-        if (params.row.payment_status === PaymentStatus.APPROVED || 
-            params.row.payment_status === PaymentStatus.REJECTED) {
+        if (params.row.payment_status === PaymentStatus.PAID || 
+            params.row.payment_status === PaymentStatus.CANCELLED) {
           return null;
         }
         
         return (
           <Box>
             <IconButton
-              color="primary"
-              onClick={() => handleOpenDialog(params.row)}
               size="small"
+              onClick={() => handleOpenDialog(params.row)}
+              color="primary"
             >
               <EditIcon />
             </IconButton>
             <IconButton
-              color="error"
-              onClick={() => handleDelete(params.row.id)}
               size="small"
+              onClick={() => handleDelete(params.row.id)}
+              color="error"
             >
               <DeleteIcon />
             </IconButton>

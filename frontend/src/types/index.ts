@@ -1,7 +1,7 @@
 export enum PaymentStatus {
-  PENDING = 'PENDING',
-  APPROVED = 'APPROVED',
-  REJECTED = 'REJECTED'
+  PENDING = 'PENDENTE',
+  PAID = 'PAGO',
+  CANCELLED = 'CANCELADA'
 }
 
 export enum VehicleStatus {

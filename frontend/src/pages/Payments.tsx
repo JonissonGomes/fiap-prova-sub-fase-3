@@ -43,7 +43,7 @@ const Payments: React.FC = () => {
     try {
       const data = await salesApi.list();
       // Filtrar apenas vendas que não estão canceladas
-      const activeSales = data.filter(sale => sale.payment_status !== PaymentStatus.REJECTED);
+      const activeSales = data.filter(sale => sale.payment_status !== PaymentStatus.CANCELLED);
       setSales(activeSales);
     } catch (error) {
       console.error('Error fetching sales:', error);
@@ -60,10 +60,10 @@ const Payments: React.FC = () => {
   };
 
   const getStatusText = (status: PaymentStatus) => {
-    if (status === PaymentStatus.APPROVED) {
+    if (status === PaymentStatus.PAID) {
       return 'Aprovado';
     }
-    if (status === PaymentStatus.REJECTED) {
+    if (status === PaymentStatus.CANCELLED) {
       return 'Cancelado';
     }
     return 'Pendente';
@@ -75,12 +75,12 @@ const Payments: React.FC = () => {
       if (!sale) return;
 
       switch (status) {
-        case PaymentStatus.APPROVED:
+        case PaymentStatus.PAID:
           // Notificar webhook de pagamento
           await salesApi.confirmPayment(saleId);
           await vehiclesApi.updateStatus(sale.vehicle_id, 'VENDIDO');
           break;
-        case PaymentStatus.REJECTED:
+        case PaymentStatus.CANCELLED:
           await salesApi.cancelPayment(saleId);
           await vehiclesApi.updateStatus(sale.vehicle_id, 'DISPONÍVEL');
           break;
@@ -127,8 +127,8 @@ const Payments: React.FC = () => {
       renderCell: (params) => {
         const statusColors = {
           [PaymentStatus.PENDING]: '#ed6c02',
-          [PaymentStatus.APPROVED]: '#2e7d32',
-          [PaymentStatus.REJECTED]: '#d32f2f'
+          [PaymentStatus.PAID]: '#2e7d32',
+          [PaymentStatus.CANCELLED]: '#d32f2f'
         };
         return (
           <Typography sx={{ color: statusColors[params.value as PaymentStatus] }}>
@@ -142,8 +142,8 @@ const Payments: React.FC = () => {
       headerName: 'Ações',
       width: 200,
       renderCell: (params) => {
-        if (params.row.payment_status === PaymentStatus.APPROVED || 
-            params.row.payment_status === PaymentStatus.REJECTED) {
+        if (params.row.payment_status === PaymentStatus.PAID || 
+            params.row.payment_status === PaymentStatus.CANCELLED) {
           return null;
         }
         
@@ -153,7 +153,7 @@ const Payments: React.FC = () => {
               color="success"
               variant="outlined"
               size="small"
-              onClick={() => handleStatusChange(params.row.id, PaymentStatus.APPROVED)}
+              onClick={() => handleStatusChange(params.row.id, PaymentStatus.PAID)}
               sx={{ mr: 1 }}
             >
               Aprovar
@@ -162,7 +162,7 @@ const Payments: React.FC = () => {
               color="error"
               variant="outlined"
               size="small"
-              onClick={() => handleStatusChange(params.row.id, PaymentStatus.REJECTED)}
+              onClick={() => handleStatusChange(params.row.id, PaymentStatus.CANCELLED)}
             >
               Cancelar
             </Button>
