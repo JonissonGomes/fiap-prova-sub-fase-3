@@ -101,11 +101,15 @@ services:
       - CORE_SERVICE_URL=http://core-service:8000
       - AUTH_SERVICE_URL=http://auth-service:8002
       - REDIS_URL=redis://redis:6379
+      - KEYCLOAK_URL=http://keycloak:8080
+      - KEYCLOAK_REALM=vehicle-sales
+      - KEYCLOAK_CLIENT_ID=vehicle-sales-app
     depends_on:
       - sales-mongodb
       - core-service
       - auth-service
       - redis
+      - keycloak
 
   # MongoDB para o sales service
   sales-mongodb:
