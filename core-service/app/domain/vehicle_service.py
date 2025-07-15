@@ -33,13 +33,15 @@ class VehicleService:
         if not vehicle:
             raise ValueError("Veículo não encontrado")
         
+        # Se já está no status desejado, retorna o veículo sem erro (operação idempotente)
+        if vehicle.status == status:
+            return vehicle
+        
         # Regras de transição de status mais flexíveis
         if status == VehicleStatus.SOLD:
             # Pode marcar como vendido se estiver disponível ou reservado
             if vehicle.status in [VehicleStatus.AVAILABLE, VehicleStatus.RESERVED]:
                 vehicle.mark_as_sold()
-            elif vehicle.status == VehicleStatus.SOLD:
-                raise ValueError("Veículo já está vendido")
             else:
                 raise ValueError("Não é possível marcar este veículo como vendido")
                 
@@ -47,8 +49,6 @@ class VehicleService:
             # Pode marcar como reservado se estiver disponível
             if vehicle.status == VehicleStatus.AVAILABLE:
                 vehicle.mark_as_pending()
-            elif vehicle.status == VehicleStatus.RESERVED:
-                raise ValueError("Veículo já está reservado")
             else:
                 raise ValueError("Apenas veículos disponíveis podem ser reservados")
                 
@@ -57,8 +57,6 @@ class VehicleService:
             if vehicle.status in [VehicleStatus.RESERVED, VehicleStatus.SOLD]:
                 vehicle.status = VehicleStatus.AVAILABLE
                 vehicle.updated_at = datetime.now()
-            elif vehicle.status == VehicleStatus.AVAILABLE:
-                raise ValueError("Veículo já está disponível")
             else:
                 raise ValueError("Não é possível marcar este veículo como disponível")
         
