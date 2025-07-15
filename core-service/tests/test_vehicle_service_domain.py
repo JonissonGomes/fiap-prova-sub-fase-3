@@ -179,10 +179,33 @@ async def test_update_vehicle_status_not_found(service, mock_repository):
         await service.update_vehicle_status("123", VehicleStatus.SOLD)
 
 @pytest.mark.asyncio
-async def test_update_vehicle_status_invalid_transition(service, mock_repository, mock_vehicle):
+async def test_update_vehicle_status_invalid_transition(service, mock_repository):
+    # Arrange - Criar um veículo com status SOLD
+    sold_vehicle = Vehicle(
+        brand="Toyota",
+        model="Corolla",
+        year=2020,
+        color="Preto",
+        price=85000.0,
+        status=VehicleStatus.SOLD,
+        created_at=datetime.now(timezone.utc),
+        updated_at=datetime.now(timezone.utc)
+    )
+    mock_repository.find_by_id.return_value = sold_vehicle
+    
+    # Act & Assert - Tentar marcar como reservado quando já está vendido (transição inválida)
+    with pytest.raises(ValueError, match="Apenas veículos disponíveis podem ser reservados"):
+        await service.update_vehicle_status("123", VehicleStatus.RESERVED)
+
+@pytest.mark.asyncio
+async def test_update_vehicle_status_idempotent(service, mock_repository, mock_vehicle):
     # Arrange
     mock_repository.find_by_id.return_value = mock_vehicle
     
-    # Act & Assert
-    with pytest.raises(ValueError, match="Apenas veículos reservados podem ser marcados como disponíveis"):
-        await service.update_vehicle_status("123", VehicleStatus.AVAILABLE) 
+    # Act - Tentar marcar como disponível quando já está disponível (operação idempotente)
+    result = await service.update_vehicle_status("123", VehicleStatus.AVAILABLE)
+    
+    # Assert - Deve retornar o veículo sem erro
+    assert result == mock_vehicle
+    # Não deve chamar update no repositório
+    mock_repository.update.assert_not_called() 
