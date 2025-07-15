@@ -86,62 +86,13 @@ class KeycloakConfig:
                     "directAccessGrantsEnabled": True,
                     "serviceAccountsEnabled": True,
                     "authorizationServicesEnabled": True,
-                    "fullScopeAllowed": True,
                     "redirectUris": ["http://localhost:3000/*", "http://localhost:8002/*"],
                     "webOrigins": ["http://localhost:3000", "http://localhost:8002"],
                     "attributes": {
                         "access.token.lifespan": "3600",
                         "client.session.idle.timeout": "3600",
-                        "client.session.max.lifespan": "36000",
-                        "oauth2.device.authorization.grant.enabled": "true",
-                        "oidc.ciba.grant.enabled": "true",
-                        "backchannel.logout.session.required": "true",
-                        "backchannel.logout.revoke.offline.tokens": "true"
-                    },
-                    "protocolMappers": [
-                        {
-                            "name": "realm roles",
-                            "protocol": "openid-connect",
-                            "protocolMapper": "oidc-usermodel-realm-role-mapper",
-                            "consentRequired": False,
-                            "config": {
-                                "multivalued": "true",
-                                "userinfo.token.claim": "true",
-                                "id.token.claim": "true",
-                                "access.token.claim": "true",
-                                "claim.name": "realm_access.roles",
-                                "jsonType.label": "String"
-                            }
-                        },
-                        {
-                            "name": "email",
-                            "protocol": "openid-connect",
-                            "protocolMapper": "oidc-usermodel-property-mapper",
-                            "consentRequired": False,
-                            "config": {
-                                "userinfo.token.claim": "true",
-                                "user.attribute": "email",
-                                "id.token.claim": "true",
-                                "access.token.claim": "true",
-                                "claim.name": "email",
-                                "jsonType.label": "String"
-                            }
-                        },
-                        {
-                            "name": "name",
-                            "protocol": "openid-connect",
-                            "protocolMapper": "oidc-usermodel-property-mapper",
-                            "consentRequired": False,
-                            "config": {
-                                "userinfo.token.claim": "true",
-                                "user.attribute": "firstName",
-                                "id.token.claim": "true",
-                                "access.token.claim": "true",
-                                "claim.name": "name",
-                                "jsonType.label": "String"
-                            }
-                        }
-                    ]
+                        "client.session.max.lifespan": "36000"
+                    }
                 }
                 client_id = self.admin_client.create_client(client_config)
                 
@@ -188,7 +139,14 @@ class KeycloakConfig:
     async def create_user(self, email: str, password: str, name: str, role: str = "CUSTOMER") -> str:
         """Cria um usuário no Keycloak"""
         try:
-            self.admin_client.realm_name = self.realm_name
+            # Converter enum para string se necessário
+            role_str = str(role.value) if hasattr(role, 'value') else str(role)
+            
+            # Salvar o realm original
+            original_realm = self.admin_client.connection.realm_name
+            
+            # Configurar para o realm do sistema
+            self.admin_client.connection.realm_name = self.realm_name
             
             user_data = {
                 "username": email,
@@ -207,7 +165,7 @@ class KeycloakConfig:
             user_id = self.admin_client.create_user(user_data)
             
             # Atribuir role ao usuário
-            role_data = self.admin_client.get_realm_role(role)
+            role_data = self.admin_client.get_realm_role(role_str)
             self.admin_client.assign_realm_roles(user_id, [role_data])
             
             logger.info(f"Usuário {email} criado com sucesso no Keycloak")
@@ -216,6 +174,10 @@ class KeycloakConfig:
         except KeycloakError as e:
             logger.error(f"Erro ao criar usuário no Keycloak: {e}")
             raise
+        finally:
+            # Sempre restaurar o realm original
+            if 'original_realm' in locals():
+                self.admin_client.connection.realm_name = original_realm
     
     async def authenticate_user(self, email: str, password: str) -> Optional[Dict[str, Any]]:
         """Autentica um usuário no Keycloak"""
