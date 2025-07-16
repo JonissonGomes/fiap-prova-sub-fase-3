@@ -1,0 +1,49 @@
+# Dockerfile Unificado para Render - Backend Only
+FROM python:3.11-slim
+
+# Instalar dependências do sistema
+RUN apt-get update && apt-get install -y \
+    nginx \
+    supervisor \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Criar diretório de trabalho
+WORKDIR /app
+
+# Copiar requirements de todos os serviços
+COPY auth-service/requirements.txt /app/auth-requirements.txt
+COPY core-service/requirements.txt /app/core-requirements.txt
+COPY sales-service/requirements.txt /app/sales-requirements.txt
+COPY customer-service/requirements.txt /app/customer-requirements.txt
+
+# Instalar todas as dependências Python
+RUN pip install --no-cache-dir -r auth-requirements.txt && \
+    pip install --no-cache-dir -r core-requirements.txt && \
+    pip install --no-cache-dir -r sales-requirements.txt && \
+    pip install --no-cache-dir -r customer-requirements.txt
+
+# Copiar código de todos os serviços
+COPY auth-service/ /app/auth-service/
+COPY core-service/ /app/core-service/
+COPY sales-service/ /app/sales-service/
+COPY customer-service/ /app/customer-service/
+
+# Configurar Nginx (apenas para API)
+COPY nginx.unified.conf /etc/nginx/nginx.conf
+
+# Configurar Supervisor
+COPY supervisor.unified.conf /etc/supervisor/conf.d/supervisord.conf
+
+# Criar diretórios necessários
+RUN mkdir -p /var/log/supervisor /var/log/nginx /var/run
+
+# Expor porta
+EXPOSE 8000
+
+# Script de inicialização
+COPY start-unified.sh /app/start-unified.sh
+RUN chmod +x /app/start-unified.sh
+
+# Comando de inicialização
+CMD ["/app/start-unified.sh"] 
