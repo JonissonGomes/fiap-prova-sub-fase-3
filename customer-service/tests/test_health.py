@@ -10,13 +10,11 @@ class TestHealth:
         self.client = TestClient(app)
     
     def test_health_endpoint(self):
-        """Testa o endpoint de saúde"""
+        """Test health check endpoint"""
         response = self.client.get("/health")
         assert response.status_code == 200
         data = response.json()
-        assert "status" in data
         assert data["status"] == "healthy"
-        assert "service" in data
         assert data["service"] == "customer-service"
 
 if __name__ == "__main__":

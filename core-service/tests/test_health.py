@@ -1,6 +1,6 @@
 import pytest
 from fastapi.testclient import TestClient
-from app.main import app
+from app.adapters.api.main import app
 
 client = TestClient(app)
 
@@ -11,7 +11,4 @@ class TestHealth:
         assert response.status_code == 200
         data = response.json()
         assert data["status"] == "healthy"
-        assert data["service"] == "auth-service"
-
-if __name__ == "__main__":
-    pytest.main([__file__, "-v"]) 
+        assert data["service"] == "core-service" 

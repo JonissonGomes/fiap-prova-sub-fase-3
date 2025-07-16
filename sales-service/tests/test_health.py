@@ -2,12 +2,12 @@ import pytest
 from fastapi.testclient import TestClient
 from app.main import app
 
-class TestHealth:
-    def setup_method(self):
-        self.client = TestClient(app)
+client = TestClient(app)
 
+class TestHealth:
     def test_health_endpoint(self):
-        response = self.client.get("/health")
+        """Test health check endpoint"""
+        response = client.get("/health")
         assert response.status_code == 200
         data = response.json()
         assert data["status"] == "healthy"

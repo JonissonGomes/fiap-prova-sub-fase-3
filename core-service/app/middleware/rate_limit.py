@@ -48,34 +48,25 @@ def create_limiter() -> Limiter:
     
     return limiter
 
-def custom_rate_limit_exceeded_handler(request: Request, exc: RateLimitExceeded):
-    """Handler customizado para exceções de rate limit"""
-    try:
-        # Tenta usar o handler padrão
-        return _rate_limit_exceeded_handler(request, exc)
-    except AttributeError as e:
-        # Fallback se o handler padrão falhar
-        logger.warning(f"Erro no handler padrão de rate limit: {e}")
-        return JSONResponse(
-            status_code=429,
-            content={
-                "error": "Rate limit exceeded",
-                "detail": "Too many requests. Please try again later."
-            }
-        )
+# Instancia o Limiter normalmente
+limiter = Limiter(key_func=get_remote_address)
+
+# Handler customizado para exceções de rate limit e erros de conexão
+async def custom_rate_limit_exceeded_handler(request: Request, exc):
+    if hasattr(exc, 'detail'):
+        return JSONResponse({"error": f"Rate limit exceeded: {exc.detail}"}, status_code=429)
+    else:
+        # Erro de conexão com Redis ou outro erro
+        return JSONResponse({"error": "Rate limit backend unavailable"}, status_code=503)
 
 def setup_rate_limiting(app):
-    """Configura rate limiting na aplicação FastAPI"""
-    limiter = create_limiter()
-    
-    # Adiciona o limiter ao estado da aplicação
+    @app.middleware("http")
+    async def skip_rate_limit_for_health(request: Request, call_next):
+        if request.url.path == "/health":
+            return await call_next(request)
+        return await limiter.middleware(request, call_next)
     app.state.limiter = limiter
-    
-    # Adiciona o middleware
-    app.add_middleware(SlowAPIMiddleware)
-    
-    # Adiciona o handler de exceções customizado
-    app.add_exception_handler(RateLimitExceeded, custom_rate_limit_exceeded_handler)
+    app.add_exception_handler(Exception, custom_rate_limit_exceeded_handler)
     
     logger.info("Rate limiting configurado com sucesso")
 
