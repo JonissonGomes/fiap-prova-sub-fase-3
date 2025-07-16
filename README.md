@@ -66,25 +66,6 @@ make check-dependencies
 - **Python 3.8+**
 - **curl** (verificar instalação)
 
-### 🚀 Configuração Automática
-
-#### Todas as Plataformas (Recomendado)
-```bash
-# Configuração completa em um comando - funciona em todos os SOs
-make setup-complete
-```
-
-#### Windows (PowerShell)
-```powershell
-# Método alternativo para Windows
-powershell -ExecutionPolicy Bypass -File scripts/setup-complete.ps1
-```
-
-#### Windows (Git Bash)
-```bash
-# Se preferir usar Git Bash no Windows
-./scripts/setup-complete.sh
-```
 
 ### 📋 Configuração Passo a Passo
 
