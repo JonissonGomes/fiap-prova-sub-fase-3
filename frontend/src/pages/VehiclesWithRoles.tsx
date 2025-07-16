@@ -48,20 +48,25 @@ import {
 } from '../utils/permissions';
 import PurchaseDialog from '../components/PurchaseDialog';
 
+interface LocalFilters {
+  brand?: string;
+  model?: string;
+  status?: VehicleStatus;
+  min_price?: number;
+  max_price?: number;
+}
+
 const VehiclesWithRoles: React.FC = () => {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [filteredVehicles, setFilteredVehicles] = useState<Vehicle[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [purchaseDialogOpen, setPurchaseDialogOpen] = useState(false);
   const [vehicleToPurchase, setVehicleToPurchase] = useState<Vehicle | null>(null);
-  const [filters, setFilters] = useState<VehicleFilters>({
-    skip: 0,
-    limit: 100,
-    sort: 'price',
-    order: 'asc'
-  });
+  const [filters, setFilters] = useState<LocalFilters>({});
+  const [sortModel, setSortModel] = useState<GridSortModel>([{ field: 'price', sort: 'asc' }]);
   const [formData, setFormData] = useState<VehicleCreate>({
     brand: '',
     model: '',
@@ -86,12 +91,16 @@ const VehiclesWithRoles: React.FC = () => {
     if (canViewVehicles(user)) {
       fetchVehicles();
     }
-  }, [filters, user]);
+  }, [user]);
+
+  useEffect(() => {
+    applyFilters();
+  }, [vehicles, filters]);
 
   const fetchVehicles = async () => {
     try {
       setLoading(true);
-      const data = await vehiclesApi.list(filters);
+      const data = await vehiclesApi.list();
       
       // Para clientes, mostrar apenas veículos disponíveis
       if (isCustomer(user)) {
@@ -101,15 +110,62 @@ const VehiclesWithRoles: React.FC = () => {
         setVehicles(data);
       }
     } catch (error) {
-      console.error('Erro ao buscar veículos:', error);
+      console.error('Error fetching vehicles:', error);
       setSnackbar({
         open: true,
-        message: 'Erro ao carregar veículos',
+        message: 'Erro ao carregar veículos. Verifique se o serviço está rodando.',
         severity: 'error'
       });
     } finally {
       setLoading(false);
     }
+  };
+
+  const applyFilters = () => {
+    let filtered = [...vehicles];
+
+    // Filtro por marca
+    if (filters.brand) {
+      filtered = filtered.filter(vehicle => 
+        vehicle.brand.toLowerCase().includes(filters.brand!.toLowerCase())
+      );
+    }
+
+    // Filtro por modelo
+    if (filters.model) {
+      filtered = filtered.filter(vehicle => 
+        vehicle.model.toLowerCase().includes(filters.model!.toLowerCase())
+      );
+    }
+
+    // Filtro por status
+    if (filters.status) {
+      filtered = filtered.filter(vehicle => vehicle.status === filters.status);
+    }
+
+    // Filtro por preço mínimo
+    if (filters.min_price) {
+      filtered = filtered.filter(vehicle => vehicle.price >= filters.min_price!);
+    }
+
+    // Filtro por preço máximo
+    if (filters.max_price) {
+      filtered = filtered.filter(vehicle => vehicle.price <= filters.max_price!);
+    }
+
+    setFilteredVehicles(filtered);
+  };
+
+  const handleFilterChange = (field: keyof LocalFilters, value: any) => {
+    setFilters((prev: LocalFilters) => ({ ...prev, [field]: value || undefined }));
+  };
+
+  const clearFilters = () => {
+    setFilters({});
+  };
+
+  const handleSortModelChange = (model: GridSortModel) => {
+    setSortModel(model);
   };
 
   const handleOpen = () => setOpen(true);
@@ -129,14 +185,7 @@ const VehiclesWithRoles: React.FC = () => {
 
   const handleEdit = (vehicle: Vehicle) => {
     setSelectedVehicle(vehicle);
-    setFormData({
-      brand: vehicle.brand,
-      model: vehicle.model,
-      year: vehicle.year,
-      color: vehicle.color,
-      price: vehicle.price,
-      status: vehicle.status,
-    });
+    setFormData(vehicle);
     setOpen(true);
   };
 
@@ -146,12 +195,12 @@ const VehiclesWithRoles: React.FC = () => {
         await vehiclesApi.delete(id);
         setSnackbar({
           open: true,
-          message: 'Veículo excluído com sucesso',
+          message: 'Veículo excluído com sucesso!',
           severity: 'success'
         });
         fetchVehicles();
       } catch (error) {
-        console.error('Erro ao excluir veículo:', error);
+        console.error('Error deleting vehicle:', error);
         setSnackbar({
           open: true,
           message: 'Erro ao excluir veículo',
@@ -167,36 +216,35 @@ const VehiclesWithRoles: React.FC = () => {
   };
 
   const handlePurchaseSuccess = () => {
-    setSnackbar({
-      open: true,
-      message: 'Compra realizada com sucesso!',
-      severity: 'success'
-    });
+    setPurchaseDialogOpen(false);
+    setVehicleToPurchase(null);
     fetchVehicles();
   };
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
+    
     try {
       if (selectedVehicle) {
         await vehiclesApi.update(selectedVehicle.id, formData);
         setSnackbar({
           open: true,
-          message: 'Veículo atualizado com sucesso',
+          message: 'Veículo atualizado com sucesso!',
           severity: 'success'
         });
       } else {
         await vehiclesApi.create(formData);
         setSnackbar({
           open: true,
-          message: 'Veículo criado com sucesso',
+          message: 'Veículo criado com sucesso!',
           severity: 'success'
         });
       }
-      handleClose();
+      
       fetchVehicles();
+      handleClose();
     } catch (error) {
-      console.error('Erro ao salvar veículo:', error);
+      console.error('Error saving vehicle:', error);
       setSnackbar({
         open: true,
         message: 'Erro ao salvar veículo',
@@ -211,30 +259,6 @@ const VehiclesWithRoles: React.FC = () => {
       ...prev,
       [name]: name === 'year' ? parseInt(value) : value
     }));
-  };
-
-  const handleFilterChange = (field: keyof VehicleFilters, value: any) => {
-    setFilters(prev => ({ ...prev, [field]: value }));
-  };
-
-  const handleSortModelChange = (model: GridSortModel) => {
-    if (model.length > 0) {
-      const { field, sort } = model[0];
-      setFilters(prev => ({
-        ...prev,
-        sort: field,
-        order: sort || 'asc'
-      }));
-    }
-  };
-
-  const clearFilters = () => {
-    setFilters({
-      skip: 0,
-      limit: 100,
-      sort: 'price',
-      order: 'asc'
-    });
   };
 
   const formatCurrency = (value: number) => {
@@ -272,22 +296,22 @@ const VehiclesWithRoles: React.FC = () => {
   };
 
   const columns: GridColDef[] = [
-    { field: 'brand', headerName: 'Marca', width: 130, minWidth: 100 },
-    { field: 'model', headerName: 'Modelo', width: 130, minWidth: 100 },
-    { field: 'year', headerName: 'Ano', width: 80, minWidth: 70 },
-    { field: 'color', headerName: 'Cor', width: 100, minWidth: 80 },
+    { field: 'brand', headerName: 'Marca', flex: 1.2, minWidth: 110 },
+    { field: 'model', headerName: 'Modelo', flex: 1.5, minWidth: 120 },
+    { field: 'year', headerName: 'Ano', flex: 0.6, minWidth: 70 },
+    { field: 'color', headerName: 'Cor', flex: 0.8, minWidth: 90 },
     { 
       field: 'price', 
       headerName: 'Preço', 
-      width: 120,
-      minWidth: 100,
+      flex: 1.1,
+      minWidth: 110,
       renderCell: (params) => formatCurrency(params.value)
     },
     // Mostrar status apenas para admin e vendedor
     ...(isCustomer(user) ? [] : [{
       field: 'status',
       headerName: 'Status',
-      width: 120,
+      flex: 1,
       minWidth: 100,
       renderCell: (params: any) => (
         <Chip
@@ -300,8 +324,8 @@ const VehiclesWithRoles: React.FC = () => {
     {
       field: 'actions',
       headerName: 'Ações',
-      width: isCustomer(user) ? 100 : 150,
-      minWidth: isCustomer(user) ? 80 : 120,
+      flex: isCustomer(user) ? 0.8 : 1,
+      minWidth: isCustomer(user) ? 80 : 100,
       sortable: false,
       renderCell: (params) => (
         <Box sx={{ display: 'flex', gap: 0.5 }}>
@@ -350,49 +374,47 @@ const VehiclesWithRoles: React.FC = () => {
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
-      {/* Header */}
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" component="h1" gutterBottom>
-          {getPageTitle()}
-        </Typography>
-        <Typography variant="body1" color="text.secondary">
-          {getPageDescription()}
-        </Typography>
+      {/* Cabeçalho */}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+        <Box>
+          <Typography variant="h4" component="h1" gutterBottom>
+            {getPageTitle()}
+          </Typography>
+          <Typography variant="body1" color="text.secondary">
+            {getPageDescription()}
+          </Typography>
+        </Box>
+        
+        {canCreateVehicles(user) && (
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => setOpen(true)}
+            sx={{ minWidth: 140, height: 42 }}
+          >
+            Novo Veículo
+          </Button>
+        )}
       </Box>
 
       {/* Filtros */}
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-            <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <FilterIcon />
-              Filtros e Pesquisa
-            </Typography>
-            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-              <Button
-                startIcon={showFilters ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-                onClick={() => setShowFilters(!showFilters)}
-                variant="outlined"
-                size="small"
-              >
-                {showFilters ? 'Ocultar' : 'Mostrar'} Filtros
-              </Button>
-              {canCreateVehicles(user) && (
-                <Button
-                  startIcon={<AddIcon />}
-                  onClick={handleOpen}
-                  variant="contained"
-                  size="small"
-                >
-                  Novo Veículo
-                </Button>
-              )}
-            </Box>
+      <Card sx={{ mb: 4 }}>
+        <CardContent sx={{ p: 3 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+            <Typography variant="h6">Filtros</Typography>
+            <Button
+              onClick={() => setShowFilters(!showFilters)}
+              startIcon={showFilters ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+              variant="outlined"
+              size="small"
+            >
+              {showFilters ? 'Ocultar' : 'Mostrar'} Filtros
+            </Button>
           </Box>
-
+          
           <Collapse in={showFilters}>
-            <Grid container spacing={2}>
-              {/* Filtro de Status - apenas para admin e vendedor */}
+            <Grid container spacing={3}>
+              {/* Status - apenas para admin e vendedor */}
               {!isCustomer(user) && (
                 <Grid item xs={12} sm={6} md={3}>
                   <FormControl fullWidth size="small">
@@ -470,13 +492,13 @@ const VehiclesWithRoles: React.FC = () => {
 
       {/* DataGrid */}
       <Card>
-        <CardContent sx={{ p: 0 }}>
-          <Box sx={{ height: 600, width: '100%' }}>
+        <CardContent sx={{ p: 2 }}>
+          <Box sx={{ height: 650, width: '100%' }}>
             <DataGrid
-              rows={vehicles}
+              rows={filteredVehicles}
               columns={columns}
               loading={loading}
-              sortModel={[{ field: filters.sort || 'price', sort: filters.order || 'asc' }]}
+              sortModel={sortModel}
               onSortModelChange={handleSortModelChange}
               initialState={{
                 pagination: {
@@ -485,20 +507,32 @@ const VehiclesWithRoles: React.FC = () => {
               }}
               pageSizeOptions={[10, 25, 50]}
               disableRowSelectionOnClick
-              density="comfortable"
+              density="standard"
               sx={{
                 '& .MuiDataGrid-cell': {
                   borderBottom: 'none',
+                  fontSize: '0.875rem',
+                  padding: '8px 12px',
                 },
                 '& .MuiDataGrid-columnHeaders': {
                   backgroundColor: 'primary.main',
                   color: 'primary.contrastText',
                   '& .MuiDataGrid-columnHeader': {
                     backgroundColor: 'primary.main',
+                    fontSize: '0.875rem',
+                    fontWeight: 600,
+                    padding: '12px',
                   },
                 },
-                '& .MuiDataGrid-row:hover': {
-                  backgroundColor: 'action.hover',
+                '& .MuiDataGrid-row': {
+                  minHeight: 52,
+                  '&:hover': {
+                    backgroundColor: 'action.hover',
+                  },
+                },
+                '& .MuiDataGrid-columnHeader': {
+                  fontSize: '0.875rem',
+                  fontWeight: 600,
                 },
               }}
               slots={{
@@ -514,10 +548,12 @@ const VehiclesWithRoles: React.FC = () => {
                     }}
                   >
                     <Typography variant="h6" color="text.secondary">
-                      {isCustomer(user) ? 'Nenhum veículo disponível' : 'Nenhum veículo cadastrado'}
+                      {Object.keys(filters).length > 0 ? 'Nenhum veículo encontrado' : 
+                       isCustomer(user) ? 'Nenhum veículo disponível' : 'Nenhum veículo cadastrado'}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                      {isCustomer(user) 
+                      {Object.keys(filters).length > 0 ? 'Tente ajustar os filtros ou cadastre um novo veículo.' :
+                       isCustomer(user) 
                         ? 'Não há veículos disponíveis no momento.'
                         : 'Cadastre o primeiro veículo para começar.'
                       }
@@ -585,33 +621,27 @@ const VehiclesWithRoles: React.FC = () => {
                   />
                 </Grid>
                 <Grid item xs={12} md={6}>
-                  <NumericFormat
-                    customInput={TextField}
+                  <TextField
                     fullWidth
                     label="Preço"
                     name="price"
+                    type="number"
                     value={formData.price}
-                    onValueChange={(values) => {
-                      setFormData((prev: VehicleCreate) => ({ ...prev, price: values.floatValue || 0 }));
-                    }}
-                    thousandSeparator="."
-                    decimalSeparator=","
-                    prefix="R$ "
-                    decimalScale={2}
-                    fixedDecimalScale
+                    onChange={handleInputChange}
+                    required
                     margin="normal"
+                    InputProps={{
+                      inputProps: { min: 0 }
+                    }}
                   />
                 </Grid>
                 <Grid item xs={12} md={6}>
                   <FormControl fullWidth margin="normal">
                     <InputLabel>Status</InputLabel>
                     <Select
-                      name="status"
                       value={formData.status}
                       label="Status"
-                      onChange={(e: SelectChangeEvent) => 
-                        setFormData((prev: VehicleCreate) => ({ ...prev, status: e.target.value as VehicleStatus }))
-                      }
+                      onChange={(e) => setFormData((prev: VehicleCreate) => ({ ...prev, status: e.target.value as VehicleStatus }))}
                     >
                       <MenuItem value={VehicleStatus.AVAILABLE}>Disponível</MenuItem>
                       <MenuItem value={VehicleStatus.RESERVED}>Reservado</MenuItem>
@@ -631,26 +661,23 @@ const VehiclesWithRoles: React.FC = () => {
         </Dialog>
       )}
 
-      {/* Dialog de Compra - apenas para cliente */}
-      <PurchaseDialog
-        open={purchaseDialogOpen}
-        onClose={() => setPurchaseDialogOpen(false)}
-        vehicle={vehicleToPurchase}
-        onPurchaseSuccess={handlePurchaseSuccess}
-      />
+      {/* Dialog de Compra - apenas para clientes */}
+      {canBuyVehicles(user) && vehicleToPurchase && (
+        <PurchaseDialog
+          open={purchaseDialogOpen}
+          onClose={() => setPurchaseDialogOpen(false)}
+          vehicle={vehicleToPurchase}
+          onPurchaseSuccess={handlePurchaseSuccess}
+        />
+      )}
 
       {/* Snackbar para notificações */}
       <Snackbar
         open={snackbar.open}
         autoHideDuration={6000}
         onClose={() => setSnackbar({ ...snackbar, open: false })}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
       >
-        <Alert
-          onClose={() => setSnackbar({ ...snackbar, open: false })}
-          severity={snackbar.severity}
-          sx={{ width: '100%' }}
-        >
+        <Alert severity={snackbar.severity} onClose={() => setSnackbar({ ...snackbar, open: false })}>
           {snackbar.message}
         </Alert>
       </Snackbar>

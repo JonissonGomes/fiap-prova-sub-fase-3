@@ -34,7 +34,9 @@ import {
   ExpandLess as ExpandLessIcon,
   Search as SearchIcon,
   CheckCircle as CheckCircleIcon,
-  Cancel as CancelIcon
+  Cancel as CancelIcon,
+  Pending as PendingIcon,
+  AttachMoney as AttachMoneyIcon
 } from '@mui/icons-material';
 import { Payment, Sale, Vehicle, PaymentStatus } from '../types';
 import { salesApi, vehiclesApi } from '../services/api';
@@ -235,31 +237,31 @@ const Payments: React.FC = () => {
   };
 
   const columns: GridColDef[] = [
-    { field: 'id', headerName: 'ID', width: 80, minWidth: 70 },
-    { field: 'buyer_cpf', headerName: 'CPF do Comprador', width: 130, minWidth: 120 },
-    { field: 'payment_code', headerName: 'Código de Pagamento', width: 150, minWidth: 130 },
+    { field: 'id', headerName: 'ID', flex: 0.4, minWidth: 70 },
     { 
-      field: 'vehicle_info', 
+      field: 'vehicle_id', 
       headerName: 'Veículo', 
-      width: 200,
-      minWidth: 150,
+      flex: 2.2,
+      minWidth: 160,
       renderCell: (params) => {
-        const vehicle = vehicles.find(v => v.id === params.row.vehicle_id);
-        return vehicle ? `${vehicle.brand} ${vehicle.model} (${vehicle.year})` : 'N/A';
+        const vehicle = vehicles.find(v => v.id === params.value);
+        return vehicle ? `${vehicle.brand} ${vehicle.model} (${vehicle.year})` : params.value;
       }
     },
+    { field: 'buyer_cpf', headerName: 'CPF do Comprador', flex: 1.3, minWidth: 130 },
     { 
       field: 'sale_price', 
       headerName: 'Valor', 
-      width: 110,
-      minWidth: 100,
+      flex: 1.1,
+      minWidth: 110,
       renderCell: (params) => formatCurrency(params.value)
     },
-    {
-      field: 'payment_status',
-      headerName: 'Status',
-      width: 100,
-      minWidth: 90,
+    { field: 'payment_code', headerName: 'Código de Pagamento', flex: 1.4, minWidth: 130 },
+    { 
+      field: 'payment_status', 
+      headerName: 'Status', 
+      flex: 1,
+      minWidth: 100,
       renderCell: (params) => (
         <Chip
           label={getStatusText(params.value)}
@@ -271,48 +273,43 @@ const Payments: React.FC = () => {
     {
       field: 'actions',
       headerName: 'Ações',
-      width: 180,
-      minWidth: 150,
+      flex: 1.5,
+      minWidth: 120,
       sortable: false,
-      renderCell: (params) => {
-        if (params.row.payment_status === PaymentStatus.PAID || 
-            params.row.payment_status === PaymentStatus.CANCELLED) {
-          return (
-            <Typography variant="body2" color="text.secondary">
-              {params.row.payment_status === PaymentStatus.PAID ? 'Aprovado' : 'Cancelado'}
-            </Typography>
-          );
-        }
-        
-        return (
-          <Box sx={{ display: 'flex', gap: 0.5 }}>
-            {canApprovePayments(user) && (
-              <Button
-                color="success"
-                variant="outlined"
-                size="small"
-                onClick={() => handleStatusChange(params.row.id, PaymentStatus.PAID)}
-                startIcon={<CheckCircleIcon fontSize="small" />}
-                sx={{ minWidth: 'auto', px: 1 }}
-              >
-                Aprovar
-              </Button>
-            )}
-            {canCancelPayments(user) && (
-              <Button
-                color="error"
-                variant="outlined"
-                size="small"
-                onClick={() => handleStatusChange(params.row.id, PaymentStatus.CANCELLED)}
-                startIcon={<CancelIcon fontSize="small" />}
-                sx={{ minWidth: 'auto', px: 1 }}
-              >
-                Cancelar
-              </Button>
-            )}
-          </Box>
-        );
-      }
+      renderCell: (params) => (
+        <Box sx={{ display: 'flex', gap: 0.5 }}>
+          {params.row.payment_status === PaymentStatus.PENDING && (
+            <Button
+              onClick={() => handleStatusChange(params.row.id, PaymentStatus.PAID)}
+              color="success"
+              variant="outlined"
+              size="small"
+            >
+              Aprovar
+            </Button>
+          )}
+          {params.row.payment_status === PaymentStatus.PENDING && (
+            <Button
+              onClick={() => handleStatusChange(params.row.id, PaymentStatus.CANCELLED)}
+              color="error"
+              variant="outlined"
+              size="small"
+            >
+              Cancelar
+            </Button>
+          )}
+          {params.row.payment_status === PaymentStatus.PAID && (
+            <Button
+              onClick={() => handleStatusChange(params.row.id, PaymentStatus.CANCELLED)}
+              color="error"
+              variant="outlined"
+              size="small"
+            >
+              Cancelar
+            </Button>
+          )}
+        </Box>
+      )
     }
   ];
 
@@ -327,67 +324,83 @@ const Payments: React.FC = () => {
     );
   }
 
+  const pendingCount = filteredSales.filter(s => s.payment_status === PaymentStatus.PENDING).length;
+  const approvedCount = filteredSales.filter(s => s.payment_status === PaymentStatus.PAID).length;
+  const totalAmount = filteredSales.reduce((sum, sale) => sum + sale.sale_price, 0);
+  const pendingTotal = filteredSales.filter(s => s.payment_status === PaymentStatus.PENDING).reduce((sum, sale) => sum + sale.sale_price, 0);
+  const approvedTotal = filteredSales.filter(s => s.payment_status === PaymentStatus.PAID).reduce((sum, sale) => sum + sale.sale_price, 0);
+
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
-      {/* Header */}
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" component="h1" gutterBottom>
-          Gerenciamento de Pagamentos
-        </Typography>
-        <Typography variant="body1" color="text.secondary">
-          Acompanhe e gerencie o status dos pagamentos das vendas
-        </Typography>
+      {/* Cabeçalho */}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+        <Box>
+          <Typography variant="h4" component="h1" gutterBottom>
+            Gerenciamento de Pagamentos
+          </Typography>
+          <Typography variant="body1" color="text.secondary">
+            Gerencie e aprove pagamentos das vendas realizadas
+          </Typography>
+        </Box>
       </Box>
 
-      {/* Resumo de Status */}
+      {/* Cards de Resumo */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid item xs={12} md={4}>
           <Card>
             <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Box sx={{ p: 1, backgroundColor: 'warning.light', borderRadius: 1 }}>
+                  <PendingIcon color="warning" />
+                </Box>
                 <Box>
-                  <Typography variant="h4" color="warning.main">
-                    {filteredSales.filter(s => s.payment_status === PaymentStatus.PENDING).length}
+                  <Typography variant="h6" component="div">
+                    {formatCurrency(pendingTotal)}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    Pagamentos Pendentes
+                    Pendentes ({pendingCount})
                   </Typography>
                 </Box>
-                <Chip label="Pendente" color="warning" />
               </Box>
             </CardContent>
           </Card>
         </Grid>
+        
         <Grid item xs={12} md={4}>
           <Card>
             <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Box sx={{ p: 1, backgroundColor: 'success.light', borderRadius: 1 }}>
+                  <CheckCircleIcon color="success" />
+                </Box>
                 <Box>
-                  <Typography variant="h4" color="success.main">
-                    {filteredSales.filter(s => s.payment_status === PaymentStatus.PAID).length}
+                  <Typography variant="h6" component="div">
+                    {formatCurrency(approvedTotal)}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    Pagamentos Aprovados
+                    Aprovados ({approvedCount})
                   </Typography>
                 </Box>
-                <Chip label="Aprovado" color="success" />
               </Box>
             </CardContent>
           </Card>
         </Grid>
+        
         <Grid item xs={12} md={4}>
           <Card>
             <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Box sx={{ p: 1, backgroundColor: 'primary.light', borderRadius: 1 }}>
+                  <AttachMoneyIcon color="primary" />
+                </Box>
                 <Box>
-                  <Typography variant="h4" color="primary.main">
-                    {formatCurrency(filteredSales.reduce((sum, sale) => sum + sale.sale_price, 0))}
+                  <Typography variant="h6" component="div">
+                    {formatCurrency(totalAmount)}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    Valor Total
+                    Total ({sales.length})
                   </Typography>
                 </Box>
-                <Chip label="Total" color="primary" />
               </Box>
             </CardContent>
           </Card>
@@ -395,33 +408,29 @@ const Payments: React.FC = () => {
       </Grid>
 
       {/* Filtros */}
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-            <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <FilterIcon />
-              Filtros e Pesquisa
-            </Typography>
+      <Card sx={{ mb: 4 }}>
+        <CardContent sx={{ p: 3 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+            <Typography variant="h6">Filtros</Typography>
             <Button
-              startIcon={showFilters ? <ExpandLessIcon /> : <ExpandMoreIcon />}
               onClick={() => setShowFilters(!showFilters)}
+              startIcon={showFilters ? <ExpandLessIcon /> : <ExpandMoreIcon />}
               variant="outlined"
               size="small"
             >
               {showFilters ? 'Ocultar' : 'Mostrar'} Filtros
             </Button>
           </Box>
-
+          
           <Collapse in={showFilters}>
-            <Grid container spacing={2}>
+            <Grid container spacing={3}>
               <Grid item xs={12} sm={6} md={3}>
                 <TextField
                   fullWidth
                   size="small"
                   label="CPF do Comprador"
                   value={filters.buyer_cpf || ''}
-                  onChange={(e) => handleFilterChange('buyer_cpf', e.target.value)}
-                  placeholder="Digite o CPF"
+                  onChange={(e) => handleFilterChange('buyer_cpf', e.target.value || undefined)}
                 />
               </Grid>
               
@@ -431,11 +440,12 @@ const Payments: React.FC = () => {
                   <Select
                     value={filters.payment_status || ''}
                     label="Status do Pagamento"
-                    onChange={(e: SelectChangeEvent) => handleFilterChange('payment_status', e.target.value)}
+                    onChange={(e: SelectChangeEvent) => handleFilterChange('payment_status', e.target.value as PaymentStatus || undefined)}
                   >
                     <MenuItem value="">Todos</MenuItem>
                     <MenuItem value={PaymentStatus.PENDING}>Pendente</MenuItem>
-                    <MenuItem value={PaymentStatus.PAID}>Aprovado</MenuItem>
+                    <MenuItem value={PaymentStatus.PAID}>Pago</MenuItem>
+                    <MenuItem value={PaymentStatus.CANCELLED}>Cancelado</MenuItem>
                   </Select>
                 </FormControl>
               </Grid>
@@ -446,8 +456,7 @@ const Payments: React.FC = () => {
                   size="small"
                   label="Código de Pagamento"
                   value={filters.payment_code || ''}
-                  onChange={(e) => handleFilterChange('payment_code', e.target.value)}
-                  placeholder="Digite o código"
+                  onChange={(e) => handleFilterChange('payment_code', e.target.value || undefined)}
                 />
               </Grid>
               
@@ -457,8 +466,7 @@ const Payments: React.FC = () => {
                   size="small"
                   label="Marca do Veículo"
                   value={filters.vehicle_brand || ''}
-                  onChange={(e) => handleFilterChange('vehicle_brand', e.target.value)}
-                  placeholder="Digite a marca"
+                  onChange={(e) => handleFilterChange('vehicle_brand', e.target.value || undefined)}
                 />
               </Grid>
               
@@ -490,7 +498,6 @@ const Payments: React.FC = () => {
                   variant="outlined"
                   fullWidth
                   size="small"
-                  startIcon={<SearchIcon />}
                 >
                   Limpar Filtros
                 </Button>
@@ -502,8 +509,8 @@ const Payments: React.FC = () => {
 
       {/* DataGrid */}
       <Card>
-        <CardContent sx={{ p: 0 }}>
-          <Box sx={{ height: 600, width: '100%' }}>
+        <CardContent sx={{ p: 2 }}>
+          <Box sx={{ height: 650, width: '100%' }}>
             <DataGrid
               rows={filteredSales}
               columns={columns}
@@ -514,20 +521,28 @@ const Payments: React.FC = () => {
               }}
               pageSizeOptions={[10, 25, 50]}
               disableRowSelectionOnClick
-              density="comfortable"
+              density="standard"
               sx={{
                 '& .MuiDataGrid-cell': {
                   borderBottom: 'none',
+                  fontSize: '0.875rem',
+                  padding: '8px 12px',
                 },
                 '& .MuiDataGrid-columnHeaders': {
                   backgroundColor: 'primary.main',
                   color: 'primary.contrastText',
                   '& .MuiDataGrid-columnHeader': {
                     backgroundColor: 'primary.main',
+                    fontSize: '0.875rem',
+                    fontWeight: 600,
+                    padding: '12px',
                   },
                 },
-                '& .MuiDataGrid-row:hover': {
-                  backgroundColor: 'action.hover',
+                '& .MuiDataGrid-row': {
+                  minHeight: 52,
+                  '&:hover': {
+                    backgroundColor: 'action.hover',
+                  },
                 },
               }}
               slots={{
@@ -548,7 +563,7 @@ const Payments: React.FC = () => {
                     <Typography variant="body2" color="text.secondary">
                       {Object.keys(filters).length > 0 
                         ? 'Tente ajustar os filtros para encontrar pagamentos.'
-                        : 'Não há pagamentos pendentes no momento.'
+                        : 'Aguarde as primeiras vendas para gerenciar pagamentos.'
                       }
                     </Typography>
                   </Box>

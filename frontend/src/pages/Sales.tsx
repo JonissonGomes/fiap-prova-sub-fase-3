@@ -38,6 +38,8 @@ import {
 import { Sale, SaleCreate, Vehicle, VehicleStatus, PaymentStatus } from '../types';
 import { salesApi, vehiclesApi } from '../services/api';
 import InputMask from 'react-input-mask';
+import { useAuth } from '../contexts/AuthContext';
+import { canViewSales, canCreateSales } from '../utils/permissions';
 
 interface SalesFilters {
   buyer_cpf?: string;
@@ -49,6 +51,7 @@ interface SalesFilters {
 }
 
 const Sales: React.FC = () => {
+  const { user } = useAuth();
   const [sales, setSales] = useState<Sale[]>([]);
   const [filteredSales, setFilteredSales] = useState<Sale[]>([]);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
@@ -396,31 +399,31 @@ const Sales: React.FC = () => {
   };
 
   const columns: GridColDef[] = [
-    { field: 'id', headerName: 'ID', width: 80, minWidth: 70 },
+    { field: 'id', headerName: 'ID', flex: 0.4, minWidth: 70 },
     { 
       field: 'vehicle_id', 
       headerName: 'Veículo', 
-      width: 200,
-      minWidth: 150,
+      flex: 2.2,
+      minWidth: 160,
       renderCell: (params) => {
         const vehicle = vehicles.find(v => v.id === params.value);
         return vehicle ? `${vehicle.brand} ${vehicle.model} (${vehicle.year})` : params.value;
       }
     },
-    { field: 'buyer_cpf', headerName: 'CPF do Comprador', width: 130, minWidth: 120 },
+    { field: 'buyer_cpf', headerName: 'CPF do Comprador', flex: 1.3, minWidth: 130 },
     { 
       field: 'sale_price', 
       headerName: 'Preço', 
-      width: 110,
-      minWidth: 100,
+      flex: 1.1,
+      minWidth: 110,
       renderCell: (params) => formatCurrency(params.value)
     },
-    { field: 'payment_code', headerName: 'Código de Pagamento', width: 140, minWidth: 120 },
+    { field: 'payment_code', headerName: 'Código de Pagamento', flex: 1.4, minWidth: 130 },
     { 
       field: 'payment_status', 
       headerName: 'Status', 
-      width: 100,
-      minWidth: 90,
+      flex: 1,
+      minWidth: 100,
       renderCell: (params) => (
         <Chip
           label={getStatusText(params.value)}
@@ -432,7 +435,7 @@ const Sales: React.FC = () => {
     {
       field: 'actions',
       headerName: 'Ações',
-      width: 120,
+      flex: 1,
       minWidth: 100,
       sortable: false,
       renderCell: (params) => (
@@ -448,56 +451,65 @@ const Sales: React.FC = () => {
     }
   ];
 
+  if (!canViewSales(user)) {
+    return (
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        <Alert severity="error">
+          Você não tem permissão para acessar esta página.
+        </Alert>
+      </Container>
+    );
+  }
+
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
-      {/* Header */}
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" component="h1" gutterBottom>
-          Gerenciamento de Vendas
-        </Typography>
-        <Typography variant="body1" color="text.secondary">
-          Gerencie vendas de veículos e acompanhe o status dos pagamentos
-        </Typography>
+      {/* Cabeçalho */}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+        <Box>
+          <Typography variant="h4" component="h1" gutterBottom>
+            Gerenciamento de Vendas
+          </Typography>
+          <Typography variant="body1" color="text.secondary">
+            Gerencie todas as vendas realizadas no sistema
+          </Typography>
+        </Box>
+        
+        {canCreateSales(user) && (
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => handleOpenDialog()}
+            sx={{ minWidth: 140, height: 42 }}
+          >
+            Nova Venda
+          </Button>
+        )}
       </Box>
 
       {/* Filtros */}
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-            <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <FilterIcon />
-              Filtros e Pesquisa
-            </Typography>
-            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-              <Button
-                startIcon={showFilters ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-                onClick={() => setShowFilters(!showFilters)}
-                variant="outlined"
-                size="small"
-              >
-                {showFilters ? 'Ocultar' : 'Mostrar'} Filtros
-              </Button>
-              <Button
-                startIcon={<AddIcon />}
-                onClick={() => handleOpenDialog()}
-                variant="contained"
-                size="small"
-              >
-                Nova Venda
-              </Button>
-            </Box>
+      <Card sx={{ mb: 4 }}>
+        <CardContent sx={{ p: 3 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+            <Typography variant="h6">Filtros</Typography>
+            <Button
+              onClick={() => setShowFilters(!showFilters)}
+              startIcon={showFilters ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+              variant="outlined"
+              size="small"
+            >
+              {showFilters ? 'Ocultar' : 'Mostrar'} Filtros
+            </Button>
           </Box>
-
+          
           <Collapse in={showFilters}>
-            <Grid container spacing={2}>
+            <Grid container spacing={3}>
               <Grid item xs={12} sm={6} md={3}>
                 <TextField
                   fullWidth
                   size="small"
                   label="CPF do Comprador"
                   value={filters.buyer_cpf || ''}
-                  onChange={(e) => handleFilterChange('buyer_cpf', e.target.value)}
-                  placeholder="Digite o CPF"
+                  onChange={(e) => handleFilterChange('buyer_cpf', e.target.value || undefined)}
                 />
               </Grid>
               
@@ -507,7 +519,7 @@ const Sales: React.FC = () => {
                   <Select
                     value={filters.payment_status || ''}
                     label="Status do Pagamento"
-                    onChange={(e: SelectChangeEvent) => handleFilterChange('payment_status', e.target.value)}
+                    onChange={(e: SelectChangeEvent) => handleFilterChange('payment_status', e.target.value as PaymentStatus || undefined)}
                   >
                     <MenuItem value="">Todos</MenuItem>
                     <MenuItem value={PaymentStatus.PENDING}>Pendente</MenuItem>
@@ -523,8 +535,7 @@ const Sales: React.FC = () => {
                   size="small"
                   label="Marca do Veículo"
                   value={filters.vehicle_brand || ''}
-                  onChange={(e) => handleFilterChange('vehicle_brand', e.target.value)}
-                  placeholder="Digite a marca"
+                  onChange={(e) => handleFilterChange('vehicle_brand', e.target.value || undefined)}
                 />
               </Grid>
               
@@ -534,8 +545,7 @@ const Sales: React.FC = () => {
                   size="small"
                   label="Código de Pagamento"
                   value={filters.payment_code || ''}
-                  onChange={(e) => handleFilterChange('payment_code', e.target.value)}
-                  placeholder="Digite o código"
+                  onChange={(e) => handleFilterChange('payment_code', e.target.value || undefined)}
                 />
               </Grid>
               
@@ -579,8 +589,8 @@ const Sales: React.FC = () => {
 
       {/* DataGrid */}
       <Card>
-        <CardContent sx={{ p: 0 }}>
-          <Box sx={{ height: 600, width: '100%' }}>
+        <CardContent sx={{ p: 2 }}>
+          <Box sx={{ height: 650, width: '100%' }}>
             <DataGrid
               rows={filteredSales}
               columns={columns}
@@ -591,20 +601,28 @@ const Sales: React.FC = () => {
               }}
               pageSizeOptions={[10, 25, 50]}
               disableRowSelectionOnClick
-              density="comfortable"
+              density="standard"
               sx={{
                 '& .MuiDataGrid-cell': {
                   borderBottom: 'none',
+                  fontSize: '0.875rem',
+                  padding: '8px 12px',
                 },
                 '& .MuiDataGrid-columnHeaders': {
                   backgroundColor: 'primary.main',
                   color: 'primary.contrastText',
                   '& .MuiDataGrid-columnHeader': {
                     backgroundColor: 'primary.main',
+                    fontSize: '0.875rem',
+                    fontWeight: 600,
+                    padding: '12px',
                   },
                 },
-                '& .MuiDataGrid-row:hover': {
-                  backgroundColor: 'action.hover',
+                '& .MuiDataGrid-row': {
+                  minHeight: 52,
+                  '&:hover': {
+                    backgroundColor: 'action.hover',
+                  },
                 },
               }}
               slots={{

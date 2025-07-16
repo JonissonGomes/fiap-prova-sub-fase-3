@@ -28,7 +28,11 @@ import {
   Search as SearchIcon,
   ShoppingBag as ShoppingBagIcon,
   Receipt as ReceiptIcon,
-  TrendingUp as TrendingIcon
+  TrendingUp as TrendingIcon,
+  ShoppingCart as ShoppingCartIcon,
+  CheckCircle as CheckCircleIcon,
+  Pending as PendingIcon,
+  AttachMoney as AttachMoneyIcon
 } from '@mui/icons-material';
 import { Sale, Vehicle, PaymentStatus } from '../types';
 import { salesApi, vehiclesApi, customerService } from '../services/api';
@@ -218,72 +222,47 @@ const MyPurchases: React.FC = () => {
   const valorTotal = filteredSales.reduce((sum, sale) => sum + sale.sale_price, 0);
 
   const columns: GridColDef[] = [
-    { 
-      field: 'id', 
-      headerName: 'ID da Compra', 
-      width: 120,
-      minWidth: 100,
-      renderCell: (params) => (
-        <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
-          {params.value.substring(0, 8)}...
-        </Typography>
-      )
-    },
+    { field: 'id', headerName: 'ID', flex: 0.4, minWidth: 70 },
     { 
       field: 'vehicle_id', 
       headerName: 'Veículo', 
-      width: 200,
-      minWidth: 150,
+      flex: 2.2,
+      minWidth: 160,
       renderCell: (params) => {
         const vehicle = vehicles.find(v => v.id === params.value);
-        return vehicle ? (
-          <Typography variant="body2">
-            {vehicle.brand} {vehicle.model} ({vehicle.year})
-          </Typography>
-        ) : (
-          <Typography variant="body2" color="text.secondary">
-            Veículo não encontrado
-          </Typography>
-        );
+        return vehicle ? `${vehicle.brand} ${vehicle.model} (${vehicle.year})` : params.value;
       }
     },
     { 
       field: 'sale_price', 
       headerName: 'Preço', 
-      width: 120,
-      minWidth: 100,
+      flex: 1.1,
+      minWidth: 110,
       renderCell: (params) => formatCurrency(params.value)
     },
-    { 
-      field: 'payment_code', 
-      headerName: 'Código de Pagamento', 
-      width: 150,
-      minWidth: 130,
-      renderCell: (params) => (
-        <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
-          {params.value}
-        </Typography>
-      )
-    },
+    { field: 'payment_code', headerName: 'Código de Pagamento', flex: 1.4, minWidth: 130 },
     { 
       field: 'payment_status', 
       headerName: 'Status', 
-      width: 100,
-      minWidth: 90,
+      flex: 1,
+      minWidth: 100,
       renderCell: (params) => (
-        <Chip 
-          label={getStatusText(params.value)} 
+        <Chip
+          label={getStatusText(params.value)}
           color={getStatusColor(params.value) as any}
           size="small"
         />
       )
     },
-    { 
-      field: 'created_at', 
-      headerName: 'Data da Compra', 
-      width: 120,
-      minWidth: 110,
-      renderCell: (params) => formatDate(params.value)
+    {
+      field: 'created_at',
+      headerName: 'Data da Compra',
+      flex: 1.2,
+      minWidth: 130,
+      renderCell: (params) => {
+        const date = new Date(params.value);
+        return date.toLocaleDateString('pt-BR');
+      }
     }
   ];
 
@@ -318,82 +297,95 @@ const MyPurchases: React.FC = () => {
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
-      {/* Header */}
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" component="h1" gutterBottom>
-          Minhas Compras
-        </Typography>
-        <Typography variant="body1" color="text.secondary">
-          Acompanhe suas compras de veículos e status de pagamento
-        </Typography>
+      {/* Cabeçalho */}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+        <Box>
+          <Typography variant="h4" component="h1" gutterBottom>
+            Minhas Compras
+          </Typography>
+          <Typography variant="body1" color="text.secondary">
+            Acompanhe o histórico e status de suas compras
+          </Typography>
+        </Box>
       </Box>
 
-      {/* Estatísticas */}
+      {/* Cards de Estatísticas */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid item xs={12} sm={6} md={3}>
           <Card>
             <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Box sx={{ p: 1, backgroundColor: 'primary.light', borderRadius: 1 }}>
+                  <ShoppingCartIcon color="primary" />
+                </Box>
                 <Box>
-                  <Typography variant="h4" color="primary.main">
-                    {totalCompras}
+                  <Typography variant="h6" component="div">
+                    {filteredSales.length}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
                     Total de Compras
                   </Typography>
                 </Box>
-                <ShoppingBagIcon color="primary" />
               </Box>
             </CardContent>
           </Card>
         </Grid>
+
         <Grid item xs={12} sm={6} md={3}>
           <Card>
             <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Box sx={{ p: 1, backgroundColor: 'success.light', borderRadius: 1 }}>
+                  <CheckCircleIcon color="success" />
+                </Box>
                 <Box>
-                  <Typography variant="h4" color="warning.main">
-                    {comprasPendentes}
+                  <Typography variant="h6" component="div">
+                    {filteredSales.filter(s => s.payment_status === PaymentStatus.PAID).length}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    Pagamentos Pendentes
+                    Pagas
                   </Typography>
                 </Box>
-                <Chip label={comprasPendentes} color="warning" />
               </Box>
             </CardContent>
           </Card>
         </Grid>
+
         <Grid item xs={12} sm={6} md={3}>
           <Card>
             <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Box sx={{ p: 1, backgroundColor: 'warning.light', borderRadius: 1 }}>
+                  <PendingIcon color="warning" />
+                </Box>
                 <Box>
-                  <Typography variant="h4" color="success.main">
-                    {comprasPagas}
+                  <Typography variant="h6" component="div">
+                    {filteredSales.filter(s => s.payment_status === PaymentStatus.PENDING).length}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    Pagamentos Realizados
+                    Pendentes
                   </Typography>
                 </Box>
-                <Chip label={comprasPagas} color="success" />
               </Box>
             </CardContent>
           </Card>
         </Grid>
+
         <Grid item xs={12} sm={6} md={3}>
           <Card>
             <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Box sx={{ p: 1, backgroundColor: 'secondary.light', borderRadius: 1 }}>
+                  <AttachMoneyIcon color="secondary" />
+                </Box>
                 <Box>
-                  <Typography variant="h5" color="primary.main">
-                    {formatCurrency(valorTotal)}
+                  <Typography variant="h6" component="div">
+                    {formatCurrency(filteredSales.reduce((sum, sale) => sum + sale.sale_price, 0))}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
                     Valor Total
                   </Typography>
                 </Box>
-                <TrendingIcon color="primary" />
               </Box>
             </CardContent>
           </Card>
@@ -401,32 +393,29 @@ const MyPurchases: React.FC = () => {
       </Grid>
 
       {/* Filtros */}
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-            <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <FilterIcon />
-              Filtros e Pesquisa
-            </Typography>
+      <Card sx={{ mb: 4 }}>
+        <CardContent sx={{ p: 3 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+            <Typography variant="h6">Filtros</Typography>
             <Button
-              startIcon={showFilters ? <ExpandLessIcon /> : <ExpandMoreIcon />}
               onClick={() => setShowFilters(!showFilters)}
+              startIcon={showFilters ? <ExpandLessIcon /> : <ExpandMoreIcon />}
               variant="outlined"
               size="small"
             >
               {showFilters ? 'Ocultar' : 'Mostrar'} Filtros
             </Button>
           </Box>
-
+          
           <Collapse in={showFilters}>
-            <Grid container spacing={2}>
+            <Grid container spacing={3}>
               <Grid item xs={12} sm={6} md={3}>
                 <FormControl fullWidth size="small">
                   <InputLabel>Status do Pagamento</InputLabel>
                   <Select
                     value={filters.payment_status || ''}
                     label="Status do Pagamento"
-                    onChange={(e: SelectChangeEvent) => handleFilterChange('payment_status', e.target.value)}
+                    onChange={(e: SelectChangeEvent) => handleFilterChange('payment_status', e.target.value as PaymentStatus || undefined)}
                   >
                     <MenuItem value="">Todos</MenuItem>
                     <MenuItem value={PaymentStatus.PENDING}>Pendente</MenuItem>
@@ -442,8 +431,7 @@ const MyPurchases: React.FC = () => {
                   size="small"
                   label="Marca do Veículo"
                   value={filters.vehicle_brand || ''}
-                  onChange={(e) => handleFilterChange('vehicle_brand', e.target.value)}
-                  placeholder="Digite a marca"
+                  onChange={(e) => handleFilterChange('vehicle_brand', e.target.value || undefined)}
                 />
               </Grid>
               
@@ -453,8 +441,7 @@ const MyPurchases: React.FC = () => {
                   size="small"
                   label="Modelo do Veículo"
                   value={filters.vehicle_model || ''}
-                  onChange={(e) => handleFilterChange('vehicle_model', e.target.value)}
-                  placeholder="Digite o modelo"
+                  onChange={(e) => handleFilterChange('vehicle_model', e.target.value || undefined)}
                 />
               </Grid>
               
@@ -462,11 +449,11 @@ const MyPurchases: React.FC = () => {
                 <FormControl fullWidth size="small">
                   <InputLabel>Período</InputLabel>
                   <Select
-                    value={filters.date_range || 'all'}
+                    value={filters.date_range || ''}
                     label="Período"
-                    onChange={(e: SelectChangeEvent) => handleFilterChange('date_range', e.target.value)}
+                    onChange={(e: SelectChangeEvent) => handleFilterChange('date_range', e.target.value || undefined)}
                   >
-                    <MenuItem value="all">Todos</MenuItem>
+                    <MenuItem value="">Todos</MenuItem>
                     <MenuItem value="last_month">Último mês</MenuItem>
                     <MenuItem value="last_3_months">Últimos 3 meses</MenuItem>
                     <MenuItem value="last_year">Último ano</MenuItem>
@@ -502,7 +489,6 @@ const MyPurchases: React.FC = () => {
                   variant="outlined"
                   fullWidth
                   size="small"
-                  startIcon={<SearchIcon />}
                 >
                   Limpar Filtros
                 </Button>
@@ -514,12 +500,11 @@ const MyPurchases: React.FC = () => {
 
       {/* DataGrid */}
       <Card>
-        <CardContent sx={{ p: 0 }}>
-          <Box sx={{ height: 600, width: '100%' }}>
+        <CardContent sx={{ p: 2 }}>
+          <Box sx={{ height: 650, width: '100%' }}>
             <DataGrid
               rows={filteredSales}
               columns={columns}
-              loading={loading}
               initialState={{
                 pagination: {
                   paginationModel: { pageSize: 10 }
@@ -527,20 +512,28 @@ const MyPurchases: React.FC = () => {
               }}
               pageSizeOptions={[10, 25, 50]}
               disableRowSelectionOnClick
-              density="comfortable"
+              density="standard"
               sx={{
                 '& .MuiDataGrid-cell': {
                   borderBottom: 'none',
+                  fontSize: '0.875rem',
+                  padding: '8px 12px',
                 },
                 '& .MuiDataGrid-columnHeaders': {
                   backgroundColor: 'primary.main',
                   color: 'primary.contrastText',
                   '& .MuiDataGrid-columnHeader': {
                     backgroundColor: 'primary.main',
+                    fontSize: '0.875rem',
+                    fontWeight: 600,
+                    padding: '12px',
                   },
                 },
-                '& .MuiDataGrid-row:hover': {
-                  backgroundColor: 'action.hover',
+                '& .MuiDataGrid-row': {
+                  minHeight: 52,
+                  '&:hover': {
+                    backgroundColor: 'action.hover',
+                  },
                 },
               }}
               slots={{
@@ -549,19 +542,19 @@ const MyPurchases: React.FC = () => {
                     sx={{
                       height: '100%',
                       display: 'flex',
-                      flexDirection: 'column',
                       alignItems: 'center',
                       justifyContent: 'center',
+                      flexDirection: 'column',
                       gap: 2
                     }}
                   >
-                    <Typography variant="h6" color="text.secondary" gutterBottom>
-                      {Object.keys(filters).length > 0 ? 'Nenhuma compra encontrada' : 'Nenhuma compra encontrada'}
+                    <Typography variant="h6" color="text.secondary">
+                      Nenhuma compra encontrada
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
                       {Object.keys(filters).length > 0 
                         ? 'Tente ajustar os filtros para encontrar suas compras.'
-                        : 'Você ainda não fez nenhuma compra de veículo.'
+                        : 'Você ainda não realizou nenhuma compra.'
                       }
                     </Typography>
                   </Box>
