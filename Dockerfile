@@ -16,16 +16,15 @@ WORKDIR /app
 # Copiar Makefile e arquivos de configuração
 COPY Makefile .
 COPY requirements.txt .
-COPY package*.json ./
 
 # Instalar dependências Python
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Instalar dependências Node.js (se existir)
-RUN if [ -f package.json ]; then npm ci; fi
-
 # Copiar todo o código
 COPY . .
+
+# Instalar dependências Node.js (se existir) - movido para depois de copiar o código
+RUN if [ -f package.json ]; then npm install; fi
 
 # Expor porta
 EXPOSE 8000
