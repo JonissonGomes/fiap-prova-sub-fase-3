@@ -1,5 +1,5 @@
 from enum import Enum
-from pydantic import BaseModel, Field, EmailStr
+from pydantic import BaseModel, Field, EmailStr, ConfigDict
 from typing import Optional
 from datetime import datetime
 
@@ -42,11 +42,7 @@ class User(UserBase):
     updated_at: Optional[datetime] = Field(None, description="Data de atualização")
     last_login: Optional[datetime] = Field(None, description="Último login")
 
-    class Config:
-        json_encoders = {
-            datetime: lambda v: v.isoformat()
-        }
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
     def to_response(self) -> UserResponse:
         return UserResponse(

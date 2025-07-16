@@ -1,6 +1,6 @@
 from enum import Enum
 from datetime import datetime
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator, ConfigDict
 from typing import Optional
 
 class PaymentStatus(str, Enum):
@@ -16,7 +16,8 @@ class SaleBase(BaseModel):
     payment_code: str = Field(..., min_length=1, description="Código do pagamento")
     payment_status: PaymentStatus = Field(default=PaymentStatus.PENDING, description="Status do pagamento")
 
-    @validator('buyer_cpf')
+    @field_validator('buyer_cpf')
+    @classmethod
     def validate_cpf(cls, v):
         # Remove caracteres não numéricos
         cpf = ''.join(filter(str.isdigit, v))
@@ -24,7 +25,8 @@ class SaleBase(BaseModel):
             raise ValueError('CPF deve conter 11 dígitos')
         return v
 
-    @validator('payment_status', pre=True)
+    @field_validator('payment_status', mode='before')
+    @classmethod
     def validate_payment_status(cls, v):
         if isinstance(v, str):
             try:
@@ -44,7 +46,8 @@ class SaleUpdate(BaseModel):
     payment_code: Optional[str] = Field(None, min_length=1, description="Código do pagamento")
     payment_status: Optional[PaymentStatus] = Field(None, description="Status do pagamento")
 
-    @validator('buyer_cpf')
+    @field_validator('buyer_cpf')
+    @classmethod
     def validate_cpf(cls, v):
         if v is None:
             return v
@@ -54,7 +57,8 @@ class SaleUpdate(BaseModel):
             raise ValueError('CPF deve conter 11 dígitos')
         return v
 
-    @validator('payment_status', pre=True)
+    @field_validator('payment_status', mode='before')
+    @classmethod
     def validate_payment_status(cls, v):
         if v is None:
             return v
@@ -70,8 +74,7 @@ class SaleResponse(SaleBase):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
     @classmethod
     def from_domain(cls, sale):

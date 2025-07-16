@@ -1,5 +1,5 @@
 from enum import Enum
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional
 from datetime import datetime
 
@@ -31,11 +31,7 @@ class Vehicle(VehicleBase):
     created_at: Optional[datetime] = Field(None, description="Data de criação")
     updated_at: Optional[datetime] = Field(None, description="Data de atualização")
 
-    class Config:
-        json_encoders = {
-            datetime: lambda v: v.isoformat()
-        }
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
     def _validate(self):
         if self.year < 1900 or self.year > datetime.now().year:
