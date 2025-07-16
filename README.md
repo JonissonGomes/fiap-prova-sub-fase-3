@@ -109,6 +109,76 @@ make quick-test     # Teste rápido da solução de problemas
 make setup-complete-fast  # Configuração rápida otimizada
 ```
 
+## 🌐 Rodando o Frontend Localmente
+
+### Pré-requisitos
+- Node.js (versão 14 ou superior)
+- npm (gerenciador de pacotes do Node.js)
+
+### Passos para Execução
+
+1. Navegue até a pasta do frontend:
+```bash
+cd frontend
+```
+
+2. Instale as dependências:
+```bash
+npm install
+# ou
+yarn install
+```
+
+3. Configure as variáveis de ambiente:
+Crie um arquivo `.env` na pasta frontend com:
+```env
+REACT_APP_API_URL=http://localhost:8000
+REACT_APP_VEHICLES_SERVICE_URL=http://localhost:8001
+REACT_APP_SALES_SERVICE_URL=http://localhost:8002
+REACT_APP_PAYMENTS_SERVICE_URL=http://localhost:8003
+```
+
+4. Inicie o servidor de desenvolvimento:
+```bash
+npm start
+# ou
+yarn start
+```
+
+5. Acesse a aplicação:
+Abra seu navegador e acesse: http://localhost:3000
+
+### Scripts Úteis do Frontend
+
+```bash
+# Executar testes
+npm test
+
+# Criar build de produção
+npm run build
+
+# Executar linter
+npm run lint
+
+# Formatar código
+npm run format
+```
+
+### Executando com Docker
+
+Alternativamente, você pode rodar o frontend usando Docker:
+
+```bash
+# Construir a imagem
+docker build -t frontend ./frontend
+
+# Executar o container
+docker run -p 3000:3000 frontend
+
+# Ou usando docker-compose
+docker-compose up frontend
+```
+
 ## 🔐 Credenciais de Acesso
 
 ### Usuário Admin
