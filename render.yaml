@@ -95,26 +95,32 @@ services:
     envVars:
       - key: NODE_VERSION
         value: 18.0.0
+      - key: REACT_APP_CORE_API_URL
+        value: https://fiap-prova-sub-fase-3.onrender.com
+      - key: REACT_APP_SALES_API_URL
+        value: https://fiap-prova-sub-fase-3.onrender.com
+      - key: REACT_APP_AUTH_API_URL
+        value: https://fiap-prova-sub-fase-3.onrender.com
+      - key: REACT_APP_CUSTOMER_API_URL
+        value: https://fiap-prova-sub-fase-3.onrender.com
       - key: REACT_APP_API_URL
-        sync: false
+        value: https://fiap-prova-sub-fase-3.onrender.com
       - key: REACT_APP_CORE_SERVICE_URL
-        sync: false
+        value: https://fiap-prova-sub-fase-3.onrender.com
       - key: REACT_APP_SALES_SERVICE_URL
-        sync: false
-      - key: REACT_APP_AUTH_SERVICE_URL
-        sync: false
+        value: https://fiap-prova-sub-fase-3.onrender.com
       - key: REACT_APP_CUSTOMER_SERVICE_URL
-        sync: false
+        value: https://fiap-prova-sub-fase-3.onrender.com
       - key: REACT_APP_APP_NAME
-        sync: false
+        value: FIAP Vehicle Sales
       - key: REACT_APP_ENABLE_AUTH
-        sync: false
+        value: true
       - key: REACT_APP_RETRY_ATTEMPTS
-        sync: false
+        value: 3
       - key: REACT_APP_RETRY_DELAY
-        sync: false
+        value: 1000
       - key: CHOKIDAR_USEPOLLING
-        sync: false
+        value: true
     routes:
       - type: rewrite
         source: /*

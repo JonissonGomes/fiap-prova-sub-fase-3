@@ -20,16 +20,18 @@ import {
   RateLimitConfig
 } from '../types';
 
-// Configuração das URLs base
-const CORE_API_URL = process.env.REACT_APP_CORE_API_URL || 'http://localhost:8000';
-const SALES_API_URL = process.env.REACT_APP_SALES_API_URL || 'http://localhost:8001';
-const AUTH_API_URL = process.env.REACT_APP_AUTH_API_URL || 'http://localhost:8002';
-const CUSTOMER_API_URL = process.env.REACT_APP_CUSTOMER_API_URL || 'http://localhost:8003';
+// Configuração das URLs base - Render
+const BASE_URL = 'https://fiap-prova-sub-fase-3.onrender.com';
+
+const CORE_API_URL = process.env.REACT_APP_CORE_API_URL || BASE_URL;
+const SALES_API_URL = process.env.REACT_APP_SALES_API_URL || BASE_URL;
+const AUTH_API_URL = process.env.REACT_APP_AUTH_API_URL || BASE_URL;
+const CUSTOMER_API_URL = process.env.REACT_APP_CUSTOMER_API_URL || BASE_URL;
 
 // Instâncias do Axios
 const coreApi: AxiosInstance = axios.create({
   baseURL: CORE_API_URL,
-  timeout: 10000,
+  timeout: 30000, // Aumentado para 30 segundos devido ao cold start do Render
   headers: {
     'Content-Type': 'application/json',
   },
@@ -37,7 +39,7 @@ const coreApi: AxiosInstance = axios.create({
 
 const salesApiInstance: AxiosInstance = axios.create({
   baseURL: SALES_API_URL,
-  timeout: 10000,
+  timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -45,7 +47,7 @@ const salesApiInstance: AxiosInstance = axios.create({
 
 const authApi: AxiosInstance = axios.create({
   baseURL: AUTH_API_URL,
-  timeout: 10000,
+  timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -53,7 +55,7 @@ const authApi: AxiosInstance = axios.create({
 
 const customerApi: AxiosInstance = axios.create({
   baseURL: CUSTOMER_API_URL,
-  timeout: 10000,
+  timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -114,7 +116,7 @@ const addAuthInterceptor = (apiInstance: any) => {
       return Promise.reject(error);
     }
   );
-};
+}
 
 // Aplicar interceptors
 addAuthInterceptor(coreApi);
@@ -322,7 +324,7 @@ export const customerService = {
       throw error;
     }
   }
-};
+}
 
 // Serviços de Pagamentos (mantido para compatibilidade)
 export const paymentsApi = {
@@ -348,6 +350,24 @@ export const paymentsApi = {
 
   delete: async (id: string): Promise<void> => {
     await coreApi.delete(`/payments/${id}`);
+  }
+};
+
+// Serviços de Rate Limiting
+export const rateLimitApi = {
+  getStats: async (): Promise<RateLimitStats> => {
+    const response = await authApi.get<RateLimitStats>('/rate-limit/stats');
+    return response.data;
+  },
+
+  getConfig: async (): Promise<RateLimitConfig> => {
+    const response = await authApi.get<RateLimitConfig>('/rate-limit/config');
+    return response.data;
+  },
+
+  updateConfig: async (config: Partial<RateLimitConfig>): Promise<RateLimitConfig> => {
+    const response = await authApi.put<RateLimitConfig>('/rate-limit/config', config);
+    return response.data;
   }
 };
 
