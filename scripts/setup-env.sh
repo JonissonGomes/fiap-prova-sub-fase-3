@@ -92,6 +92,11 @@ CUSTOMER_MONGODB_DB_NAME=customer_db
 CUSTOMER_MONGODB_COLLECTION=customers
 CUSTOMER_SERVICE_URL=http://customer-service:8003
 
+# Configurações do Payment Service
+PAYMENT_MONGODB_URL=mongodb://payment-mongodb:27017
+PAYMENT_MONGODB_DB_NAME=payment_db
+PAYMENT_MONGODB_COLLECTION=payments
+
 # Configurações do Frontend
 REACT_APP_API_URL=http://localhost:8000
 REACT_APP_CORE_SERVICE_URL=http://localhost:8000
@@ -145,6 +150,11 @@ CUSTOMER_MONGODB_DB_NAME=customer_db
 CUSTOMER_MONGODB_COLLECTION=customers
 CUSTOMER_SERVICE_URL=http://customer-service:8003
 
+# Configurações do Payment Service (Desenvolvimento)
+PAYMENT_MONGODB_URL=mongodb://payment-mongodb:27017
+PAYMENT_MONGODB_DB_NAME=payment_db
+PAYMENT_MONGODB_COLLECTION=payments
+
 # Configurações do Frontend (Desenvolvimento)
 REACT_APP_API_URL=http://localhost:8000
 REACT_APP_CORE_SERVICE_URL=http://localhost:8000
@@ -186,9 +196,20 @@ KEYCLOAK_ADMIN_PASSWORD=CHANGE-ME-IN-PRODUCTION
 # MongoDB para produção
 MONGODB_URL=mongodb://mongodb:27017
 AUTH_MONGODB_URL=mongodb://auth-mongodb:27017
+AUTH_MONGODB_DB_NAME=auth_db
+AUTH_MONGODB_COLLECTION=users
 CORE_MONGODB_URL=mongodb://core-mongodb:27017
+CORE_MONGODB_DB_NAME=core_db
+CORE_MONGODB_COLLECTION=vehicles
 SALES_MONGODB_URL=mongodb://sales-mongodb:27017
+SALES_MONGODB_DB_NAME=sales_db
+SALES_MONGODB_COLLECTION=sales
 CUSTOMER_MONGODB_URL=mongodb://customer-mongodb:27017
+CUSTOMER_MONGODB_DB_NAME=customer_db
+CUSTOMER_MONGODB_COLLECTION=customers
+PAYMENT_MONGODB_URL=mongodb://payment-mongodb:27017
+PAYMENT_MONGODB_DB_NAME=payment_db
+PAYMENT_MONGODB_COLLECTION=payments
 
 # Redis para produção
 REDIS_URL=redis://redis:6379
