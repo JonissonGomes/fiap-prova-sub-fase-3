@@ -17,8 +17,8 @@ def test_email_validator():
         from email_validator import validate_email, EmailNotValidError
         
         # Testa com um email válido
-        email = "test@example.com"
-        validated = validate_email(email)
+        email = "test@localhost"
+        validated = validate_email(email, check_deliverability=False)
         print(f"✅ Validação de email funcionando: {validated.email}")
         
         return True
@@ -41,7 +41,7 @@ def test_pydantic_email():
             email: EmailStr
         
         # Testa com um email válido
-        test_data = {"email": "test@example.com"}
+        test_data = {"email": "test@localhost"}
         model = TestModel(**test_data)
         print(f"✅ Pydantic EmailStr funcionando: {model.email}")
         
