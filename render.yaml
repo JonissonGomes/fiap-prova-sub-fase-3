@@ -44,16 +44,10 @@ services:
   # Core Service
   - type: web
     name: core-service
-    env: python
+    env: docker
     plan: free
-    buildCommand: |
-      cd core-service
-      pip install --upgrade pip
-      pip install --no-cache-dir -r requirements.txt
-    startCommand: cd core-service && uvicorn app.adapters.api.main:app --host 0.0.0.0 --port $PORT
+    dockerfilePath: ./core-service/Dockerfile
     envVars:
-      - key: PYTHON_VERSION
-        value: 3.11.0
       - key: MONGODB_URL
         sync: false
       - key: MONGODB_DB_NAME
@@ -68,16 +62,10 @@ services:
   # Sales Service
   - type: web
     name: sales-service
-    env: python
+    env: docker
     plan: free
-    buildCommand: |
-      cd sales-service
-      pip install --upgrade pip
-      pip install --no-cache-dir -r requirements.txt
-    startCommand: cd sales-service && uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    dockerfilePath: ./sales-service/Dockerfile
     envVars:
-      - key: PYTHON_VERSION
-        value: 3.11.0
       - key: MONGODB_URL
         sync: false
       - key: MONGODB_DB_NAME
@@ -136,5 +124,4 @@ databases:
   - name: fiap-mongodb
     databaseName: fiap
     plan: starter
-    ipAllowList: [] 
     ipAllowList: [] 
