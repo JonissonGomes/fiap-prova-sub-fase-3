@@ -24,7 +24,8 @@ import {
   Menu as MenuIcon,
   Dashboard as DashboardIcon,
   AccountCircle as AccountIcon,
-  Logout as LogoutIcon
+  Logout as LogoutIcon,
+  AdminPanelSettings as AdminIcon
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -43,10 +44,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   const menuItems = [
     { text: 'Início', icon: <DashboardIcon />, path: '/', roles: ['ADMIN', 'CUSTOMER', 'SALES'] },
-    { text: 'Veículos', icon: <VehicleIcon />, path: '/vehicles', roles: ['ADMIN', 'SALES'] },
+    { text: 'Dashboard', icon: <AdminIcon />, path: '/dashboard', roles: ['ADMIN'] },
+    { text: 'Veículos', icon: <VehicleIcon />, path: '/vehicles', roles: ['ADMIN', 'SALES', 'CUSTOMER'] },
     { text: 'Vendas', icon: <SaleIcon />, path: '/sales', roles: ['ADMIN', 'SALES'] },
     { text: 'Clientes', icon: <CustomerIcon />, path: '/customers', roles: ['ADMIN', 'SALES'] },
-    { text: 'Pagamentos', icon: <PaymentIcon />, path: '/payments', roles: ['ADMIN', 'SALES'] }
+    { text: 'Pagamentos', icon: <PaymentIcon />, path: '/payments', roles: ['ADMIN', 'SALES'] },
+    { text: 'Minhas Compras', icon: <SaleIcon />, path: '/my-purchases', roles: ['CUSTOMER'] }
   ];
 
   const filteredMenuItems = menuItems.filter(item => 

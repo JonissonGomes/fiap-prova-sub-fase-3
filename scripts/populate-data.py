@@ -242,7 +242,7 @@ class DataPopulator:
             base_price = random.randint(25000, 120000)
             age_factor = (2024 - year) * 0.1
             mileage_factor = mileage / 100000 * 0.2
-            price = int(base_price * (1 - age_factor - mileage_factor))
+            price = max(1000, int(base_price * (1 - age_factor - mileage_factor)))
             
             vehicle_data = {
                 "brand": brand,
@@ -643,7 +643,7 @@ class DataPopulator:
             base_price = random.randint(25000, 120000)
             age_factor = (2024 - year) * 0.1
             mileage_factor = mileage / 100000 * 0.2
-            price = int(base_price * (1 - age_factor - mileage_factor))
+            price = max(1000, int(base_price * (1 - age_factor - mileage_factor)))
             
             vehicle_data = {
                 "brand": brand,
@@ -1044,7 +1044,7 @@ class DataPopulator:
             base_price = random.randint(25000, 120000)
             age_factor = (2024 - year) * 0.1
             mileage_factor = mileage / 100000 * 0.2
-            price = int(base_price * (1 - age_factor - mileage_factor))
+            price = max(1000, int(base_price * (1 - age_factor - mileage_factor)))
             
             vehicle_data = {
                 "brand": brand,
@@ -1445,7 +1445,7 @@ class DataPopulator:
             base_price = random.randint(25000, 120000)
             age_factor = (2024 - year) * 0.1
             mileage_factor = mileage / 100000 * 0.2
-            price = int(base_price * (1 - age_factor - mileage_factor))
+            price = max(1000, int(base_price * (1 - age_factor - mileage_factor)))
             
             vehicle_data = {
                 "brand": brand,

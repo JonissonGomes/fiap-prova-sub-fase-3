@@ -1,4 +1,37 @@
-.PHONY: setup install up down test test-core test-sales test-auth test-customer logs clean run stop mongodb mongodb-logs core sales auth customer frontend core-logs sales-logs auth-logs customer-logs frontend-logs keycloak keycloak-logs lint type-check rebuild status restart clean-sales-db clean-core-db clean-auth-db clean-customer-db coverage coverage-core coverage-sales coverage-auth coverage-customer coverage-report setup-env validate-env docs redis redis-logs redis-cli clean-redis test-rate-limiting test-frontend populate-data populate-data-clean test-populate-data frontend-build frontend-test frontend-lint frontend-format
+.PHONY: setup install up down test test-core test-sales test-auth test-customer logs clean run stop mongodb mongodb-logs core sales auth customer frontend core-logs sales-logs auth-logs customer-logs frontend-logs keycloak keycloak-logs lint type-check rebuild status restart clean-sales-db clean-core-db clean-auth-db clean-customer-db coverage coverage-core coverage-sales coverage-auth coverage-customer coverage-report setup-env validate-env docs redis redis-logs redis-cli clean-redis test-rate-limiting test-frontend populate-data populate-data-clean test-populate-data frontend-build frontend-test frontend-lint frontend-format check-dependencies test-compatibility test-setup-complete quick-test setup-complete-fast
+
+# Detectar sistema operacional
+UNAME_S := $(shell uname -s 2>/dev/null || echo Windows)
+ifeq ($(UNAME_S),Linux)
+    OS_TYPE = linux
+    ECHO_FLAG = -e
+    SCRIPT_EXT = .sh
+endif
+ifeq ($(UNAME_S),Darwin)
+    OS_TYPE = macos
+    ECHO_FLAG = -e
+    SCRIPT_EXT = .sh
+endif
+ifeq ($(UNAME_S),Windows)
+    OS_TYPE = windows
+    ECHO_FLAG = 
+    SCRIPT_EXT = .ps1
+endif
+ifdef OS
+    OS_TYPE = windows
+    ECHO_FLAG = 
+    SCRIPT_EXT = .ps1
+endif
+
+# Função para detectar se estamos no Windows
+define is_windows
+$(if $(filter windows,$(OS_TYPE)),true,false)
+endef
+
+# Função para executar scripts de forma compatível
+define run_script
+$(if $(filter windows,$(OS_TYPE)),powershell -ExecutionPolicy Bypass -File scripts/$(1).ps1,./scripts/$(1).sh)
+endef
 
 setup:
 	@echo "Configurando ambiente..."
@@ -33,17 +66,29 @@ down:
 # População de dados
 populate-data:
 	@echo "🚀 Populando dados de teste..."
+ifeq ($(OS_TYPE),windows)
+	@python scripts/populate-data.py
+else
 	@./scripts/populate-data.sh
+endif
 
 populate-data-working:
 	@echo "🚀 Populando dados (versão funcional)..."
+ifeq ($(OS_TYPE),windows)
+	@python scripts/populate-data.py
+else
 	@./scripts/populate-data-working.sh
+endif
 
 populate-data-clean: clean-dbs populate-data-working
 
 test-populate-data:
 	@echo "🧪 Testando sistema de população de dados..."
+ifeq ($(OS_TYPE),windows)
+	@python scripts/test-populate-data.py
+else
 	@./scripts/test-populate-data.sh
+endif
 
 test:
 	@echo "Executando testes..."
@@ -337,8 +382,8 @@ setup-env-production:
 
 validate-env:
 	@echo "Validando configuração do ambiente..."
-	@if [ -f "scripts/validate-env.sh" ]; then \
-		chmod +x scripts/validate-env.sh && ./scripts/validate-env.sh; \
+	@if [ -f "scripts/validate-env-simple.sh" ]; then \
+		chmod +x scripts/validate-env-simple.sh && ./scripts/validate-env-simple.sh; \
 	else \
 		echo "Script de validação não encontrado"; \
 	fi
@@ -386,4 +431,41 @@ fix-keycloak:
 
 setup-complete:
 	@echo "🚀 Configuração completa do sistema..."
-	@./scripts/setup-complete.sh 
+ifeq ($(OS_TYPE),windows)
+	@powershell -ExecutionPolicy Bypass -File scripts/setup-complete.ps1
+else
+	@./scripts/setup-complete.sh
+endif
+
+# Sincronizar client_secret do Keycloak
+sync-keycloak-env:
+	@echo "🔄 Sincronizando variáveis de ambiente do Keycloak..."
+	@chmod +x scripts/setup-env-from-keycloak.sh
+	@./scripts/setup-env-from-keycloak.sh
+
+setup-complete-fast:
+	@echo "🚀 Configuração rápida do sistema..."
+	@chmod +x scripts/setup-complete-fast.sh
+	@./scripts/setup-complete-fast.sh
+
+# Verificação de dependências e compatibilidade
+check-dependencies:
+	@echo "🔍 Verificando dependências e compatibilidade..."
+	@python3 scripts/check-dependencies.py
+
+test-compatibility:
+	@echo "🧪 Testando compatibilidade entre sistemas..."
+	@echo "Sistema detectado: $(OS_TYPE)"
+	@echo "Echo flag: $(ECHO_FLAG)"
+	@echo "Script extension: $(SCRIPT_EXT)"
+	@python3 scripts/check-dependencies.py
+
+test-setup-complete:
+	@echo "🧪 Testando correção do setup-complete..."
+	@chmod +x scripts/test-setup-complete.sh
+	@./scripts/test-setup-complete.sh
+
+quick-test:
+	@echo "🔧 Teste rápido da solução..."
+	@chmod +x scripts/quick-test.sh
+	@./scripts/quick-test.sh 

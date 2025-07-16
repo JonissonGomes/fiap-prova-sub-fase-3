@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { CircularProgress, Box } from '@mui/material';
 import Layout from './components/Layout';
-import Vehicles from './pages/Vehicles';
+import VehiclesWithRoles from './pages/VehiclesWithRoles';
 import Sales from './pages/Sales';
 import Payments from './pages/Payments';
 import Customers from './pages/Customers';
@@ -11,6 +11,8 @@ import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Profile from './pages/Profile';
+import MyPurchases from './pages/MyPurchases';
+import Dashboard from './pages/Dashboard';
 
 // Componente para proteger rotas
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -72,11 +74,13 @@ const AppContent: React.FC = () => {
               <Layout>
                 <Routes>
                   <Route path="/" element={<Home />} />
-                  <Route path="/vehicles" element={<Vehicles />} />
+                  <Route path="/vehicles" element={<VehiclesWithRoles />} />
                   <Route path="/sales" element={<Sales />} />
                   <Route path="/payments" element={<Payments />} />
                   <Route path="/customers" element={<Customers />} />
+                  <Route path="/my-purchases" element={<MyPurchases />} />
                   <Route path="/profile" element={<Profile />} />
+                  <Route path="/dashboard" element={<Dashboard />} />
                 </Routes>
               </Layout>
             </ProtectedRoute>

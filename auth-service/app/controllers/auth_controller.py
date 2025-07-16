@@ -157,12 +157,12 @@ async def get_profile(
             raise HTTPException(status_code=401, detail="Token de acesso necessário")
         
         token = authorization.split(" ")[1]
-        user = await auth_service.get_user_profile(token)
+        validation = await auth_service.validate_token(token)
         
-        if not user:
+        if not validation.valid:
             raise HTTPException(status_code=401, detail="Token inválido")
         
-        return user
+        return validation.user
     except HTTPException:
         raise
     except Exception as e:
@@ -192,7 +192,9 @@ async def update_profile(
             raise HTTPException(status_code=401, detail="Token inválido")
         
         # Usuário só pode atualizar seu próprio perfil
-        updated_user = await auth_service.update_user(validation.user.id, user_data)
+        updated_user = await auth_service.update_user_profile(validation.user.id, user_data)
+        if not updated_user:
+            raise HTTPException(status_code=404, detail="Usuário não encontrado")
         return updated_user
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -299,7 +301,10 @@ async def update_user(
         if validation.user.id != user_id and validation.user.role != "ADMIN":
             raise HTTPException(status_code=403, detail="Acesso negado")
         
-        return await auth_service.update_user(user_id, user_data)
+        updated_user = await auth_service.update_user_profile(user_id, user_data)
+        if not updated_user:
+            raise HTTPException(status_code=404, detail="Usuário não encontrado")
+        return updated_user
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except HTTPException:

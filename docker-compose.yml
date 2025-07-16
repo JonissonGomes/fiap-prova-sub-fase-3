@@ -17,9 +17,9 @@ services:
   keycloak:
     image: quay.io/keycloak/keycloak:23.0.0
     environment:
-      - KEYCLOAK_ADMIN=admin
-      - KEYCLOAK_ADMIN_PASSWORD=admin123
-      - KC_DB=dev-file
+      - KEYCLOAK_ADMIN=${KEYCLOAK_ADMIN}
+      - KEYCLOAK_ADMIN_PASSWORD=${KEYCLOAK_ADMIN_PASSWORD}
+      - KC_DB=${KC_DB}
     ports:
       - "8080:8080"
     command: start-dev
@@ -36,14 +36,14 @@ services:
     ports:
       - "8002:8002"
     environment:
-      - KEYCLOAK_URL=http://keycloak:8080
-      - KEYCLOAK_REALM=vehicle-sales
-      - KEYCLOAK_CLIENT_ID=vehicle-sales-app
-      - KEYCLOAK_CLIENT_SECRET=T14LidpfzazUfpvn6GsrlDyGooT8p0s6
-      - MONGODB_URL=mongodb://auth-mongodb:27017
-      - MONGODB_DB_NAME=auth_db
-      - MONGODB_COLLECTION=users
-      - REDIS_URL=redis://redis:6379
+      - KEYCLOAK_URL=${KEYCLOAK_URL}
+      - KEYCLOAK_REALM=${KEYCLOAK_REALM}
+      - KEYCLOAK_CLIENT_ID=${KEYCLOAK_CLIENT_ID}
+      - KEYCLOAK_CLIENT_SECRET=${KEYCLOAK_CLIENT_SECRET}
+      - MONGODB_URL=${AUTH_MONGODB_URL}
+      - MONGODB_DB_NAME=${AUTH_MONGODB_DB_NAME}
+      - MONGODB_COLLECTION=${AUTH_MONGODB_COLLECTION}
+      - REDIS_URL=${REDIS_URL}
     depends_on:
       - keycloak
       - auth-mongodb
@@ -67,11 +67,11 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - MONGODB_URL=mongodb://core-mongodb:27017
-      - MONGODB_DB_NAME=core_db
-      - MONGODB_COLLECTION=vehicles
-      - AUTH_SERVICE_URL=http://auth-service:8002
-      - REDIS_URL=redis://redis:6379
+      - MONGODB_URL=${CORE_MONGODB_URL}
+      - MONGODB_DB_NAME=${CORE_MONGODB_DB_NAME}
+      - MONGODB_COLLECTION=${CORE_MONGODB_COLLECTION}
+      - AUTH_SERVICE_URL=${AUTH_SERVICE_URL}
+      - REDIS_URL=${REDIS_URL}
     depends_on:
       - core-mongodb
       - auth-service
@@ -95,15 +95,15 @@ services:
     ports:
       - "8001:8001"
     environment:
-      - MONGODB_URL=mongodb://sales-mongodb:27017
-      - MONGODB_DB_NAME=sales_db
-      - MONGODB_COLLECTION=sales
-      - CORE_SERVICE_URL=http://core-service:8000
-      - AUTH_SERVICE_URL=http://auth-service:8002
-      - REDIS_URL=redis://redis:6379
-      - KEYCLOAK_URL=http://keycloak:8080
-      - KEYCLOAK_REALM=vehicle-sales
-      - KEYCLOAK_CLIENT_ID=vehicle-sales-app
+      - MONGODB_URL=${SALES_MONGODB_URL}
+      - MONGODB_DB_NAME=${SALES_MONGODB_DB_NAME}
+      - MONGODB_COLLECTION=${SALES_MONGODB_COLLECTION}
+      - CORE_SERVICE_URL=${CORE_SERVICE_URL}
+      - AUTH_SERVICE_URL=${AUTH_SERVICE_URL}
+      - REDIS_URL=${REDIS_URL}
+      - KEYCLOAK_URL=${KEYCLOAK_URL}
+      - KEYCLOAK_REALM=${KEYCLOAK_REALM}
+      - KEYCLOAK_CLIENT_ID=${KEYCLOAK_CLIENT_ID}
     depends_on:
       - sales-mongodb
       - core-service
@@ -129,11 +129,11 @@ services:
     ports:
       - "8003:8003"
     environment:
-      - MONGODB_URL=mongodb://customer-mongodb:27017
-      - MONGODB_DB_NAME=customer_db
-      - MONGODB_COLLECTION=customers
-      - AUTH_SERVICE_URL=http://auth-service:8002
-      - REDIS_URL=redis://redis:6379
+      - MONGODB_URL=${CUSTOMER_MONGODB_URL}
+      - MONGODB_DB_NAME=${CUSTOMER_MONGODB_DB_NAME}
+      - MONGODB_COLLECTION=${CUSTOMER_MONGODB_COLLECTION}
+      - AUTH_SERVICE_URL=${AUTH_SERVICE_URL}
+      - REDIS_URL=${REDIS_URL}
     depends_on:
       - customer-mongodb
       - auth-service
@@ -158,16 +158,16 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - REACT_APP_API_URL=http://localhost:8000
-      - REACT_APP_CORE_SERVICE_URL=http://localhost:8000
-      - REACT_APP_SALES_SERVICE_URL=http://localhost:8001
-      - REACT_APP_AUTH_SERVICE_URL=http://localhost:8002
-      - REACT_APP_CUSTOMER_SERVICE_URL=http://localhost:8003
-      - REACT_APP_APP_NAME=Sistema de Vendas de Veículos
-      - REACT_APP_ENABLE_AUTH=true
-      - REACT_APP_RETRY_ATTEMPTS=3
-      - REACT_APP_RETRY_DELAY=1000
-      - CHOKIDAR_USEPOLLING=true
+      - REACT_APP_API_URL=${REACT_APP_API_URL}
+      - REACT_APP_CORE_SERVICE_URL=${REACT_APP_CORE_SERVICE_URL}
+      - REACT_APP_SALES_SERVICE_URL=${REACT_APP_SALES_SERVICE_URL}
+      - REACT_APP_AUTH_SERVICE_URL=${REACT_APP_AUTH_SERVICE_URL}
+      - REACT_APP_CUSTOMER_SERVICE_URL=${REACT_APP_CUSTOMER_SERVICE_URL}
+      - REACT_APP_APP_NAME=${REACT_APP_APP_NAME}
+      - REACT_APP_ENABLE_AUTH=${REACT_APP_ENABLE_AUTH}
+      - REACT_APP_RETRY_ATTEMPTS=${REACT_APP_RETRY_ATTEMPTS}
+      - REACT_APP_RETRY_DELAY=${REACT_APP_RETRY_DELAY}
+      - CHOKIDAR_USEPOLLING=${CHOKIDAR_USEPOLLING}
     depends_on:
       - auth-service
       - core-service

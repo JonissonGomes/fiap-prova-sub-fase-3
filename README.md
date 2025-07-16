@@ -1,12 +1,70 @@
 # Sistema de Vendas de Veículos - Microsserviços
 
+[![Compatibility](https://img.shields.io/badge/Compatibility-Windows%20%7C%20MacOS%20%7C%20Linux-brightgreen)](docs/CROSS_PLATFORM_COMPATIBILITY.md)
+[![Docker](https://img.shields.io/badge/Docker-Required-blue)](https://www.docker.com/products/docker-desktop)
+[![Python](https://img.shields.io/badge/Python-3.8%2B-blue)](https://www.python.org/downloads/)
+
 ## 📋 Visão Geral
 
 Sistema completo de vendas de veículos construído com arquitetura de microsserviços, incluindo autenticação robusta, gestão de clientes, catálogo de veículos e processamento de vendas.
 
+🌐 **Agora 100% compatível com Windows, MacOS e Linux!**
+
 ## 🚀 Início Rápido
 
-### 1. Iniciar o Sistema
+### ✅ Compatibilidade entre Sistemas Operacionais
+
+Este projeto é **totalmente compatível** com Windows, MacOS e Linux!
+
+#### 🔍 Verificar Compatibilidade
+```bash
+# Verificar dependências e compatibilidade do sistema
+python3 scripts/check-dependencies.py
+
+# Ou usar o comando Make
+make check-dependencies
+```
+
+### 📋 Pré-requisitos por Sistema
+
+#### 🪟 Windows
+- **Docker Desktop** (obrigatório)
+- **Python 3.8+** (Microsoft Store recomendado)
+- **Git Bash** (opcional, para scripts Unix)
+
+#### 🍎 MacOS
+- **Docker Desktop**
+- **Homebrew** (para dependências)
+- **Python 3.8+** (via Homebrew)
+
+#### 🐧 Linux
+- **Docker e Docker Compose**
+- **Python 3.8+**
+- **curl** (verificar instalação)
+
+### 🚀 Configuração Automática
+
+#### Todas as Plataformas (Recomendado)
+```bash
+# Configuração completa em um comando - funciona em todos os SOs
+make setup-complete
+```
+
+#### Windows (PowerShell)
+```powershell
+# Método alternativo para Windows
+powershell -ExecutionPolicy Bypass -File scripts/setup-complete.ps1
+```
+
+#### Windows (Git Bash)
+```bash
+# Se preferir usar Git Bash no Windows
+./scripts/setup-complete.sh
+```
+
+### 📋 Configuração Passo a Passo
+
+#### 1. Iniciar o Sistema
 ```bash
 # Iniciar todos os serviços
 make up
@@ -15,7 +73,7 @@ make up
 make status
 ```
 
-### 2. Configurar Autenticação e Popular Dados
+#### 2. Configurar Autenticação e Popular Dados
 ```bash
 # Configuração completa em um comando
 make setup-complete
@@ -23,19 +81,21 @@ make setup-complete
 # OU execute passo a passo:
 make setup-admin     # Configura usuário admin no Keycloak
 make fix-keycloak    # Corrige configuração do client
-make populate-data-working  # Popula dados de teste
+make populate-data   # Popula dados de teste (compatível com todos os SOs)
 ```
 
-### 3. Acessar o Sistema
+#### 3. Acessar o Sistema
 - **Frontend**: http://localhost:3000
 - **Login**: admin@vehiclesales.com / admin123
 
-### 4. Comandos Úteis
+#### 4. Comandos Úteis
 ```bash
 make logs           # Ver logs de todos os serviços
 make restart        # Reiniciar serviços
 make clean          # Limpar containers e volumes
-make help           # Ver todos os comandos disponíveis
+make test-compatibility  # Testar compatibilidade do sistema
+make quick-test     # Teste rápido da solução de problemas
+make setup-complete-fast  # Configuração rápida otimizada
 ```
 
 ## 🔐 Credenciais de Acesso
@@ -107,23 +167,57 @@ graph TB
 
 ## 🛠️ Resolução de Problemas
 
-### Problema: "Falha ao fazer login do admin"
+### 🔍 Diagnóstico Geral
+```bash
+# Verificar compatibilidade e dependências
+python3 scripts/check-dependencies.py
 
+# Verificar sistema operacional detectado
+make test-compatibility
+```
+
+### 🪟 Problemas Específicos do Windows
+
+#### "Scripts .sh não funcionam"
+**Solução**: Use métodos alternativos:
+```powershell
+# Método 1: PowerShell (recomendado)
+powershell -ExecutionPolicy Bypass -File scripts/setup-complete.ps1
+
+# Método 2: Git Bash
+./scripts/setup-complete.sh
+
+# Método 3: Python direto
+python scripts/populate-data.py
+```
+
+#### "docker não é reconhecido"
+**Solução**: 
+- Verificar se Docker Desktop está rodando
+- Adicionar Docker ao PATH do sistema
+- Reiniciar terminal
+
+#### "python não é reconhecido"
+**Solução**:
+- Instalar Python via Microsoft Store
+- Ou usar `py` ao invés de `python`
+
+### 🚨 Problemas Gerais
+
+#### "Falha ao fazer login do admin"
 **Solução**: Execute a configuração completa:
 ```bash
 make setup-complete
 ```
 
-### Problema: "Serviço não está respondendo"
-
+#### "Serviço não está respondendo"
 **Solução**: Verifique o status e reinicie se necessário:
 ```bash
 make status
 make restart
 ```
 
-### Problema: "Keycloak não está acessível"
-
+#### "Keycloak não está acessível"
 **Solução**: Aguarde o Keycloak inicializar completamente:
 ```bash
 # Aguarde até que todos os serviços estejam "healthy"
@@ -133,29 +227,63 @@ make status
 docker-compose restart keycloak
 ```
 
-### Problema: "Dados não foram criados"
-
+#### "Dados não foram criados"
 **Solução**: Execute a população de dados:
 ```bash
-make populate-data-working
+make populate-data  # Funciona em todos os SOs
+```
+
+#### "service 'auth-service' is not running container"
+**Solução**: Os containers não estão rodando. Corrija com:
+```bash
+# Método 1: Iniciar containers primeiro
+make up
+make setup-complete
+
+# Método 2: O script agora inicia automaticamente
+make setup-complete  # Já inclui inicialização automática
+
+# Método 3: Verificar status
+make status
+docker-compose ps
+```
+
+#### "Keycloak está demorando muito para inicializar"
+**Solução**: Keycloak pode demorar 1-2 minutos para inicializar. Use:
+```bash
+# Método 1: Configuração rápida otimizada
+make setup-complete-fast  # Mais tolerante a delays
+
+# Método 2: Verificar logs do Keycloak
+docker-compose logs keycloak
+
+# Método 3: Aguardar e tentar novamente
+make setup-complete  # Timeout aumentado para 2 minutos
 ```
 
 ## 🔧 Comandos de Manutenção
 
-### Configuração
+### 🔍 Diagnóstico e Compatibilidade
+```bash
+make check-dependencies    # Verifica dependências do sistema
+make test-compatibility   # Testa compatibilidade entre SOs
+```
+
+### ⚙️ Configuração
 ```bash
 make setup-admin           # Configura usuário admin
 make fix-keycloak         # Corrige configuração do Keycloak
-make setup-complete       # Configuração completa
+make setup-complete       # Configuração completa (todos os SOs)
+make setup-complete-fast  # Configuração rápida otimizada (para Keycloak lento)
 ```
 
-### População de Dados
+### 📊 População de Dados
 ```bash
-make populate-data-working  # Popula dados (versão funcional)
-make populate-data-clean   # Limpa bancos e popula dados
+make populate-data        # Popula dados (compatível com todos os SOs)
+make populate-data-clean  # Limpa bancos e popula dados
 ```
 
-### Monitoramento
+### 📋 Monitoramento
 ```bash
 make logs                 # Logs de todos os serviços
 make auth-logs           # Logs apenas do auth-service
@@ -163,7 +291,7 @@ make core-logs           # Logs apenas do core-service
 make status              # Status dos containers
 ```
 
-### Limpeza
+### 🧹 Limpeza
 ```bash
 make clean               # Remove containers e volumes
 make clean-dbs           # Limpa apenas bancos de dados
@@ -208,35 +336,65 @@ make clean-redis         # Limpa cache Redis
 - Métricas de rate limiting
 - Monitoramento de conectividade
 
+### ✅ Compatibilidade Multiplataforma
+- **100% compatível** com Windows, MacOS e Linux
+- Detecção automática de sistema operacional
+- Scripts PowerShell para Windows
+- Scripts Python multiplataforma
+- Makefile inteligente com comandos condicionais
+- Verificação automática de dependências
+
 ## 🔄 Fluxo de Desenvolvimento
 
-1. **Desenvolvimento Local**:
-   ```bash
-   make up
-   make setup-complete
-   # Desenvolver...
-   make logs  # Para debug
-   ```
+### 1. **Verificação Inicial** (Todos os SOs):
+```bash
+# Verificar compatibilidade e dependências
+make check-dependencies
 
-2. **Testes**:
-   ```bash
-   make test
-   make test-rate-limiting
-   ```
+# Verificar se sistema está configurado corretamente
+make test-compatibility
+```
 
-3. **Limpeza**:
-   ```bash
-   make clean
-   make up
-   ```
+### 2. **Desenvolvimento Local**:
+```bash
+make up
+make setup-complete  # Configuração automática
+# Desenvolver...
+make logs  # Para debug
+```
+
+### 3. **Testes**:
+```bash
+make test
+make test-rate-limiting
+```
+
+### 4. **Limpeza**:
+```bash
+make clean
+make up
+```
 
 ## 📚 Documentação Adicional
 
+### 🔧 Documentação Técnica
 - [Arquitetura Detalhada](docs/ARCHITECTURE.md)
 - [Documentação das APIs](docs/API_DOCUMENTATION.md)
 - [Guia de Deployment](docs/DEPLOYMENT.md)
 - [Variáveis de Ambiente](docs/ENVIRONMENT_VARIABLES.md)
 - [Guia de População de Dados](docs/POPULATE_DATA_GUIDE.md)
+
+### 🌐 Compatibilidade entre Sistemas
+- [**Compatibilidade Multiplataforma**](docs/CROSS_PLATFORM_COMPATIBILITY.md) - Análise completa de compatibilidade
+- [**Guia Windows**](docs/WINDOWS_SETUP_GUIDE.md) - Configuração específica para Windows
+- [Guia Keycloak](docs/KEYCLOAK_QUICKSTART.md)
+- [Guia Produção Keycloak](docs/KEYCLOAK_PRODUCTION_GUIDE.md)
+
+### 🔍 Ferramentas de Diagnóstico
+- `scripts/check-dependencies.py` - Verificação de dependências
+- `scripts/setup-complete.ps1` - Configuração para Windows
+- `make check-dependencies` - Comando de verificação
+- `make test-compatibility` - Teste de compatibilidade
 
 ## 🤝 Contribuição
 
@@ -246,11 +404,36 @@ make clean-redis         # Limpa cache Redis
 4. Push para a branch (`git push origin feature/AmazingFeature`)
 5. Abra um Pull Request
 
+## 🎯 Status de Compatibilidade
+
+| Sistema Operacional | Status | Configuração | Scripts |
+|-------------------|--------|-------------|---------|
+| 🪟 **Windows** | ✅ **Totalmente Compatível** | PowerShell + Python | `.ps1` + `.py` |
+| 🍎 **MacOS** | ✅ **Totalmente Compatível** | Bash + Python | `.sh` + `.py` |
+| 🐧 **Linux** | ✅ **Totalmente Compatível** | Bash + Python | `.sh` + `.py` |
+
+### 🔧 Recursos de Compatibilidade
+- ✅ **Detecção automática** de sistema operacional
+- ✅ **Scripts condicionais** no Makefile
+- ✅ **Verificação de dependências** automática
+- ✅ **Documentação específica** por plataforma
+- ✅ **Resolução de problemas** por sistema
+
+### 🚀 Comandos Universais
+```bash
+make check-dependencies    # Funciona em todos os SOs
+make setup-complete       # Configuração automática
+make populate-data        # População de dados
+make test-compatibility   # Testa compatibilidade
+```
+
 ## 📄 Licença
 
 Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
 
 ---
 
-⭐ Se este projeto foi útil para você, considere dar uma estrela no repositório! 
+⭐ Se este projeto foi útil para você, considere dar uma estrela no repositório!
+
+🌐 **Agora 100% compatível com Windows, MacOS e Linux!** 
 

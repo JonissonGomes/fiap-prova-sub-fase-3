@@ -7,6 +7,11 @@ set -e
 
 echo "🚀 Iniciando população de dados..."
 
+# Função para converter para maiúsculas (compatível com todos os shells)
+to_uppercase() {
+    echo "$1" | tr '[:lower:]' '[:upper:]'
+}
+
 # Verifica se o Docker está disponível
 if ! command -v docker &> /dev/null; then
     echo "❌ Docker não encontrado. Instale o Docker para continuar."
@@ -28,9 +33,9 @@ all_running=true
 for service in "${services[@]}"; do
     IFS=':' read -r name port <<< "$service"
     if curl -s -f "http://localhost:${port}/health" > /dev/null 2>&1; then
-        echo "✅ ${name^^} Service: OK"
+        echo "✅ $(to_uppercase "$name") Service: OK"
     else
-        echo "❌ ${name^^} Service: NOT RUNNING"
+        echo "❌ $(to_uppercase "$name") Service: NOT RUNNING"
         all_running=false
     fi
 done
@@ -122,9 +127,9 @@ all_running=true
 for service in "${services[@]}"; do
     IFS=':' read -r name port <<< "$service"
     if curl -s -f "http://localhost:${port}/health" > /dev/null 2>&1; then
-        echo "✅ ${name^^} Service: OK"
+        echo "✅ $(to_uppercase "$name") Service: OK"
     else
-        echo "❌ ${name^^} Service: NOT RUNNING"
+        echo "❌ $(to_uppercase "$name") Service: NOT RUNNING"
         all_running=false
     fi
 done
@@ -216,9 +221,9 @@ all_running=true
 for service in "${services[@]}"; do
     IFS=':' read -r name port <<< "$service"
     if curl -s -f "http://localhost:${port}/health" > /dev/null 2>&1; then
-        echo "✅ ${name^^} Service: OK"
+        echo "✅ $(to_uppercase "$name") Service: OK"
     else
-        echo "❌ ${name^^} Service: NOT RUNNING"
+        echo "❌ $(to_uppercase "$name") Service: NOT RUNNING"
         all_running=false
     fi
 done
@@ -310,9 +315,9 @@ all_running=true
 for service in "${services[@]}"; do
     IFS=':' read -r name port <<< "$service"
     if curl -s -f "http://localhost:${port}/health" > /dev/null 2>&1; then
-        echo "✅ ${name^^} Service: OK"
+        echo "✅ $(to_uppercase "$name") Service: OK"
     else
-        echo "❌ ${name^^} Service: NOT RUNNING"
+        echo "❌ $(to_uppercase "$name") Service: NOT RUNNING"
         all_running=false
     fi
 done
@@ -404,9 +409,9 @@ all_running=true
 for service in "${services[@]}"; do
     IFS=':' read -r name port <<< "$service"
     if curl -s -f "http://localhost:${port}/health" > /dev/null 2>&1; then
-        echo "✅ ${name^^} Service: OK"
+        echo "✅ $(to_uppercase "$name") Service: OK"
     else
-        echo "❌ ${name^^} Service: NOT RUNNING"
+        echo "❌ $(to_uppercase "$name") Service: NOT RUNNING"
         all_running=false
     fi
 done
@@ -498,9 +503,9 @@ all_running=true
 for service in "${services[@]}"; do
     IFS=':' read -r name port <<< "$service"
     if curl -s -f "http://localhost:${port}/health" > /dev/null 2>&1; then
-        echo "✅ ${name^^} Service: OK"
+        echo "✅ $(to_uppercase "$name") Service: OK"
     else
-        echo "❌ ${name^^} Service: NOT RUNNING"
+        echo "❌ $(to_uppercase "$name") Service: NOT RUNNING"
         all_running=false
     fi
 done
@@ -592,9 +597,9 @@ all_running=true
 for service in "${services[@]}"; do
     IFS=':' read -r name port <<< "$service"
     if curl -s -f "http://localhost:${port}/health" > /dev/null 2>&1; then
-        echo "✅ ${name^^} Service: OK"
+        echo "✅ $(to_uppercase "$name") Service: OK"
     else
-        echo "❌ ${name^^} Service: NOT RUNNING"
+        echo "❌ $(to_uppercase "$name") Service: NOT RUNNING"
         all_running=false
     fi
 done
@@ -686,9 +691,9 @@ all_running=true
 for service in "${services[@]}"; do
     IFS=':' read -r name port <<< "$service"
     if curl -s -f "http://localhost:${port}/health" > /dev/null 2>&1; then
-        echo "✅ ${name^^} Service: OK"
+        echo "✅ $(to_uppercase "$name") Service: OK"
     else
-        echo "❌ ${name^^} Service: NOT RUNNING"
+        echo "❌ $(to_uppercase "$name") Service: NOT RUNNING"
         all_running=false
     fi
 done
