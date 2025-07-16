@@ -1,4 +1,4 @@
-import axios, { AxiosInstance } from 'axios';
+import axios from 'axios';
 import { 
   Vehicle, 
   VehicleCreate, 
@@ -20,148 +20,122 @@ import {
   RateLimitConfig
 } from '../types';
 
-// Configuração das URLs base - Render
-const BASE_URL = 'https://fiap-prova-sub-fase-3.onrender.com';
+// URL do backend unificado no Render
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'https://fiap-unified-backend.onrender.com';
 
-const CORE_API_URL = process.env.REACT_APP_CORE_API_URL || BASE_URL;
-const SALES_API_URL = process.env.REACT_APP_SALES_API_URL || BASE_URL;
-const AUTH_API_URL = process.env.REACT_APP_AUTH_API_URL || BASE_URL;
-const CUSTOMER_API_URL = process.env.REACT_APP_CUSTOMER_API_URL || BASE_URL;
-
-// Instâncias do Axios
-const coreApi: AxiosInstance = axios.create({
-  baseURL: CORE_API_URL,
-  timeout: 30000, // Aumentado para 30 segundos devido ao cold start do Render
+// Configuração base do Axios
+const api = axios.create({
+  baseURL: BACKEND_URL,
+  timeout: 30000, // 30 segundos para cold starts do Render
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-const salesApiInstance: AxiosInstance = axios.create({
-  baseURL: SALES_API_URL,
+// Instâncias específicas para cada serviço (todas apontam para o mesmo backend)
+export const authApi = axios.create({
+  baseURL: `${BACKEND_URL}/auth`,
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-const authApi: AxiosInstance = axios.create({
-  baseURL: AUTH_API_URL,
+export const coreApi = axios.create({
+  baseURL: `${BACKEND_URL}/vehicles`,
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-const customerApi: AxiosInstance = axios.create({
-  baseURL: CUSTOMER_API_URL,
+export const salesApi = axios.create({
+  baseURL: `${BACKEND_URL}/sales`,
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Interceptor para adicionar token de autenticação
-const addAuthInterceptor = (apiInstance: any) => {
-  apiInstance.interceptors.request.use(
-    (config: any) => {
-      const token = localStorage.getItem('access_token');
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
-      return config;
-    },
-    (error: any) => Promise.reject(error)
+export const customerApi = axios.create({
+  baseURL: `${BACKEND_URL}/customers`,
+  timeout: 30000,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Interceptador para adicionar token de autenticação
+const addAuthToken = (config: any) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+};
+
+// Interceptador para tratar erros
+const handleError = (error: any) => {
+  if (error.response?.status === 401) {
+    localStorage.removeItem('token');
+    window.location.href = '/login';
+  }
+  
+  // Rate limiting
+  if (error.response?.status === 429) {
+    console.warn('Rate limit atingido, aguardando...');
+  }
+  
+  return Promise.reject(error);
+};
+
+// Aplicar interceptadores em todas as instâncias
+[api, authApi, coreApi, salesApi, customerApi].forEach(instance => {
+  instance.interceptors.request.use(addAuthToken);
+  instance.interceptors.response.use(
+    (response) => response,
+    handleError
   );
-
-  // Interceptor para lidar com rate limiting
-  apiInstance.interceptors.response.use(
-    (response: any) => response,
-    async (error: any) => {
-      if (error.response?.status === 429) {
-        const retryAfter = error.response.data.retry_after || 60;
-        console.warn(`Rate limit excedido. Tentando novamente em ${retryAfter} segundos...`);
-        
-        await new Promise(resolve => setTimeout(resolve, retryAfter * 1000));
-        return apiInstance.request(error.config);
-      }
-
-      if (error.response?.status === 401) {
-        // Token expirado, tentar renovar
-        const refreshToken = localStorage.getItem('refresh_token');
-        if (refreshToken) {
-          try {
-            const response = await authApi.post('/auth/refresh', {
-              refresh_token: refreshToken
-            });
-            
-            const { access_token, refresh_token: newRefreshToken } = response.data;
-            localStorage.setItem('access_token', access_token);
-            localStorage.setItem('refresh_token', newRefreshToken);
-            
-            // Repetir a requisição original
-            error.config.headers.Authorization = `Bearer ${access_token}`;
-            return apiInstance.request(error.config);
-          } catch (refreshError) {
-            // Falha ao renovar token, redirecionar para login
-            localStorage.removeItem('access_token');
-            localStorage.removeItem('refresh_token');
-            localStorage.removeItem('current_user');
-            window.location.href = '/login';
-            return Promise.reject(refreshError);
-          }
-        }
-      }
-
-      return Promise.reject(error);
-    }
-  );
-}
-
-// Aplicar interceptors
-addAuthInterceptor(coreApi);
-addAuthInterceptor(salesApiInstance);
-addAuthInterceptor(authApi);
-addAuthInterceptor(customerApi);
+});
 
 // Serviços de Autenticação
 export const authService = {
   login: async (credentials: LoginRequest): Promise<LoginResponse> => {
-    const response = await authApi.post<LoginResponse>('/auth/login', credentials);
+    const response = await authApi.post<LoginResponse>('/login', credentials);
     return response.data;
   },
 
   register: async (userData: RegisterRequest): Promise<User> => {
-    const response = await authApi.post<User>('/auth/register', userData);
+    const response = await authApi.post<User>('/register', userData);
     return response.data;
   },
 
   logout: async (): Promise<void> => {
     const refreshToken = localStorage.getItem('refresh_token');
     if (refreshToken) {
-      await authApi.post('/auth/logout', { refresh_token: refreshToken });
+      await authApi.post('/logout', { refresh_token: refreshToken });
     }
   },
 
   validateToken: async (): Promise<TokenValidation> => {
-    const response = await authApi.get<TokenValidation>('/auth/validate');
+    const response = await authApi.get<TokenValidation>('/validate');
     return response.data;
   },
 
   refreshToken: async (refreshToken: string): Promise<LoginResponse> => {
-    const response = await authApi.post<LoginResponse>('/auth/refresh', {
+    const response = await authApi.post<LoginResponse>('/refresh', {
       refresh_token: refreshToken
     });
     return response.data;
   },
 
   getProfile: async (): Promise<User> => {
-    const response = await authApi.get<User>('/auth/profile');
+    const response = await authApi.get<User>('/profile');
     return response.data;
   },
 
   updateProfile: async (userData: Partial<User>): Promise<User> => {
-    const response = await authApi.put<User>('/auth/profile', userData);
+    const response = await authApi.put<User>('/profile', userData);
     return response.data;
   }
 };
@@ -181,31 +155,31 @@ export const vehiclesApi = {
     if (filters.skip) params.append('skip', filters.skip.toString());
     if (filters.limit) params.append('limit', filters.limit.toString());
 
-    const response = await coreApi.get<Vehicle[]>(`/vehicles/?${params.toString()}`);
+    const response = await coreApi.get<Vehicle[]>(`/?${params.toString()}`);
     return response.data;
   },
 
   get: async (id: string): Promise<Vehicle> => {
-    const response = await coreApi.get<Vehicle>(`/vehicles/${id}`);
+    const response = await coreApi.get<Vehicle>(`/${id}`);
     return response.data;
   },
 
   create: async (vehicle: VehicleCreate): Promise<Vehicle> => {
-    const response = await coreApi.post<Vehicle>('/vehicles/', vehicle);
+    const response = await coreApi.post<Vehicle>('/', vehicle);
     return response.data;
   },
 
   update: async (id: string, vehicle: Partial<VehicleCreate>): Promise<Vehicle> => {
-    const response = await coreApi.put<Vehicle>(`/vehicles/${id}`, vehicle);
+    const response = await coreApi.put<Vehicle>(`/${id}`, vehicle);
     return response.data;
   },
 
   delete: async (id: string): Promise<void> => {
-    await coreApi.delete(`/vehicles/${id}`);
+    await coreApi.delete(`/${id}`);
   },
 
   updateStatus: async (id: string, status: string): Promise<Vehicle> => {
-    const response = await coreApi.patch<Vehicle>(`/vehicles/${id}/status`, { status });
+    const response = await coreApi.patch<Vehicle>(`/${id}/status`, { status });
     return response.data;
   }
 };
@@ -213,46 +187,46 @@ export const vehiclesApi = {
 // Serviços de Vendas
 export const salesApi = {
   list: async (skip = 0, limit = 100): Promise<Sale[]> => {
-    const response = await salesApiInstance.get<Sale[]>(`/sales?skip=${skip}&limit=${limit}`);
+    const response = await salesApi.get<Sale[]>(`?skip=${skip}&limit=${limit}`);
     return response.data;
   },
 
   get: async (id: string): Promise<Sale> => {
-    const response = await salesApiInstance.get<Sale>(`/sales/${id}`);
+    const response = await salesApi.get<Sale>(`/${id}`);
     return response.data;
   },
 
   create: async (sale: SaleCreate): Promise<Sale> => {
-    const response = await salesApiInstance.post<Sale>('/sales', sale);
+    const response = await salesApi.post<Sale>('/', sale);
     return response.data;
   },
 
   update: async (id: string, sale: SaleUpdate): Promise<Sale> => {
-    const response = await salesApiInstance.put<Sale>(`/sales/${id}`, sale);
+    const response = await salesApi.put<Sale>(`/${id}`, sale);
     return response.data;
   },
 
   delete: async (id: string): Promise<void> => {
-    await salesApiInstance.delete(`/sales/${id}`);
+    await salesApi.delete(`/${id}`);
   },
 
   purchase: async (data: { customer_id: string; vehicle_id: string; payment_method: string; notes?: string }): Promise<Sale> => {
-    const response = await salesApiInstance.post<Sale>('/sales/purchase', data);
+    const response = await salesApi.post<Sale>('/purchase', data);
     return response.data;
   },
 
   updateStatus: async (id: string, status: string, notes?: string): Promise<Sale> => {
-    const response = await salesApiInstance.put<Sale>(`/sales/${id}/status`, { status, notes });
+    const response = await salesApi.put<Sale>(`/${id}/status`, { status, notes });
     return response.data;
   },
 
   confirmPayment: async (saleId: string): Promise<Sale> => {
-    const response = await salesApiInstance.patch<Sale>(`/sales/${saleId}/payment/confirm`);
+    const response = await salesApi.patch<Sale>(`/${saleId}/payment/confirm`);
     return response.data;
   },
 
   cancelPayment: async (saleId: string): Promise<Sale> => {
-    const response = await salesApiInstance.patch<Sale>(`/sales/${saleId}/mark-as-canceled`);
+    const response = await salesApi.patch<Sale>(`/${saleId}/mark-as-canceled`);
     return response.data;
   }
 };
@@ -268,7 +242,7 @@ export const customerService = {
         params.append('active', active.toString());
       }
       
-      const response = await customerApi.get<Customer[]>(`/customers/?${params.toString()}`);
+      const response = await customerApi.get<Customer[]>(`/?${params.toString()}`);
       return response.data;
     } catch (error) {
       console.error('Erro ao buscar clientes:', error);
@@ -278,7 +252,7 @@ export const customerService = {
 
   get: async (id: string): Promise<Customer> => {
     try {
-      const response = await customerApi.get<Customer>(`/customers/${id}`);
+      const response = await customerApi.get<Customer>(`/${id}`);
       return response.data;
     } catch (error) {
       console.error('Erro ao buscar cliente:', error);
@@ -288,7 +262,7 @@ export const customerService = {
 
   create: async (customer: CustomerCreate): Promise<Customer> => {
     try {
-      const response = await customerApi.post<Customer>('/customers/', customer);
+      const response = await customerApi.post<Customer>('/', customer);
       return response.data;
     } catch (error) {
       console.error('Erro ao criar cliente:', error);
@@ -298,7 +272,7 @@ export const customerService = {
 
   update: async (id: string, customer: CustomerUpdate): Promise<Customer> => {
     try {
-      const response = await customerApi.put<Customer>(`/customers/${id}`, customer);
+      const response = await customerApi.put<Customer>(`/${id}`, customer);
       return response.data;
     } catch (error) {
       console.error('Erro ao atualizar cliente:', error);
@@ -308,7 +282,7 @@ export const customerService = {
 
   delete: async (id: string): Promise<void> => {
     try {
-      await customerApi.delete(`/customers/${id}`);
+      await customerApi.delete(`/${id}`);
     } catch (error) {
       console.error('Erro ao deletar cliente:', error);
       throw error;
@@ -317,7 +291,7 @@ export const customerService = {
 
   search: async (query: string): Promise<Customer[]> => {
     try {
-      const response = await customerApi.get<Customer[]>(`/customers/search?q=${encodeURIComponent(query)}`);
+      const response = await customerApi.get<Customer[]>(`/search?q=${encodeURIComponent(query)}`);
       return response.data;
     } catch (error) {
       console.error('Erro ao buscar clientes:', error);
@@ -373,7 +347,7 @@ export const rateLimitApi = {
 
 // Utilitários
 export const isAuthenticated = (): boolean => {
-  return !!localStorage.getItem('access_token');
+  return !!localStorage.getItem('token');
 };
 
 export const getCurrentUser = (): User | null => {
@@ -391,4 +365,4 @@ export const isSales = (): boolean => hasRole('SALES');
 export const isCustomer = (): boolean => hasRole('CUSTOMER');
 
 // Exportação da API principal (para compatibilidade)
-export default coreApi; 
+export default api; 
