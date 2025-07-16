@@ -2,13 +2,10 @@ services:
   # Auth Service
   - type: web
     name: auth-service
-    env: python
+    env: docker
     plan: free
-    buildCommand: cd auth-service && chmod +x build.sh && ./build.sh
-    startCommand: cd auth-service && uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    dockerfilePath: ./auth-service/Dockerfile
     envVars:
-      - key: PYTHON_VERSION
-        value: 3.11.0
       - key: KEYCLOAK_URL
         sync: false
       - key: KEYCLOAK_REALM
@@ -29,13 +26,10 @@ services:
   # Customer Service
   - type: web
     name: customer-service
-    env: python
+    env: docker
     plan: free
-    buildCommand: cd customer-service && chmod +x build.sh && ./build.sh
-    startCommand: cd customer-service && uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    dockerfilePath: ./customer-service/Dockerfile
     envVars:
-      - key: PYTHON_VERSION
-        value: 3.11.0
       - key: MONGODB_URL
         sync: false
       - key: MONGODB_DB_NAME
@@ -52,7 +46,10 @@ services:
     name: core-service
     env: python
     plan: free
-    buildCommand: cd core-service && pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
+    buildCommand: |
+      cd core-service
+      pip install --upgrade pip
+      pip install --no-cache-dir -r requirements.txt
     startCommand: cd core-service && uvicorn app.adapters.api.main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: PYTHON_VERSION
@@ -73,7 +70,10 @@ services:
     name: sales-service
     env: python
     plan: free
-    buildCommand: cd sales-service && pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
+    buildCommand: |
+      cd sales-service
+      pip install --upgrade pip
+      pip install --no-cache-dir -r requirements.txt
     startCommand: cd sales-service && uvicorn app.main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: PYTHON_VERSION
