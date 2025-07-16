@@ -1,0 +1,166 @@
+services:
+  # Auth Service
+  - type: web
+    name: fiap-auth-service
+    env: python
+    plan: starter
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: MONGODB_URL
+        sync: false
+      - key: MONGODB_DB_NAME
+        sync: false
+      - key: MONGODB_COLLECTION
+        sync: false
+      - key: KEYCLOAK_URL
+        sync: false
+      - key: KEYCLOAK_REALM
+        sync: false
+      - key: KEYCLOAK_CLIENT_ID
+        sync: false
+      - key: KEYCLOAK_CLIENT_SECRET
+        sync: false
+      - key: REDIS_URL
+        sync: false
+    healthCheckPath: /health
+
+  # Core Service
+  - type: web
+    name: fiap-core-service
+    env: python
+    plan: starter
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -m uvicorn app.adapters.api.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: MONGODB_URL
+        sync: false
+      - key: MONGODB_DB_NAME
+        sync: false
+      - key: MONGODB_COLLECTION
+        sync: false
+      - key: AUTH_SERVICE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+    healthCheckPath: /health
+
+  # Customer Service
+  - type: web
+    name: fiap-customer-service
+    env: python
+    plan: starter
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: MONGODB_URL
+        sync: false
+      - key: MONGODB_DB_NAME
+        sync: false
+      - key: MONGODB_COLLECTION
+        sync: false
+      - key: AUTH_SERVICE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+    healthCheckPath: /health
+
+  # Payment Service
+  - type: web
+    name: fiap-payment-service
+    env: python
+    plan: starter
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: MONGODB_URL
+        sync: false
+      - key: MONGODB_DB_NAME
+        sync: false
+      - key: MONGODB_COLLECTION
+        sync: false
+      - key: AUTH_SERVICE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+    healthCheckPath: /health
+
+  # Sales Service
+  - type: web
+    name: fiap-sales-service
+    env: python
+    plan: starter
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: MONGODB_URL
+        sync: false
+      - key: MONGODB_DB_NAME
+        sync: false
+      - key: MONGODB_COLLECTION
+        sync: false
+      - key: AUTH_SERVICE_URL
+        sync: false
+      - key: CORE_SERVICE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: KEYCLOAK_URL
+        sync: false
+      - key: KEYCLOAK_REALM
+        sync: false
+      - key: KEYCLOAK_CLIENT_ID
+        sync: false
+    healthCheckPath: /health
+
+  # Frontend
+  - type: web
+    name: fiap-frontend
+    env: static
+    plan: starter
+    buildCommand: npm ci && npm run build
+    staticPublishPath: ./build
+    envVars:
+      - key: NODE_VERSION
+        value: 18.0.0
+      - key: REACT_APP_API_URL
+        sync: false
+      - key: REACT_APP_CORE_SERVICE_URL
+        sync: false
+      - key: REACT_APP_SALES_SERVICE_URL
+        sync: false
+      - key: REACT_APP_AUTH_SERVICE_URL
+        sync: false
+      - key: REACT_APP_CUSTOMER_SERVICE_URL
+        sync: false
+      - key: REACT_APP_APP_NAME
+        sync: false
+      - key: REACT_APP_ENABLE_AUTH
+        sync: false
+      - key: REACT_APP_RETRY_ATTEMPTS
+        sync: false
+      - key: REACT_APP_RETRY_DELAY
+        sync: false
+      - key: CHOKIDAR_USEPOLLING
+        sync: false
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+
+databases:
+  - name: fiap-mongodb
+    databaseName: fiap
+    plan: starter
+    ipAllowList: [] 
+    ipAllowList: [] 
