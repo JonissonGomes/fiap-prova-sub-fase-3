@@ -550,60 +550,64 @@ const Dashboard: React.FC = () => {
             {/* Vendas Recentes e Top Veículos */}
       <Grid container spacing={3}>
         <Grid item xs={12} md={6}>
-          <Card>
-            <CardContent sx={{ p: 4 }}>
+          <Card sx={{ height: '100%' }}>
+            <CardContent sx={{ p: 4, height: '100%', display: 'flex', flexDirection: 'column' }}>
               <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
                 Vendas Recentes
               </Typography>
-              <List sx={{ p: 0 }}>
-                {stats.recentSales.map((sale) => (
-                  <ListItem key={sale.id} divider sx={{ px: 0, py: 2 }}>
-                    <ListItemIcon sx={{ minWidth: 40 }}>
-                      <SaleIcon color="primary" />
-                    </ListItemIcon>
-                    <ListItemText
-                      primary={`Venda #${sale.id.slice(-6)}`}
-                      secondary={`${formatCurrency(sale.sale_price)} • ${sale.buyer_cpf}`}
-                      primaryTypographyProps={{ fontWeight: 500 }}
-                      secondaryTypographyProps={{ fontSize: '0.875rem' }}
-                    />
-                    <Chip
-                      label={getStatusText(sale.payment_status)}
-                      color={getStatusColor(sale.payment_status) as any}
-                      size="small"
-                      sx={{ fontWeight: 500 }}
-                    />
-                  </ListItem>
-                ))}
-              </List>
+              <Box sx={{ flex: 1 }}>
+                <List sx={{ p: 0 }}>
+                  {stats.recentSales.map((sale) => (
+                    <ListItem key={sale.id} divider sx={{ px: 0, py: 2 }}>
+                      <ListItemIcon sx={{ minWidth: 40 }}>
+                        <SaleIcon color="primary" />
+                      </ListItemIcon>
+                      <ListItemText
+                        primary={`Venda #${sale.id.slice(-6)}`}
+                        secondary={`${formatCurrency(sale.sale_price)} • ${sale.buyer_cpf}`}
+                        primaryTypographyProps={{ fontWeight: 500 }}
+                        secondaryTypographyProps={{ fontSize: '0.875rem' }}
+                      />
+                      <Chip
+                        label={getStatusText(sale.payment_status)}
+                        color={getStatusColor(sale.payment_status) as any}
+                        size="small"
+                        sx={{ fontWeight: 500 }}
+                      />
+                    </ListItem>
+                  ))}
+                </List>
+              </Box>
             </CardContent>
           </Card>
         </Grid>
         
         <Grid item xs={12} md={6}>
-          <Card>
-            <CardContent sx={{ p: 4 }}>
+          <Card sx={{ height: '100%' }}>
+            <CardContent sx={{ p: 4, height: '100%', display: 'flex', flexDirection: 'column' }}>
               <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
                 Veículos Mais Caros
               </Typography>
-              <List sx={{ p: 0 }}>
-                {stats.topVehicles.map((vehicle) => (
-                  <ListItem key={vehicle.id} divider sx={{ px: 0, py: 2 }}>
-                    <ListItemIcon sx={{ minWidth: 40 }}>
-                      <VehicleIcon color="primary" />
-                    </ListItemIcon>
-                    <ListItemText
-                      primary={`${vehicle.brand} ${vehicle.model} (${vehicle.year})`}
-                      secondary={`${vehicle.color} • ${vehicle.status}`}
-                      primaryTypographyProps={{ fontWeight: 500 }}
-                      secondaryTypographyProps={{ fontSize: '0.875rem' }}
-                    />
-                    <Typography variant="h6" color="primary" sx={{ fontWeight: 'bold' }}>
-                      {formatCurrency(vehicle.price)}
-                    </Typography>
-                  </ListItem>
-                ))}
-              </List>
+              <Box sx={{ flex: 1 }}>
+                <List sx={{ p: 0 }}>
+                  {stats.topVehicles.map((vehicle) => (
+                    <ListItem key={vehicle.id} divider sx={{ px: 0, py: 2 }}>
+                      <ListItemIcon sx={{ minWidth: 40 }}>
+                        <VehicleIcon color="primary" />
+                      </ListItemIcon>
+                      <ListItemText
+                        primary={`${vehicle.brand} ${vehicle.model} (${vehicle.year})`}
+                        secondary={`${vehicle.color} • ${vehicle.status}`}
+                        primaryTypographyProps={{ fontWeight: 500 }}
+                        secondaryTypographyProps={{ fontSize: '0.875rem' }}
+                      />
+                      <Typography variant="h6" color="primary" sx={{ fontWeight: 'bold' }}>
+                        {formatCurrency(vehicle.price)}
+                      </Typography>
+                    </ListItem>
+                  ))}
+                </List>
+              </Box>
             </CardContent>
           </Card>
         </Grid>

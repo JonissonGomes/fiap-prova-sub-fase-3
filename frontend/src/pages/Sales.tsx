@@ -399,7 +399,6 @@ const Sales: React.FC = () => {
   };
 
   const columns: GridColDef[] = [
-    { field: 'id', headerName: 'ID', flex: 0.4, minWidth: 70, align: 'center' as const, headerAlign: 'center' as const },
     { 
       field: 'vehicle_id', 
       headerName: 'Veículo', 

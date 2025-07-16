@@ -464,6 +464,56 @@ const Home: React.FC = () => {
             </Grid>
           </Grid>
 
+          {/* Estatísticas gerais do sistema */}
+          <Paper sx={{ p: 4, mb: 4 }}>
+            <Typography variant="h6" gutterBottom>
+              Estatísticas Gerais do Sistema
+            </Typography>
+            <Divider sx={{ mb: 2 }} />
+            <Grid container spacing={3}>
+              <Grid item xs={6} md={3}>
+                <Box sx={{ textAlign: 'center' }}>
+                  <Typography variant="h4" color="primary">
+                    {stats.availableVehicles}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Veículos Disponíveis
+                  </Typography>
+                </Box>
+              </Grid>
+              <Grid item xs={6} md={3}>
+                <Box sx={{ textAlign: 'center' }}>
+                  <Typography variant="h4" color="success.main">
+                    {stats.paidSales}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Vendas Concluídas
+                  </Typography>
+                </Box>
+              </Grid>
+              <Grid item xs={6} md={3}>
+                <Box sx={{ textAlign: 'center' }}>
+                  <Typography variant="h4" color="warning.main">
+                    {stats.pendingSales}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Vendas Pendentes
+                  </Typography>
+                </Box>
+              </Grid>
+              <Grid item xs={6} md={3}>
+                <Box sx={{ textAlign: 'center' }}>
+                  <Typography variant="h4" color="error.main">
+                    {stats.cancelledSales}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Vendas Canceladas
+                  </Typography>
+                </Box>
+              </Grid>
+            </Grid>
+          </Paper>
+
           <Typography variant="h5" gutterBottom sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
             <TrendingIcon sx={{ mr: 1 }} />
             Gerenciamento
@@ -533,55 +583,7 @@ const Home: React.FC = () => {
         </>
       )}
 
-      {/* Estatísticas gerais na parte inferior */}
-      <Paper sx={{ p: 4, mt: 4 }}>
-        <Typography variant="h6" gutterBottom>
-          Estatísticas Gerais do Sistema
-        </Typography>
-        <Divider sx={{ mb: 2 }} />
-        <Grid container spacing={3}>
-          <Grid item xs={6} md={3}>
-            <Box sx={{ textAlign: 'center' }}>
-              <Typography variant="h4" color="primary">
-                {stats.availableVehicles}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Veículos Disponíveis
-              </Typography>
-            </Box>
-          </Grid>
-          <Grid item xs={6} md={3}>
-            <Box sx={{ textAlign: 'center' }}>
-              <Typography variant="h4" color="success.main">
-                {stats.paidSales}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Vendas Concluídas
-              </Typography>
-            </Box>
-          </Grid>
-          <Grid item xs={6} md={3}>
-            <Box sx={{ textAlign: 'center' }}>
-              <Typography variant="h4" color="warning.main">
-                {stats.pendingSales}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Vendas Pendentes
-              </Typography>
-            </Box>
-          </Grid>
-          <Grid item xs={6} md={3}>
-            <Box sx={{ textAlign: 'center' }}>
-              <Typography variant="h4" color="error.main">
-                {stats.cancelledSales}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Vendas Canceladas
-              </Typography>
-            </Box>
-          </Grid>
-        </Grid>
-      </Paper>
+
     </Container>
   );
 };
