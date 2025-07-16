@@ -382,8 +382,8 @@ setup-env-production:
 
 validate-env:
 	@echo "Validando configuração do ambiente..."
-	@if [ -f "scripts/validate-env.sh" ]; then \
-		chmod +x scripts/validate-env.sh && ./scripts/validate-env.sh; \
+	@if [ -f "scripts/validate-env-simple.sh" ]; then \
+		chmod +x scripts/validate-env-simple.sh && ./scripts/validate-env-simple.sh; \
 	else \
 		echo "Script de validação não encontrado"; \
 	fi
