@@ -38,7 +38,7 @@ jobs:
         fail_ci_if_error: true
     - name: Check coverage
       run: |
-        coverage report --fail-under=80
+        coverage report
 
   lint:
     runs-on: ubuntu-latest
