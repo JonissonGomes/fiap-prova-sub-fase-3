@@ -296,15 +296,17 @@ const VehiclesWithRoles: React.FC = () => {
   };
 
   const columns: GridColDef[] = [
-    { field: 'brand', headerName: 'Marca', flex: 1.2, minWidth: 110 },
-    { field: 'model', headerName: 'Modelo', flex: 1.5, minWidth: 120 },
-    { field: 'year', headerName: 'Ano', flex: 0.6, minWidth: 70 },
-    { field: 'color', headerName: 'Cor', flex: 0.8, minWidth: 90 },
+    { field: 'brand', headerName: 'Marca', flex: 1.2, minWidth: 110, align: 'center' as const, headerAlign: 'center' as const },
+    { field: 'model', headerName: 'Modelo', flex: 1.5, minWidth: 120, align: 'center' as const, headerAlign: 'center' as const },
+    { field: 'year', headerName: 'Ano', flex: 0.6, minWidth: 70, align: 'center' as const, headerAlign: 'center' as const },
+    { field: 'color', headerName: 'Cor', flex: 0.8, minWidth: 90, align: 'center' as const, headerAlign: 'center' as const },
     { 
       field: 'price', 
       headerName: 'Preço', 
       flex: 1.1,
       minWidth: 110,
+      align: 'center' as const,
+      headerAlign: 'center' as const,
       renderCell: (params) => formatCurrency(params.value)
     },
     // Mostrar status apenas para admin e vendedor
@@ -313,11 +315,22 @@ const VehiclesWithRoles: React.FC = () => {
       headerName: 'Status',
       flex: 1,
       minWidth: 100,
+      align: 'center' as const,
+      headerAlign: 'center' as const,
       renderCell: (params: any) => (
         <Chip
           label={params.value}
           color={getStatusColor(params.value) as any}
           size="small"
+          sx={{ 
+            minWidth: 80,
+            height: 24,
+            fontSize: '0.75rem',
+            fontWeight: 500,
+            '& .MuiChip-label': {
+              px: 1
+            }
+          }}
         />
       )
     }]),
@@ -326,9 +339,11 @@ const VehiclesWithRoles: React.FC = () => {
       headerName: 'Ações',
       flex: isCustomer(user) ? 0.8 : 1,
       minWidth: isCustomer(user) ? 80 : 100,
+      align: 'center' as const,
+      headerAlign: 'center' as const,
       sortable: false,
       renderCell: (params) => (
-        <Box sx={{ display: 'flex', gap: 0.5 }}>
+        <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'center' }}>
           {isCustomer(user) ? (
             // Cliente: botão de compra
             <Button

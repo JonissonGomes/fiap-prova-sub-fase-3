@@ -222,12 +222,14 @@ const MyPurchases: React.FC = () => {
   const valorTotal = filteredSales.reduce((sum, sale) => sum + sale.sale_price, 0);
 
   const columns: GridColDef[] = [
-    { field: 'id', headerName: 'ID', flex: 0.4, minWidth: 70 },
+    { field: 'id', headerName: 'ID', flex: 0.4, minWidth: 70, align: 'center', headerAlign: 'center' },
     { 
       field: 'vehicle_id', 
       headerName: 'Veículo', 
       flex: 2.2,
       minWidth: 160,
+      align: 'center',
+      headerAlign: 'center',
       renderCell: (params) => {
         const vehicle = vehicles.find(v => v.id === params.value);
         return vehicle ? `${vehicle.brand} ${vehicle.model} (${vehicle.year})` : params.value;
@@ -238,19 +240,32 @@ const MyPurchases: React.FC = () => {
       headerName: 'Preço', 
       flex: 1.1,
       minWidth: 110,
+      align: 'center',
+      headerAlign: 'center',
       renderCell: (params) => formatCurrency(params.value)
     },
-    { field: 'payment_code', headerName: 'Código de Pagamento', flex: 1.4, minWidth: 130 },
+    { field: 'payment_code', headerName: 'Código de Pagamento', flex: 1.4, minWidth: 130, align: 'center', headerAlign: 'center' },
     { 
       field: 'payment_status', 
       headerName: 'Status', 
       flex: 1,
       minWidth: 100,
+      align: 'center',
+      headerAlign: 'center',
       renderCell: (params) => (
         <Chip
           label={getStatusText(params.value)}
           color={getStatusColor(params.value) as any}
           size="small"
+          sx={{ 
+            minWidth: 80,
+            height: 24,
+            fontSize: '0.75rem',
+            fontWeight: 500,
+            '& .MuiChip-label': {
+              px: 1
+            }
+          }}
         />
       )
     },
@@ -259,6 +274,8 @@ const MyPurchases: React.FC = () => {
       headerName: 'Data da Compra',
       flex: 1.2,
       minWidth: 130,
+      align: 'center',
+      headerAlign: 'center',
       renderCell: (params) => {
         const date = new Date(params.value);
         return date.toLocaleDateString('pt-BR');

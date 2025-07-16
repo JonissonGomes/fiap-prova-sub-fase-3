@@ -237,36 +237,51 @@ const Payments: React.FC = () => {
   };
 
   const columns: GridColDef[] = [
-    { field: 'id', headerName: 'ID', flex: 0.4, minWidth: 70 },
+    { field: 'id', headerName: 'ID', flex: 0.4, minWidth: 70, align: 'center', headerAlign: 'center' },
     { 
       field: 'vehicle_id', 
       headerName: 'Veículo', 
       flex: 2.2,
       minWidth: 160,
+      align: 'center',
+      headerAlign: 'center',
       renderCell: (params) => {
         const vehicle = vehicles.find(v => v.id === params.value);
         return vehicle ? `${vehicle.brand} ${vehicle.model} (${vehicle.year})` : params.value;
       }
     },
-    { field: 'buyer_cpf', headerName: 'CPF do Comprador', flex: 1.3, minWidth: 130 },
+    { field: 'buyer_cpf', headerName: 'CPF do Comprador', flex: 1.3, minWidth: 130, align: 'center', headerAlign: 'center' },
     { 
       field: 'sale_price', 
       headerName: 'Valor', 
       flex: 1.1,
       minWidth: 110,
+      align: 'center',
+      headerAlign: 'center',
       renderCell: (params) => formatCurrency(params.value)
     },
-    { field: 'payment_code', headerName: 'Código de Pagamento', flex: 1.4, minWidth: 130 },
+    { field: 'payment_code', headerName: 'Código de Pagamento', flex: 1.4, minWidth: 130, align: 'center', headerAlign: 'center' },
     { 
       field: 'payment_status', 
       headerName: 'Status', 
       flex: 1,
       minWidth: 100,
+      align: 'center',
+      headerAlign: 'center',
       renderCell: (params) => (
         <Chip
           label={getStatusText(params.value)}
           color={getStatusColor(params.value) as any}
           size="small"
+          sx={{ 
+            minWidth: 80,
+            height: 24,
+            fontSize: '0.75rem',
+            fontWeight: 500,
+            '& .MuiChip-label': {
+              px: 1
+            }
+          }}
         />
       )
     },
@@ -275,9 +290,11 @@ const Payments: React.FC = () => {
       headerName: 'Ações',
       flex: 1.5,
       minWidth: 120,
+      align: 'center',
+      headerAlign: 'center',
       sortable: false,
       renderCell: (params) => (
-        <Box sx={{ display: 'flex', gap: 0.5 }}>
+        <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'center' }}>
           {params.row.payment_status === PaymentStatus.PENDING && (
             <Button
               onClick={() => handleStatusChange(params.row.id, PaymentStatus.PAID)}
