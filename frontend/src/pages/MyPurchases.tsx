@@ -9,20 +9,50 @@ import {
   Card,
   CardContent,
   Chip,
-  Divider
+  Divider,
+  Container,
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Button,
+  Collapse,
+  SelectChangeEvent
 } from '@mui/material';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
+import { 
+  FilterList as FilterIcon,
+  ExpandMore as ExpandMoreIcon,
+  ExpandLess as ExpandLessIcon,
+  Search as SearchIcon,
+  ShoppingBag as ShoppingBagIcon,
+  Receipt as ReceiptIcon,
+  TrendingUp as TrendingIcon
+} from '@mui/icons-material';
 import { Sale, Vehicle, PaymentStatus } from '../types';
 import { salesApi, vehiclesApi, customerService } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { isCustomer } from '../utils/permissions';
 
+interface PurchaseFilters {
+  payment_status?: PaymentStatus;
+  vehicle_brand?: string;
+  vehicle_model?: string;
+  min_price?: number;
+  max_price?: number;
+  date_range?: 'all' | 'last_month' | 'last_3_months' | 'last_year';
+}
+
 const MyPurchases: React.FC = () => {
   const [sales, setSales] = useState<Sale[]>([]);
+  const [filteredSales, setFilteredSales] = useState<Sale[]>([]);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
   const [customerCpf, setCustomerCpf] = useState<string>('');
+  const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState<PurchaseFilters>({});
 
   const { user } = useAuth();
 
@@ -31,6 +61,10 @@ const MyPurchases: React.FC = () => {
       fetchCustomerData();
     }
   }, [user]);
+
+  useEffect(() => {
+    applyFilters();
+  }, [sales, filters]);
 
   const fetchCustomerData = async () => {
     if (!user) return;
@@ -64,6 +98,79 @@ const MyPurchases: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const applyFilters = () => {
+    let filtered = [...sales];
+
+    // Filtro por status de pagamento
+    if (filters.payment_status) {
+      filtered = filtered.filter(sale => 
+        sale.payment_status === filters.payment_status
+      );
+    }
+
+    // Filtro por marca do veículo
+    if (filters.vehicle_brand) {
+      filtered = filtered.filter(sale => {
+        const vehicle = vehicles.find(v => v.id === sale.vehicle_id);
+        return vehicle && vehicle.brand.toLowerCase().includes(filters.vehicle_brand!.toLowerCase());
+      });
+    }
+
+    // Filtro por modelo do veículo
+    if (filters.vehicle_model) {
+      filtered = filtered.filter(sale => {
+        const vehicle = vehicles.find(v => v.id === sale.vehicle_id);
+        return vehicle && vehicle.model.toLowerCase().includes(filters.vehicle_model!.toLowerCase());
+      });
+    }
+
+    // Filtro por preço mínimo
+    if (filters.min_price) {
+      filtered = filtered.filter(sale => sale.sale_price >= filters.min_price!);
+    }
+
+    // Filtro por preço máximo
+    if (filters.max_price) {
+      filtered = filtered.filter(sale => sale.sale_price <= filters.max_price!);
+    }
+
+    // Filtro por data
+    if (filters.date_range && filters.date_range !== 'all') {
+      const now = new Date();
+      const filterDate = new Date();
+      
+      switch (filters.date_range) {
+        case 'last_month':
+          filterDate.setMonth(now.getMonth() - 1);
+          break;
+        case 'last_3_months':
+          filterDate.setMonth(now.getMonth() - 3);
+          break;
+        case 'last_year':
+          filterDate.setFullYear(now.getFullYear() - 1);
+          break;
+      }
+      
+      filtered = filtered.filter(sale => {
+        const saleDate = new Date(sale.created_at);
+        return saleDate >= filterDate;
+      });
+    }
+
+    setFilteredSales(filtered);
+  };
+
+  const handleFilterChange = (field: keyof PurchaseFilters, value: any) => {
+    setFilters(prev => ({
+      ...prev,
+      [field]: value || undefined
+    }));
+  };
+
+  const clearFilters = () => {
+    setFilters({});
   };
 
   const formatCurrency = (value: number) => {
@@ -103,11 +210,19 @@ const MyPurchases: React.FC = () => {
     }
   };
 
+  // Estatísticas das compras
+  const totalCompras = filteredSales.length;
+  const comprasPendentes = filteredSales.filter(s => s.payment_status === PaymentStatus.PENDING).length;
+  const comprasPagas = filteredSales.filter(s => s.payment_status === PaymentStatus.PAID).length;
+  const comprasCanceladas = filteredSales.filter(s => s.payment_status === PaymentStatus.CANCELLED).length;
+  const valorTotal = filteredSales.reduce((sum, sale) => sum + sale.sale_price, 0);
+
   const columns: GridColDef[] = [
     { 
       field: 'id', 
       headerName: 'ID da Compra', 
-      width: 150,
+      width: 120,
+      minWidth: 100,
       renderCell: (params) => (
         <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
           {params.value.substring(0, 8)}...
@@ -118,6 +233,7 @@ const MyPurchases: React.FC = () => {
       field: 'vehicle_id', 
       headerName: 'Veículo', 
       width: 200,
+      minWidth: 150,
       renderCell: (params) => {
         const vehicle = vehicles.find(v => v.id === params.value);
         return vehicle ? (
@@ -134,13 +250,15 @@ const MyPurchases: React.FC = () => {
     { 
       field: 'sale_price', 
       headerName: 'Preço', 
-      width: 130,
+      width: 120,
+      minWidth: 100,
       renderCell: (params) => formatCurrency(params.value)
     },
     { 
       field: 'payment_code', 
       headerName: 'Código de Pagamento', 
-      width: 180,
+      width: 150,
+      minWidth: 130,
       renderCell: (params) => (
         <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
           {params.value}
@@ -150,7 +268,8 @@ const MyPurchases: React.FC = () => {
     { 
       field: 'payment_status', 
       headerName: 'Status', 
-      width: 120,
+      width: 100,
+      minWidth: 90,
       renderCell: (params) => (
         <Chip 
           label={getStatusText(params.value)} 
@@ -162,7 +281,8 @@ const MyPurchases: React.FC = () => {
     { 
       field: 'created_at', 
       headerName: 'Data da Compra', 
-      width: 130,
+      width: 120,
+      minWidth: 110,
       renderCell: (params) => formatDate(params.value)
     }
   ];
@@ -170,144 +290,292 @@ const MyPurchases: React.FC = () => {
   // Verificar se o usuário é cliente
   if (!isCustomer(user)) {
     return (
-      <Box sx={{ p: 3 }}>
+      <Container maxWidth="lg" sx={{ py: 4 }}>
         <Alert severity="error">
           Esta página é apenas para clientes.
         </Alert>
-      </Box>
+      </Container>
     );
   }
 
   if (loading) {
     return (
-      <Box sx={{ p: 3, display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
-        <CircularProgress />
-      </Box>
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 400 }}>
+          <CircularProgress />
+        </Box>
+      </Container>
     );
   }
 
   if (error) {
     return (
-      <Box sx={{ p: 3 }}>
-        <Alert severity="error">
-          {error}
-        </Alert>
-      </Box>
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        <Alert severity="error">{error}</Alert>
+      </Container>
     );
   }
 
-  // Estatísticas rápidas
-  const totalCompras = sales.length;
-  const comprasPagas = sales.filter(s => s.payment_status === PaymentStatus.PAID).length;
-  const comprasPendentes = sales.filter(s => s.payment_status === PaymentStatus.PENDING).length;
-  const comprasCanceladas = sales.filter(s => s.payment_status === PaymentStatus.CANCELLED).length;
-  const valorTotal = sales.reduce((sum, s) => sum + s.sale_price, 0);
-
   return (
-    <Box sx={{ p: 3 }}>
-      <Typography variant="h4" gutterBottom>
-        Minhas Compras
-      </Typography>
-      
-      <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-        Histórico de todas as suas compras de veículos
-      </Typography>
+    <Container maxWidth="lg" sx={{ py: 4 }}>
+      {/* Header */}
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h4" component="h1" gutterBottom>
+          Minhas Compras
+        </Typography>
+        <Typography variant="body1" color="text.secondary">
+          Acompanhe suas compras de veículos e status de pagamento
+        </Typography>
+      </Box>
 
       {/* Estatísticas */}
-      <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid item xs={12} md={3}>
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid item xs={12} sm={6} md={3}>
           <Card>
             <CardContent>
-              <Typography variant="h6" color="primary">
-                {totalCompras}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Total de Compras
-              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box>
+                  <Typography variant="h4" color="primary.main">
+                    {totalCompras}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Total de Compras
+                  </Typography>
+                </Box>
+                <ShoppingBagIcon color="primary" />
+              </Box>
             </CardContent>
           </Card>
         </Grid>
-        
-        <Grid item xs={12} md={3}>
+        <Grid item xs={12} sm={6} md={3}>
           <Card>
             <CardContent>
-              <Typography variant="h6" color="success.main">
-                {comprasPagas}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Compras Pagas
-              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box>
+                  <Typography variant="h4" color="warning.main">
+                    {comprasPendentes}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Pagamentos Pendentes
+                  </Typography>
+                </Box>
+                <Chip label={comprasPendentes} color="warning" />
+              </Box>
             </CardContent>
           </Card>
         </Grid>
-        
-        <Grid item xs={12} md={3}>
+        <Grid item xs={12} sm={6} md={3}>
           <Card>
             <CardContent>
-              <Typography variant="h6" color="warning.main">
-                {comprasPendentes}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Pendentes
-              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box>
+                  <Typography variant="h4" color="success.main">
+                    {comprasPagas}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Pagamentos Realizados
+                  </Typography>
+                </Box>
+                <Chip label={comprasPagas} color="success" />
+              </Box>
             </CardContent>
           </Card>
         </Grid>
-        
-        <Grid item xs={12} md={3}>
+        <Grid item xs={12} sm={6} md={3}>
           <Card>
             <CardContent>
-              <Typography variant="h6" color="primary">
-                {formatCurrency(valorTotal)}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Valor Total
-              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box>
+                  <Typography variant="h5" color="primary.main">
+                    {formatCurrency(valorTotal)}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Valor Total
+                  </Typography>
+                </Box>
+                <TrendingIcon color="primary" />
+              </Box>
             </CardContent>
           </Card>
         </Grid>
       </Grid>
 
-      {/* Tabela de Compras */}
-      <Paper sx={{ height: 600, width: '100%' }}>
-        <DataGrid
-          rows={sales}
-          columns={columns}
-          loading={loading}
-          initialState={{
-            pagination: {
-              paginationModel: { pageSize: 10 }
-            }
-          }}
-          pageSizeOptions={[10, 25, 50]}
-          disableRowSelectionOnClick
-          slots={{
-            noRowsOverlay: () => (
-              <Box
-                sx={{
-                  height: '100%',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}
-              >
-                <Typography variant="h6" color="text.secondary" gutterBottom>
-                  Nenhuma compra encontrada
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Você ainda não fez nenhuma compra de veículo.
-                </Typography>
-              </Box>
-            )
-          }}
-        />
-      </Paper>
+      {/* Filtros */}
+      <Card sx={{ mb: 3 }}>
+        <CardContent>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <FilterIcon />
+              Filtros e Pesquisa
+            </Typography>
+            <Button
+              startIcon={showFilters ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+              onClick={() => setShowFilters(!showFilters)}
+              variant="outlined"
+              size="small"
+            >
+              {showFilters ? 'Ocultar' : 'Mostrar'} Filtros
+            </Button>
+          </Box>
+
+          <Collapse in={showFilters}>
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6} md={3}>
+                <FormControl fullWidth size="small">
+                  <InputLabel>Status do Pagamento</InputLabel>
+                  <Select
+                    value={filters.payment_status || ''}
+                    label="Status do Pagamento"
+                    onChange={(e: SelectChangeEvent) => handleFilterChange('payment_status', e.target.value)}
+                  >
+                    <MenuItem value="">Todos</MenuItem>
+                    <MenuItem value={PaymentStatus.PENDING}>Pendente</MenuItem>
+                    <MenuItem value={PaymentStatus.PAID}>Pago</MenuItem>
+                    <MenuItem value={PaymentStatus.CANCELLED}>Cancelado</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+              
+              <Grid item xs={12} sm={6} md={3}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="Marca do Veículo"
+                  value={filters.vehicle_brand || ''}
+                  onChange={(e) => handleFilterChange('vehicle_brand', e.target.value)}
+                  placeholder="Digite a marca"
+                />
+              </Grid>
+              
+              <Grid item xs={12} sm={6} md={3}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="Modelo do Veículo"
+                  value={filters.vehicle_model || ''}
+                  onChange={(e) => handleFilterChange('vehicle_model', e.target.value)}
+                  placeholder="Digite o modelo"
+                />
+              </Grid>
+              
+              <Grid item xs={12} sm={6} md={3}>
+                <FormControl fullWidth size="small">
+                  <InputLabel>Período</InputLabel>
+                  <Select
+                    value={filters.date_range || 'all'}
+                    label="Período"
+                    onChange={(e: SelectChangeEvent) => handleFilterChange('date_range', e.target.value)}
+                  >
+                    <MenuItem value="all">Todos</MenuItem>
+                    <MenuItem value="last_month">Último mês</MenuItem>
+                    <MenuItem value="last_3_months">Últimos 3 meses</MenuItem>
+                    <MenuItem value="last_year">Último ano</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+              
+              <Grid item xs={12} sm={6} md={3}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="Preço Mínimo"
+                  type="number"
+                  value={filters.min_price || ''}
+                  onChange={(e) => handleFilterChange('min_price', e.target.value ? parseFloat(e.target.value) : undefined)}
+                />
+              </Grid>
+              
+              <Grid item xs={12} sm={6} md={3}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="Preço Máximo"
+                  type="number"
+                  value={filters.max_price || ''}
+                  onChange={(e) => handleFilterChange('max_price', e.target.value ? parseFloat(e.target.value) : undefined)}
+                />
+              </Grid>
+              
+              <Grid item xs={12} sm={6} md={3}>
+                <Button
+                  onClick={clearFilters}
+                  variant="outlined"
+                  fullWidth
+                  size="small"
+                  startIcon={<SearchIcon />}
+                >
+                  Limpar Filtros
+                </Button>
+              </Grid>
+            </Grid>
+          </Collapse>
+        </CardContent>
+      </Card>
+
+      {/* DataGrid */}
+      <Card>
+        <CardContent sx={{ p: 0 }}>
+          <Box sx={{ height: 600, width: '100%' }}>
+            <DataGrid
+              rows={filteredSales}
+              columns={columns}
+              loading={loading}
+              initialState={{
+                pagination: {
+                  paginationModel: { pageSize: 10 }
+                }
+              }}
+              pageSizeOptions={[10, 25, 50]}
+              disableRowSelectionOnClick
+              density="comfortable"
+              sx={{
+                '& .MuiDataGrid-cell': {
+                  borderBottom: 'none',
+                },
+                '& .MuiDataGrid-columnHeaders': {
+                  backgroundColor: 'primary.main',
+                  color: 'primary.contrastText',
+                  '& .MuiDataGrid-columnHeader': {
+                    backgroundColor: 'primary.main',
+                  },
+                },
+                '& .MuiDataGrid-row:hover': {
+                  backgroundColor: 'action.hover',
+                },
+              }}
+              slots={{
+                noRowsOverlay: () => (
+                  <Box
+                    sx={{
+                      height: '100%',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 2
+                    }}
+                  >
+                    <Typography variant="h6" color="text.secondary" gutterBottom>
+                      {Object.keys(filters).length > 0 ? 'Nenhuma compra encontrada' : 'Nenhuma compra encontrada'}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {Object.keys(filters).length > 0 
+                        ? 'Tente ajustar os filtros para encontrar suas compras.'
+                        : 'Você ainda não fez nenhuma compra de veículo.'
+                      }
+                    </Typography>
+                  </Box>
+                )
+              }}
+            />
+          </Box>
+        </CardContent>
+      </Card>
 
       {/* Instruções para pagamento */}
       {comprasPendentes > 0 && (
         <Alert severity="info" sx={{ mt: 3 }}>
-          <Typography variant="body2">
+          <Typography variant="body1">
             <strong>Instruções para Pagamento:</strong><br />
             • Você tem {comprasPendentes} compra(s) pendente(s)<br />
             • Use o código de pagamento para efetuar o pagamento<br />
@@ -316,7 +584,7 @@ const MyPurchases: React.FC = () => {
           </Typography>
         </Alert>
       )}
-    </Box>
+    </Container>
   );
 };
 
