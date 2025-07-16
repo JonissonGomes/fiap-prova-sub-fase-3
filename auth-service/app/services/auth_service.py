@@ -150,13 +150,37 @@ class AuthService:
             logger.error(f"Erro ao obter perfil do usuário: {e}")
             return None
     
+    async def get_user_by_id(self, user_id: str) -> Optional[UserResponse]:
+        """Obtém um usuário pelo ID"""
+        try:
+            user = await self.user_repository.get_user_by_id(user_id)
+            if user:
+                return user.to_response()
+            return None
+        except Exception as e:
+            logger.error(f"Erro ao obter usuário por ID: {e}")
+            return None
+    
     async def update_user_profile(self, user_id: str, user_update: UserUpdate) -> Optional[UserResponse]:
         """Atualiza o perfil de um usuário"""
         try:
-            updated_user = await self.user_repository.update_user(user_id, user_update)
-            if updated_user:
-                return updated_user.to_response()
-            return None
+            # Buscar usuário atual
+            user = await self.user_repository.get_user_by_id(user_id)
+            if not user:
+                return None
+            
+            # Atualizar apenas os campos fornecidos
+            update_data = user_update.dict(exclude_unset=True)
+            if not update_data:
+                return user.to_response()
+            
+            # Aplicar as atualizações
+            for field, value in update_data.items():
+                setattr(user, field, value)
+            
+            # Atualizar no banco
+            updated_user = await self.user_repository.update_user(user)
+            return updated_user.to_response()
         except Exception as e:
             logger.error(f"Erro ao atualizar perfil do usuário: {e}")
             return None
