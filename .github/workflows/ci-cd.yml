@@ -1,0 +1,205 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  PYTHON_VERSION: '3.11'
+  NODE_VERSION: '18'
+
+jobs:
+  test-backend:
+    name: Test Backend Services
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        service: [auth-service, core-service, customer-service, payment-service, sales-service]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ matrix.service }}-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-${{ matrix.service }}-
+          
+    - name: Install dependencies
+      run: |
+        cd ${{ matrix.service }}
+        pip install -r requirements.txt
+        if [ -f requirements-dev.txt ]; then
+          pip install -r requirements-dev.txt
+        fi
+        
+    - name: Run tests with coverage
+      run: |
+        cd ${{ matrix.service }}
+        if [ -d "tests" ]; then
+          coverage run -m pytest tests/ -v --tb=short
+          coverage report --show-missing --fail-under=60
+          coverage xml
+        else
+          echo "No tests directory found for ${{ matrix.service }}"
+        fi
+        
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ${{ matrix.service }}/coverage.xml
+        flags: ${{ matrix.service }}
+        name: ${{ matrix.service }}-coverage
+        fail_ci_if_error: false
+        
+    - name: Upload test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: test-results-${{ matrix.service }}
+        path: ${{ matrix.service }}/.pytest_cache/
+        retention-days: 7
+
+  test-frontend:
+    name: Test Frontend
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Node.js ${{ env.NODE_VERSION }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+        
+    - name: Install dependencies
+      run: |
+        cd frontend
+        npm ci
+        
+    - name: Run linting
+      run: |
+        cd frontend
+        npm run lint
+        
+    - name: Run tests
+      run: |
+        cd frontend
+        npm test -- --coverage --watchAll=false --passWithNoTests
+        
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: frontend/coverage/lcov.info
+        flags: frontend
+        name: frontend-coverage
+        fail_ci_if_error: false
+        
+    - name: Upload test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: frontend-test-results
+        path: frontend/coverage/
+        retention-days: 7
+
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Run Bandit security scan
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Install Bandit
+      run: pip install bandit
+      
+    - name: Run security scan
+      run: |
+        bandit -r . -f json -o bandit-report.json || true
+        
+    - name: Upload security report
+      uses: actions/upload-artifact@v3
+      with:
+        name: security-report
+        path: bandit-report.json
+        retention-days: 30
+
+  build-and-deploy:
+    name: Build and Deploy to Render
+    runs-on: ubuntu-latest
+    needs: [test-backend, test-frontend, security-scan]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      
+    - name: Login to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+        
+    - name: Build and push Docker images
+      run: |
+        # Build auth-service
+        docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/fiap-auth-service:latest auth-service/
+        docker push ${{ secrets.DOCKERHUB_USERNAME }}/fiap-auth-service:latest
+        
+        # Build core-service
+        docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/fiap-core-service:latest core-service/
+        docker push ${{ secrets.DOCKERHUB_USERNAME }}/fiap-core-service:latest
+        
+        # Build customer-service
+        docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/fiap-customer-service:latest customer-service/
+        docker push ${{ secrets.DOCKERHUB_USERNAME }}/fiap-customer-service:latest
+        
+        # Build payment-service
+        docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/fiap-payment-service:latest payment-service/
+        docker push ${{ secrets.DOCKERHUB_USERNAME }}/fiap-payment-service:latest
+        
+        # Build sales-service
+        docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/fiap-sales-service:latest sales-service/
+        docker push ${{ secrets.DOCKERHUB_USERNAME }}/fiap-sales-service:latest
+        
+        # Build frontend
+        docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/fiap-frontend:latest frontend/
+        docker push ${{ secrets.DOCKERHUB_USERNAME }}/fiap-frontend:latest
+        
+    - name: Deploy to Render
+      uses: johnbeynon/render-deploy-action@v1.0.0
+      with:
+        service-id: ${{ secrets.RENDER_SERVICE_ID }}
+        api-key: ${{ secrets.RENDER_API_KEY }}
+        
+    - name: Notify deployment status
+      if: always()
+      run: |
+        if [ "${{ job.status }}" == "success" ]; then
+          echo "✅ Deployment successful!"
+        else
+          echo "❌ Deployment failed!"
+        fi 
