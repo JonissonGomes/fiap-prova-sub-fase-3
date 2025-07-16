@@ -22,6 +22,8 @@ import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import { Payment, Sale, Vehicle, PaymentStatus } from '../types';
 import { salesApi, vehiclesApi } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
+import { canViewPayments, canApprovePayments, canCancelPayments } from '../utils/permissions';
 
 const Payments: React.FC = () => {
   const [sales, setSales] = useState<Sale[]>([]);
@@ -33,6 +35,8 @@ const Payments: React.FC = () => {
     message: '',
     severity: 'success'
   });
+  
+  const { user } = useAuth();
 
   useEffect(() => {
     fetchSales();
@@ -70,6 +74,25 @@ const Payments: React.FC = () => {
   };
 
   const handleStatusChange = async (saleId: string, status: PaymentStatus) => {
+    // Verificar permissões
+    if (status === PaymentStatus.PAID && !canApprovePayments(user)) {
+      setSnackbar({
+        open: true,
+        message: 'Você não tem permissão para aprovar pagamentos',
+        severity: 'error'
+      });
+      return;
+    }
+
+    if (status === PaymentStatus.CANCELLED && !canCancelPayments(user)) {
+      setSnackbar({
+        open: true,
+        message: 'Você não tem permissão para cancelar pagamentos',
+        severity: 'error'
+      });
+      return;
+    }
+
     try {
       const sale = sales.find(s => s.id === saleId);
       if (!sale) return;
@@ -171,6 +194,17 @@ const Payments: React.FC = () => {
       }
     }
   ];
+
+  // Verificar se o usuário tem permissão para ver pagamentos
+  if (!canViewPayments(user)) {
+    return (
+      <Box sx={{ p: 3 }}>
+        <Alert severity="error">
+          Você não tem permissão para acessar esta página.
+        </Alert>
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ flexGrow: 1 }}>
