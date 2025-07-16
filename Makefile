@@ -468,4 +468,39 @@ test-setup-complete:
 quick-test:
 	@echo "🔧 Teste rápido da solução..."
 	@chmod +x scripts/quick-test.sh
-	@./scripts/quick-test.sh 
+	@./scripts/quick-test.sh
+
+# Comando para produção no Render
+start-production:
+	@echo "🚀 Iniciando sistema em modo produção..."
+	@echo "📋 Verificando variáveis de ambiente..."
+	@echo "🔧 Iniciando serviços..."
+	
+	# Iniciar todos os serviços em modo produção
+	@echo "Starting Auth Service..."
+	@cd auth-service && python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 &
+	@echo "Starting Core Service..."
+	@cd core-service && python -m uvicorn app.adapters.api.main:app --host 0.0.0.0 --port 8001 &
+	@echo "Starting Customer Service..."
+	@cd customer-service && python -m uvicorn app.main:app --host 0.0.0.0 --port 8002 &
+	@echo "Starting Sales Service..."
+	@cd sales-service && python -m uvicorn app.main:app --host 0.0.0.0 --port 8003 &
+	@echo "Starting Frontend..."
+	@cd frontend && npm start &
+	
+	@echo "✅ Todos os serviços iniciados!"
+	@echo "🌐 URLs dos serviços:"
+	@echo "   Auth Service: http://0.0.0.0:8000"
+	@echo "   Core Service: http://0.0.0.0:8001"
+	@echo "   Customer Service: http://0.0.0.0:8002"
+	@echo "   Sales Service: http://0.0.0.0:8003"
+	@echo "   Frontend: http://0.0.0.0:3000"
+	@echo ""
+	@echo "🔍 Health checks:"
+	@echo "   Auth: http://0.0.0.0:8000/health"
+	@echo "   Core: http://0.0.0.0:8001/health"
+	@echo "   Customer: http://0.0.0.0:8002/health"
+	@echo "   Sales: http://0.0.0.0:8003/health"
+	
+	# Manter o container rodando
+	@tail -f /dev/null 
