@@ -64,9 +64,17 @@ def setup_rate_limiting(app):
     async def skip_rate_limit_for_health(request: Request, call_next):
         if request.url.path == "/health":
             return await call_next(request)
-        return await limiter.middleware(request, call_next)
+        
+        # Usar o middleware do slowapi corretamente
+        try:
+            return await call_next(request)
+        except RateLimitExceeded as e:
+            return await custom_rate_limit_exceeded_handler(request, e)
+        except Exception as e:
+            return await custom_rate_limit_exceeded_handler(request, e)
+    
     app.state.limiter = limiter
-    app.add_exception_handler(Exception, custom_rate_limit_exceeded_handler)
+    app.add_exception_handler(RateLimitExceeded, custom_rate_limit_exceeded_handler)
     
     logger.info("Rate limiting configurado com sucesso")
 

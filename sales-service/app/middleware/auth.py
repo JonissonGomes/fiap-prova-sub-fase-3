@@ -1,5 +1,5 @@
 import os
-import jwt
+from jose import jwt
 import httpx
 from fastapi import HTTPException, Depends, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
