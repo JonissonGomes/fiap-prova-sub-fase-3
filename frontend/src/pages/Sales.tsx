@@ -479,7 +479,7 @@ const Sales: React.FC = () => {
   }
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
+    <Container maxWidth="lg" sx={{ py: 6 }}>
       {/* Cabeçalho */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
         <Box>
@@ -505,7 +505,7 @@ const Sales: React.FC = () => {
 
       {/* Filtros */}
       <Card sx={{ mb: 4 }}>
-        <CardContent sx={{ p: 3 }}>
+        <CardContent sx={{ p: 4 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
             <Typography variant="h6" sx={{ fontWeight: 600 }}>Filtros</Typography>
             <Button
@@ -608,7 +608,7 @@ const Sales: React.FC = () => {
 
       {/* DataGrid */}
       <Card>
-        <CardContent sx={{ p: 2 }}>
+        <CardContent sx={{ p: 3 }}>
           <Box sx={{ height: 650, width: '100%' }}>
             <DataGrid
               rows={filteredSales}

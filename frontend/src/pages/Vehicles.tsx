@@ -231,7 +231,7 @@ const Vehicles: React.FC = () => {
   const canManageVehicles = user?.role === 'ADMIN' || user?.role === 'SALES';
 
   return (
-    <Box sx={{ p: 3 }}>
+    <Box sx={{ p: 4 }}>
       {/* Cabeçalho */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
         <Typography variant="h4" component="h1" sx={{ fontWeight: 'bold' }}>
@@ -251,7 +251,7 @@ const Vehicles: React.FC = () => {
 
       {/* Filtros */}
       <Card sx={{ mb: 4 }}>
-        <CardContent sx={{ p: 3 }}>
+        <CardContent sx={{ p: 4 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
             <Typography variant="h6" sx={{ fontWeight: 600 }}>Filtros</Typography>
             <Button

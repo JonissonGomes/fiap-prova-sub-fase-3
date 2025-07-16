@@ -315,7 +315,7 @@ const MyPurchases: React.FC = () => {
   }
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
+    <Container maxWidth="lg" sx={{ py: 6 }}>
       {/* Cabeçalho */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
         <Box>
@@ -332,19 +332,24 @@ const MyPurchases: React.FC = () => {
       <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid item xs={12} sm={6} md={3}>
           <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Box sx={{ p: 1, backgroundColor: 'primary.light', borderRadius: 1 }}>
+            <CardContent sx={{ p: 3 }}>
+              <Box sx={{ 
+                display: 'flex', 
+                flexDirection: 'column', 
+                alignItems: 'center', 
+                textAlign: 'center',
+                height: '100%',
+                justifyContent: 'center'
+              }}>
+                <Box sx={{ p: 1, backgroundColor: 'primary.light', borderRadius: 1, mb: 2 }}>
                   <ShoppingCartIcon color="primary" />
                 </Box>
-                <Box>
-                  <Typography variant="h6" component="div">
-                    {filteredSales.length}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Total de Compras
-                  </Typography>
-                </Box>
+                <Typography variant="h6" component="div" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                  {filteredSales.length}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Total de Compras
+                </Typography>
               </Box>
             </CardContent>
           </Card>
@@ -352,19 +357,24 @@ const MyPurchases: React.FC = () => {
 
         <Grid item xs={12} sm={6} md={3}>
           <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Box sx={{ p: 1, backgroundColor: 'success.light', borderRadius: 1 }}>
+            <CardContent sx={{ p: 3 }}>
+              <Box sx={{ 
+                display: 'flex', 
+                flexDirection: 'column', 
+                alignItems: 'center', 
+                textAlign: 'center',
+                height: '100%',
+                justifyContent: 'center'
+              }}>
+                <Box sx={{ p: 1, backgroundColor: 'success.light', borderRadius: 1, mb: 2 }}>
                   <CheckCircleIcon color="success" />
                 </Box>
-                <Box>
-                  <Typography variant="h6" component="div">
-                    {filteredSales.filter(s => s.payment_status === PaymentStatus.PAID).length}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Pagas
-                  </Typography>
-                </Box>
+                <Typography variant="h6" component="div" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                  {filteredSales.filter(s => s.payment_status === PaymentStatus.PAID).length}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Pagas
+                </Typography>
               </Box>
             </CardContent>
           </Card>
@@ -372,19 +382,24 @@ const MyPurchases: React.FC = () => {
 
         <Grid item xs={12} sm={6} md={3}>
           <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Box sx={{ p: 1, backgroundColor: 'warning.light', borderRadius: 1 }}>
+            <CardContent sx={{ p: 3 }}>
+              <Box sx={{ 
+                display: 'flex', 
+                flexDirection: 'column', 
+                alignItems: 'center', 
+                textAlign: 'center',
+                height: '100%',
+                justifyContent: 'center'
+              }}>
+                <Box sx={{ p: 1, backgroundColor: 'warning.light', borderRadius: 1, mb: 2 }}>
                   <PendingIcon color="warning" />
                 </Box>
-                <Box>
-                  <Typography variant="h6" component="div">
-                    {filteredSales.filter(s => s.payment_status === PaymentStatus.PENDING).length}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Pendentes
-                  </Typography>
-                </Box>
+                <Typography variant="h6" component="div" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                  {filteredSales.filter(s => s.payment_status === PaymentStatus.PENDING).length}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Pendentes
+                </Typography>
               </Box>
             </CardContent>
           </Card>
@@ -392,22 +407,27 @@ const MyPurchases: React.FC = () => {
 
         <Grid item xs={12} sm={6} md={3}>
           <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Box sx={{ p: 1, backgroundColor: 'secondary.light', borderRadius: 1 }}>
+            <CardContent sx={{ p: 3 }}>
+              <Box sx={{ 
+                display: 'flex', 
+                flexDirection: 'column', 
+                alignItems: 'center', 
+                textAlign: 'center',
+                height: '100%',
+                justifyContent: 'center'
+              }}>
+                <Box sx={{ p: 1, backgroundColor: 'secondary.light', borderRadius: 1, mb: 2 }}>
                   <AttachMoneyIcon color="secondary" />
                 </Box>
-                <Box>
-                  <Typography variant="h6" component="div">
-                    {formatCurrency(valorTotal)}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Valor Total
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    (Pendentes + Pagas)
-                  </Typography>
-                </Box>
+                <Typography variant="h6" component="div" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                  {formatCurrency(valorTotal)}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Valor Total
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  (Pendentes + Pagas)
+                </Typography>
               </Box>
             </CardContent>
           </Card>
@@ -416,7 +436,7 @@ const MyPurchases: React.FC = () => {
 
       {/* Filtros */}
       <Card sx={{ mb: 4 }}>
-        <CardContent sx={{ p: 3 }}>
+        <CardContent sx={{ p: 4 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
             <Typography variant="h6" sx={{ fontWeight: 600 }}>Filtros</Typography>
             <Button
@@ -524,7 +544,7 @@ const MyPurchases: React.FC = () => {
 
       {/* DataGrid */}
       <Card>
-        <CardContent sx={{ p: 2 }}>
+        <CardContent sx={{ p: 3 }}>
           <Box sx={{ height: 650, width: '100%' }}>
             <DataGrid
               rows={filteredSales}

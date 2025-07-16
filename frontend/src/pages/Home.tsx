@@ -176,14 +176,44 @@ const Home: React.FC = () => {
     icon: React.ReactNode;
     color: string;
     subtitle?: string;
-  }> = ({ title, value, icon, color, subtitle }) => (
-    <Card sx={{ height: '100%' }}>
-      <CardContent sx={{ p: 2 }}>
-        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
-          <Avatar sx={{ bgcolor: color, width: 48, height: 48, flexShrink: 0 }}>
-            {icon}
-          </Avatar>
-          <Box sx={{ minWidth: 0, flex: 1 }}>
+  }> = ({ title, value, icon, color, subtitle }) => {
+    // Função para formatar valores grandes
+    const formatLargeValue = (val: string) => {
+      if (typeof val === 'string' && val.includes('R$')) {
+        const numericValue = parseFloat(val.replace(/[^\d,]/g, '').replace(',', '.'));
+        if (numericValue >= 1000000) {
+          const abbreviated = (numericValue / 1000000).toFixed(1).replace('.', ',');
+          return {
+            main: `R$ ${abbreviated}M`,
+            full: val
+          };
+        } else if (numericValue >= 1000) {
+          const abbreviated = (numericValue / 1000).toFixed(0);
+          return {
+            main: `R$ ${abbreviated}K`,
+            full: val
+          };
+        }
+      }
+      return { main: val, full: null };
+    };
+
+    const formattedValue = formatLargeValue(value as string);
+
+    return (
+      <Card sx={{ height: '100%' }}>
+        <CardContent sx={{ p: 3 }}>
+          <Box sx={{ 
+            display: 'flex', 
+            flexDirection: 'column', 
+            alignItems: 'center', 
+            textAlign: 'center',
+            height: '100%',
+            justifyContent: 'center'
+          }}>
+            <Avatar sx={{ bgcolor: color, width: 48, height: 48, mb: 2 }}>
+              {icon}
+            </Avatar>
             <Typography 
               variant="h5" 
               component="div" 
@@ -191,11 +221,26 @@ const Home: React.FC = () => {
                 fontWeight: 'bold',
                 fontSize: { xs: '1.25rem', sm: '1.5rem', md: '1.75rem' },
                 lineHeight: 1.2,
-                mb: 0.5
+                mb: 0.5,
+                wordBreak: 'break-word'
               }}
             >
-              {typeof value === 'number' ? value.toLocaleString() : value}
+              {formattedValue.main}
             </Typography>
+            {formattedValue.full && (
+              <Typography 
+                variant="caption" 
+                color="text.secondary"
+                sx={{ 
+                  fontSize: { xs: '0.625rem', sm: '0.75rem' },
+                  lineHeight: 1.2,
+                  mb: 0.5,
+                  fontWeight: 300
+                }}
+              >
+                {formattedValue.full}
+              </Typography>
+            )}
             <Typography 
               variant="body2" 
               color="text.secondary"
@@ -221,10 +266,10 @@ const Home: React.FC = () => {
               </Typography>
             )}
           </Box>
-        </Box>
-      </CardContent>
-    </Card>
-  );
+        </CardContent>
+      </Card>
+    );
+  };
 
   const QuickActionCard: React.FC<{
     title: string;
@@ -235,7 +280,7 @@ const Home: React.FC = () => {
     disabled?: boolean;
   }> = ({ title, description, icon, color, to, disabled = false }) => (
     <Card sx={{ height: '100%', opacity: disabled ? 0.6 : 1 }}>
-      <CardContent>
+      <CardContent sx={{ p: 3 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
           <Avatar sx={{ bgcolor: color, mr: 2 }}>
             {icon}
@@ -250,7 +295,7 @@ const Home: React.FC = () => {
           </Box>
         </Box>
       </CardContent>
-      <CardActions>
+      <CardActions sx={{ p: 3, pt: 0 }}>
         <Button
           component={RouterLink}
           to={to}
@@ -276,9 +321,9 @@ const Home: React.FC = () => {
   }
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+    <Container maxWidth="lg" sx={{ mt: 6, mb: 6 }}>
       {/* Header com saudação personalizada */}
-      <Paper sx={{ p: 3, mb: 4, background: 'linear-gradient(135deg, #1976d2 0%, #42a5f5 100%)', color: 'white' }}>
+      <Paper sx={{ p: 4, mb: 4, background: 'linear-gradient(135deg, #1976d2 0%, #42a5f5 100%)', color: 'white' }}>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             <Avatar sx={{ bgcolor: 'rgba(255,255,255,0.2)', mr: 2, width: 56, height: 56 }}>
@@ -312,7 +357,7 @@ const Home: React.FC = () => {
             Suas Compras
           </Typography>
           
-          <Grid container spacing={2} sx={{ mb: 4 }}>
+          <Grid container spacing={3} sx={{ mb: 4 }}>
             <Grid item xs={12} sm={6} md={4}>
               <StatCard
                 title="Compras Realizadas"
@@ -380,7 +425,7 @@ const Home: React.FC = () => {
             Dashboard Operacional
           </Typography>
           
-          <Grid container spacing={2} sx={{ mb: 4 }}>
+          <Grid container spacing={3} sx={{ mb: 4 }}>
             <Grid item xs={12} sm={6} md={3}>
               <StatCard
                 title="Total de Veículos"
@@ -489,7 +534,7 @@ const Home: React.FC = () => {
       )}
 
       {/* Estatísticas gerais na parte inferior */}
-      <Paper sx={{ p: 3, mt: 4 }}>
+      <Paper sx={{ p: 4, mt: 4 }}>
         <Typography variant="h6" gutterBottom>
           Estatísticas Gerais do Sistema
         </Typography>
