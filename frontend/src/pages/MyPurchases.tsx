@@ -219,7 +219,9 @@ const MyPurchases: React.FC = () => {
   const comprasPendentes = filteredSales.filter(s => s.payment_status === PaymentStatus.PENDING).length;
   const comprasPagas = filteredSales.filter(s => s.payment_status === PaymentStatus.PAID).length;
   const comprasCanceladas = filteredSales.filter(s => s.payment_status === PaymentStatus.CANCELLED).length;
-  const valorTotal = filteredSales.reduce((sum, sale) => sum + sale.sale_price, 0);
+  const valorTotal = filteredSales
+    .filter(s => s.payment_status === PaymentStatus.PENDING || s.payment_status === PaymentStatus.PAID)
+    .reduce((sum, sale) => sum + sale.sale_price, 0);
 
   const columns: GridColDef[] = [
     { field: 'id', headerName: 'ID', flex: 0.4, minWidth: 70, align: 'center' as const, headerAlign: 'center' as const },
@@ -397,10 +399,13 @@ const MyPurchases: React.FC = () => {
                 </Box>
                 <Box>
                   <Typography variant="h6" component="div">
-                    {formatCurrency(filteredSales.reduce((sum, sale) => sum + sale.sale_price, 0))}
+                    {formatCurrency(valorTotal)}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
                     Valor Total
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    (Pendentes + Pagas)
                   </Typography>
                 </Box>
               </Box>

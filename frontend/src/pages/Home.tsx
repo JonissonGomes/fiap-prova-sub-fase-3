@@ -100,7 +100,7 @@ const Home: React.FC = () => {
          pendingSales: sales.filter((s: Sale) => s.payment_status === PaymentStatus.PENDING).length,
          paidSales: sales.filter((s: Sale) => s.payment_status === PaymentStatus.PAID).length,
          cancelledSales: sales.filter((s: Sale) => s.payment_status === PaymentStatus.CANCELLED).length,
-         totalRevenue: sales.reduce((sum: number, s: Sale) => sum + s.sale_price, 0),
+         totalRevenue: sales.filter((s: Sale) => s.payment_status === PaymentStatus.PAID).reduce((sum: number, s: Sale) => sum + s.sale_price, 0),
          totalCustomers: 0,
          myPurchases: 0,
          pendingPurchases: 0,
@@ -178,20 +178,45 @@ const Home: React.FC = () => {
     subtitle?: string;
   }> = ({ title, value, icon, color, subtitle }) => (
     <Card sx={{ height: '100%' }}>
-      <CardContent>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-          <Avatar sx={{ bgcolor: color, mr: 2 }}>
+      <CardContent sx={{ p: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
+          <Avatar sx={{ bgcolor: color, width: 48, height: 48, flexShrink: 0 }}>
             {icon}
           </Avatar>
-          <Box>
-            <Typography variant="h4" component="div" sx={{ fontWeight: 'bold' }}>
+          <Box sx={{ minWidth: 0, flex: 1 }}>
+            <Typography 
+              variant="h5" 
+              component="div" 
+              sx={{ 
+                fontWeight: 'bold',
+                fontSize: { xs: '1.25rem', sm: '1.5rem', md: '1.75rem' },
+                lineHeight: 1.2,
+                mb: 0.5
+              }}
+            >
               {typeof value === 'number' ? value.toLocaleString() : value}
             </Typography>
-            <Typography variant="body2" color="text.secondary">
+            <Typography 
+              variant="body2" 
+              color="text.secondary"
+              sx={{ 
+                fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                lineHeight: 1.2,
+                mb: subtitle ? 0.5 : 0
+              }}
+            >
               {title}
             </Typography>
             {subtitle && (
-              <Typography variant="caption" color="text.secondary">
+              <Typography 
+                variant="caption" 
+                color="text.secondary"
+                sx={{ 
+                  fontSize: { xs: '0.625rem', sm: '0.75rem' },
+                  lineHeight: 1.2,
+                  display: 'block'
+                }}
+              >
                 {subtitle}
               </Typography>
             )}
@@ -287,8 +312,8 @@ const Home: React.FC = () => {
             Suas Compras
           </Typography>
           
-          <Grid container spacing={3} sx={{ mb: 4 }}>
-            <Grid item xs={12} md={4}>
+          <Grid container spacing={2} sx={{ mb: 4 }}>
+            <Grid item xs={12} sm={6} md={4}>
               <StatCard
                 title="Compras Realizadas"
                 value={stats.myPurchases || 0}
@@ -296,7 +321,7 @@ const Home: React.FC = () => {
                 color="#2e7d32"
               />
             </Grid>
-            <Grid item xs={12} md={4}>
+            <Grid item xs={12} sm={6} md={4}>
               <StatCard
                 title="Pagamentos Pendentes"
                 value={stats.pendingPurchases || 0}
@@ -304,7 +329,7 @@ const Home: React.FC = () => {
                 color="#ed6c02"
               />
             </Grid>
-            <Grid item xs={12} md={4}>
+            <Grid item xs={12} sm={6} md={4}>
               <StatCard
                 title="Pagamentos Realizados"
                 value={stats.paidPurchases || 0}
@@ -355,8 +380,8 @@ const Home: React.FC = () => {
             Dashboard Operacional
           </Typography>
           
-          <Grid container spacing={3} sx={{ mb: 4 }}>
-            <Grid item xs={12} md={3}>
+          <Grid container spacing={2} sx={{ mb: 4 }}>
+            <Grid item xs={12} sm={6} md={3}>
               <StatCard
                 title="Total de Veículos"
                 value={stats.totalVehicles}
@@ -365,7 +390,7 @@ const Home: React.FC = () => {
                 subtitle={`${stats.availableVehicles} disponíveis`}
               />
             </Grid>
-            <Grid item xs={12} md={3}>
+            <Grid item xs={12} sm={6} md={3}>
               <StatCard
                 title="Total de Vendas"
                 value={stats.totalSales}
@@ -374,15 +399,16 @@ const Home: React.FC = () => {
                 subtitle={`${stats.paidSales} pagas`}
               />
             </Grid>
-            <Grid item xs={12} md={3}>
+            <Grid item xs={12} sm={6} md={3}>
               <StatCard
                 title="Receita Total"
                 value={formatCurrency(stats.totalRevenue)}
                 icon={<TrendingIcon />}
                 color="#ed6c02"
+                subtitle="Apenas vendas pagas"
               />
             </Grid>
-            <Grid item xs={12} md={3}>
+            <Grid item xs={12} sm={6} md={3}>
               <StatCard
                 title="Clientes"
                 value={stats.totalCustomers}
