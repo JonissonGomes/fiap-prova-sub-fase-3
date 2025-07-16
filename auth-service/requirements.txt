@@ -12,7 +12,7 @@ httpx==0.25.2
 # Autenticação e Keycloak
 python-jose[cryptography]==3.3.0
 PyJWT==2.8.0
-keycloak==3.7.0
+python-keycloak==3.7.0
 requests==2.31.0
 
 # Rate limiting
