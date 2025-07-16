@@ -64,7 +64,7 @@ jobs:
         fail_ci_if_error: false
         
     - name: Upload test results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: test-results-${{ matrix.service }}
@@ -110,7 +110,7 @@ jobs:
         fail_ci_if_error: false
         
     - name: Upload test results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: frontend-test-results
@@ -138,7 +138,7 @@ jobs:
         bandit -r . -f json -o bandit-report.json || true
         
     - name: Upload security report
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: security-report
         path: bandit-report.json
