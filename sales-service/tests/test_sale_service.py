@@ -1,8 +1,8 @@
 import asyncio
 import pytest
 from unittest.mock import AsyncMock
-from app.domain.sale_schema import SaleCreate, SaleUpdate
-from app.services.sale_service import SaleService
+from app.schemas.sale_schema import SaleCreate, SaleUpdate
+from app.ports.sale_service import SaleService
 from app.domain.sale import Sale, PaymentStatus
 from datetime import datetime
 

@@ -5,6 +5,7 @@ from fastapi import FastAPI
 from httpx import AsyncClient
 from bson import ObjectId
 from app.controllers.sale_controller import router, get_service
+from app.middleware.auth import get_current_user, require_role
 from app.domain.sale import Sale, PaymentStatus
 from app.schemas.sale_schema import SaleCreate, SaleUpdate, SaleResponse
 from app.exceptions import SaleNotFoundError
@@ -18,7 +19,16 @@ def app(mock_sale_service):
     async def override_get_service():
         return mock_sale_service
 
+    # Mock das dependências de autenticação
+    async def mock_get_current_user():
+        return {"user_id": "test_user", "email": "test@example.com", "role": "ADMIN"}
+
+    async def mock_require_role(roles):
+        return {"user_id": "test_user", "email": "test@example.com", "role": "ADMIN"}
+
     app.dependency_overrides[get_service] = override_get_service
+    app.dependency_overrides[get_current_user] = mock_get_current_user
+    app.dependency_overrides[require_role] = mock_require_role
     app.include_router(router)
     return app
 
@@ -139,7 +149,7 @@ def mock_sale_service():
 @pytest.mark.asyncio
 async def test_create_sale(client):
     response = await client.post(
-        "/sales",
+        "/sales/",
         json={
             "vehicle_id": "test_vehicle_id",
             "buyer_cpf": "12345678900",

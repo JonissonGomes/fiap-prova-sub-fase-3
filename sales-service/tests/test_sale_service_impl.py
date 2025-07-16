@@ -3,7 +3,7 @@ from unittest.mock import AsyncMock, patch
 from datetime import datetime
 from app.services.sale_service_impl import SaleServiceImpl
 from app.domain.sale import Sale, PaymentStatus
-from app.domain.sale_schema import SaleCreate, SaleUpdate
+from app.schemas.sale_schema import SaleCreate, SaleUpdate
 from app.exceptions import SaleNotFoundError, InvalidSaleDataError
 
 @pytest.fixture
