@@ -43,12 +43,10 @@ install:
 	docker-compose run --rm sales-service pip install -r requirements.txt
 	docker-compose run --rm auth-service pip install -r requirements.txt
 	docker-compose run --rm customer-service pip install -r requirements.txt
-	docker-compose run --rm frontend npm install
 
 up:
-	docker-compose up -d
+	docker-compose up -d redis keycloak auth-mongodb core-mongodb sales-mongodb customer-mongodb auth-service core-service sales-service customer-service
 	@echo "🚀 Serviços iniciados:"
-	@echo "   Frontend: http://localhost:3000"
 	@echo "   Core Service: http://localhost:8000"
 	@echo "   Sales Service: http://localhost:8001"
 	@echo "   Auth Service: http://localhost:8002"
@@ -284,7 +282,6 @@ lint:
 	docker-compose run --rm sales-service flake8 app/
 	docker-compose run --rm auth-service flake8 app/
 	docker-compose run --rm customer-service flake8 app/
-	docker-compose run --rm frontend npm run lint
 
 type-check:
 	@echo "Verificando tipos..."
@@ -470,6 +467,11 @@ quick-test:
 	@chmod +x scripts/quick-test.sh
 	@./scripts/quick-test.sh
 
+# Teste de email-validator
+test-email-validator:
+	@echo "🔍 Testando email-validator..."
+	@python3 scripts/test-email-validator.py
+
 # Comando para produção no Render
 start-production:
 	@echo "🚀 Iniciando sistema em modo produção..."
@@ -485,8 +487,6 @@ start-production:
 	@cd customer-service && python -m uvicorn app.main:app --host 0.0.0.0 --port 8002 &
 	@echo "Starting Sales Service..."
 	@cd sales-service && python -m uvicorn app.main:app --host 0.0.0.0 --port 8003 &
-	@echo "Starting Frontend..."
-	@cd frontend && npm start &
 	
 	@echo "✅ Todos os serviços iniciados!"
 	@echo "🌐 URLs dos serviços:"
@@ -494,7 +494,6 @@ start-production:
 	@echo "   Core Service: http://0.0.0.0:8001"
 	@echo "   Customer Service: http://0.0.0.0:8002"
 	@echo "   Sales Service: http://0.0.0.0:8003"
-	@echo "   Frontend: http://0.0.0.0:3000"
 	@echo ""
 	@echo "🔍 Health checks:"
 	@echo "   Auth: http://0.0.0.0:8000/health"
