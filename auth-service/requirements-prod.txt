@@ -4,12 +4,14 @@ pydantic[email]==2.5.0
 fastapi==0.104.1
 uvicorn==0.24.0
 
+# Autenticação e segurança
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+python-keycloak==3.7.0
+
 # Banco de dados
 motor==3.3.2
 pymongo==4.6.0
-
-# Configuração
-pydantic-settings==2.1.0
 
 # Utilitários
 python-multipart==0.0.6
@@ -18,9 +20,4 @@ httpx==0.25.2
 
 # Rate limiting
 redis==5.0.1
-slowapi==0.1.9
-
-# Testes (apenas para desenvolvimento)
-pytest==7.4.3
-pytest-asyncio==0.21.1
-pytest-cov==4.1.0
+slowapi==0.1.9 

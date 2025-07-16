@@ -18,9 +18,4 @@ httpx==0.25.2
 
 # Rate limiting
 redis==5.0.1
-slowapi==0.1.9
-
-# Testes (apenas para desenvolvimento)
-pytest==7.4.3
-pytest-asyncio==0.21.1
-pytest-cov==4.1.0
+slowapi==0.1.9 
