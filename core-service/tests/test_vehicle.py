@@ -1,5 +1,5 @@
 import pytest
-from datetime import datetime, UTC
+from datetime import datetime, timezone
 from app.domain.vehicle import Vehicle, VehicleStatus
 
 def test_create_vehicle():
@@ -50,7 +50,7 @@ def test_create_vehicle_with_id():
 
 def test_create_vehicle_with_dates():
     # Arrange
-    now = datetime.now(UTC)
+    now = datetime.now(timezone.utc)
     vehicle_data = {
         "brand": "Toyota",
         "model": "Corolla",
