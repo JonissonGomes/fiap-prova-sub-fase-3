@@ -437,7 +437,7 @@ const Home: React.FC = () => {
             </Grid>
             <Grid item xs={12} sm={6} md={3}>
               <StatCard
-                title="Total de Vendas"
+                title="Total de Negociações"
                 value={stats.totalSales}
                 icon={<SaleIcon />}
                 color="#2e7d32"
@@ -513,7 +513,7 @@ const Home: React.FC = () => {
               </Grid>
               <Grid item xs={12} md={6}>
                 <QuickActionCard
-                  title="Dashboard Completo"
+                  title="Dashboard"
                   description="Visão completa do sistema"
                   icon={<DashboardIcon />}
                   color="#607d8b"

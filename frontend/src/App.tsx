@@ -12,6 +12,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Profile from './pages/Profile';
 import MyPurchases from './pages/MyPurchases';
+import Dashboard from './pages/Dashboard';
 
 // Componente para proteger rotas
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -75,10 +76,11 @@ const AppContent: React.FC = () => {
                   <Route path="/" element={<Home />} />
                   <Route path="/vehicles" element={<VehiclesWithRoles />} />
                   <Route path="/sales" element={<Sales />} />
-                                      <Route path="/payments" element={<Payments />} />
-                    <Route path="/customers" element={<Customers />} />
-                    <Route path="/my-purchases" element={<MyPurchases />} />
-                    <Route path="/profile" element={<Profile />} />
+                  <Route path="/payments" element={<Payments />} />
+                  <Route path="/customers" element={<Customers />} />
+                  <Route path="/my-purchases" element={<MyPurchases />} />
+                  <Route path="/profile" element={<Profile />} />
+                  <Route path="/dashboard" element={<Dashboard />} />
                 </Routes>
               </Layout>
             </ProtectedRoute>
