@@ -57,42 +57,52 @@ create_env_files() {
     # Arquivo .env principal
     if [ ! -f ".env" ]; then
         cat > .env << EOF
-# Configuração do ambiente
-ENVIRONMENT=$env
-NODE_ENV=$env
-
-# Serviços
-AUTH_SERVICE_URL=http://localhost:8002
-CORE_SERVICE_URL=http://localhost:8000
-SALES_SERVICE_URL=http://localhost:8001
-CUSTOMER_SERVICE_URL=http://localhost:8003
-FRONTEND_URL=http://localhost:3000
-
-# Keycloak
-KEYCLOAK_URL=http://localhost:8080
-KEYCLOAK_REALM=vehicle-sales
-KEYCLOAK_CLIENT_ID=vehicle-sales-app
-KEYCLOAK_CLIENT_SECRET=T14LidpfzazUfpvn6GsrlDyGooT8p0s6
+# Configurações do Keycloak
 KEYCLOAK_ADMIN=admin
 KEYCLOAK_ADMIN_PASSWORD=admin123
+KC_DB=dev-file
+KEYCLOAK_URL=http://keycloak:8080
+KEYCLOAK_REALM=vehicle-sales
+KEYCLOAK_CLIENT_ID=vehicle-sales-app
+KEYCLOAK_CLIENT_SECRET=BCzhpesgtiAQENgLRuO2tlsLBdUPPMTv
 
-# MongoDB URLs
-MONGODB_URL=mongodb://localhost:27017
-AUTH_MONGODB_URL=mongodb://localhost:27021
-CORE_MONGODB_URL=mongodb://localhost:27019
-SALES_MONGODB_URL=mongodb://localhost:27018
-CUSTOMER_MONGODB_URL=mongodb://localhost:27020
+# Configurações do Redis
+REDIS_URL=redis://redis:6379
 
-# Redis
-REDIS_URL=redis://localhost:6379
+# Configurações do Auth Service
+AUTH_MONGODB_URL=mongodb://auth-mongodb:27017
+AUTH_MONGODB_DB_NAME=auth_db
+AUTH_MONGODB_COLLECTION=users
+AUTH_SERVICE_URL=http://auth-service:8002
 
-# JWT
-JWT_SECRET_KEY=your-secret-key-here
-JWT_ALGORITHM=HS256
-JWT_EXPIRATION_HOURS=24
+# Configurações do Core Service
+CORE_MONGODB_URL=mongodb://core-mongodb:27017
+CORE_MONGODB_DB_NAME=core_db
+CORE_MONGODB_COLLECTION=vehicles
 
-# Logging
-LOG_LEVEL=INFO
+# Configurações do Sales Service  
+SALES_MONGODB_URL=mongodb://sales-mongodb:27017
+SALES_MONGODB_DB_NAME=sales_db
+SALES_MONGODB_COLLECTION=sales
+CORE_SERVICE_URL=http://core-service:8000
+
+# Configurações do Customer Service
+CUSTOMER_MONGODB_URL=mongodb://customer-mongodb:27017
+CUSTOMER_MONGODB_DB_NAME=customer_db
+CUSTOMER_MONGODB_COLLECTION=customers
+CUSTOMER_SERVICE_URL=http://customer-service:8003
+
+# Configurações do Frontend
+REACT_APP_API_URL=http://localhost:8000
+REACT_APP_CORE_SERVICE_URL=http://localhost:8000
+REACT_APP_SALES_SERVICE_URL=http://localhost:8001
+REACT_APP_AUTH_SERVICE_URL=http://localhost:8002
+REACT_APP_CUSTOMER_SERVICE_URL=http://localhost:8003
+REACT_APP_APP_NAME="Sistema de Vendas de Veículos"
+REACT_APP_ENABLE_AUTH=true
+REACT_APP_RETRY_ATTEMPTS=3
+REACT_APP_RETRY_DELAY=1000
+CHOKIDAR_USEPOLLING=true
 EOF
         log_success "Arquivo .env criado"
     fi
@@ -100,40 +110,52 @@ EOF
     # Arquivo .env.development
     if [ ! -f ".env.development" ]; then
         cat > .env.development << EOF
-# Configuração para desenvolvimento
-ENVIRONMENT=development
-DEBUG=true
-LOG_LEVEL=DEBUG
-
-# URLs para desenvolvimento
-AUTH_SERVICE_URL=http://localhost:8002
-CORE_SERVICE_URL=http://localhost:8000
-SALES_SERVICE_URL=http://localhost:8001
-CUSTOMER_SERVICE_URL=http://localhost:8003
-FRONTEND_URL=http://localhost:3000
-
-# Keycloak desenvolvimento
-KEYCLOAK_URL=http://localhost:8080
-KEYCLOAK_REALM=vehicle-sales
-KEYCLOAK_CLIENT_ID=vehicle-sales-app
-KEYCLOAK_CLIENT_SECRET=T14LidpfzazUfpvn6GsrlDyGooT8p0s6
+# Configurações do Keycloak (Desenvolvimento)
 KEYCLOAK_ADMIN=admin
 KEYCLOAK_ADMIN_PASSWORD=admin123
+KC_DB=dev-file
+KEYCLOAK_URL=http://keycloak:8080
+KEYCLOAK_REALM=vehicle-sales
+KEYCLOAK_CLIENT_ID=vehicle-sales-app
+KEYCLOAK_CLIENT_SECRET=BCzhpesgtiAQENgLRuO2tlsLBdUPPMTv
 
-# MongoDB para desenvolvimento
-MONGODB_URL=mongodb://localhost:27017
-AUTH_MONGODB_URL=mongodb://localhost:27021
-CORE_MONGODB_URL=mongodb://localhost:27019
-SALES_MONGODB_URL=mongodb://localhost:27018
-CUSTOMER_MONGODB_URL=mongodb://localhost:27020
+# Configurações do Redis (Desenvolvimento)
+REDIS_URL=redis://redis:6379
 
-# Redis para desenvolvimento
-REDIS_URL=redis://localhost:6379
+# Configurações do Auth Service (Desenvolvimento)
+AUTH_MONGODB_URL=mongodb://auth-mongodb:27017
+AUTH_MONGODB_DB_NAME=auth_db
+AUTH_MONGODB_COLLECTION=users
+AUTH_SERVICE_URL=http://auth-service:8002
 
-# JWT para desenvolvimento
-JWT_SECRET_KEY=dev-secret-key
-JWT_ALGORITHM=HS256
-JWT_EXPIRATION_HOURS=24
+# Configurações do Core Service (Desenvolvimento)
+CORE_MONGODB_URL=mongodb://core-mongodb:27017
+CORE_MONGODB_DB_NAME=core_db
+CORE_MONGODB_COLLECTION=vehicles
+
+# Configurações do Sales Service (Desenvolvimento)
+SALES_MONGODB_URL=mongodb://sales-mongodb:27017
+SALES_MONGODB_DB_NAME=sales_db
+SALES_MONGODB_COLLECTION=sales
+CORE_SERVICE_URL=http://core-service:8000
+
+# Configurações do Customer Service (Desenvolvimento)
+CUSTOMER_MONGODB_URL=mongodb://customer-mongodb:27017
+CUSTOMER_MONGODB_DB_NAME=customer_db
+CUSTOMER_MONGODB_COLLECTION=customers
+CUSTOMER_SERVICE_URL=http://customer-service:8003
+
+# Configurações do Frontend (Desenvolvimento)
+REACT_APP_API_URL=http://localhost:8000
+REACT_APP_CORE_SERVICE_URL=http://localhost:8000
+REACT_APP_SALES_SERVICE_URL=http://localhost:8001
+REACT_APP_AUTH_SERVICE_URL=http://localhost:8002
+REACT_APP_CUSTOMER_SERVICE_URL=http://localhost:8003
+REACT_APP_APP_NAME="Sistema de Vendas de Veículos"
+REACT_APP_ENABLE_AUTH=true
+REACT_APP_RETRY_ATTEMPTS=3
+REACT_APP_RETRY_DELAY=1000
+CHOKIDAR_USEPOLLING=true
 EOF
         log_success "Arquivo .env.development criado"
     fi
