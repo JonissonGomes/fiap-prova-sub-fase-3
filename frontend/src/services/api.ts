@@ -21,7 +21,7 @@ import {
 } from '../types';
 
 // URL do backend unificado no Render
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'https://fiap-unified-backend.onrender.com';
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'https://fiap-prova-sub-fase-3.onrender.com';
 
 // Configuração base do Axios
 const api = axios.create({

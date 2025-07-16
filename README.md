@@ -10,6 +10,30 @@ Sistema completo de vendas de veículos construído com arquitetura de microsser
 
 🌐 **Agora 100% compatível com Windows, MacOS e Linux!**
 
+## 🏥 Endpoints de Healthcheck
+
+### Local
+Após iniciar os serviços localmente, você pode verificar a saúde de cada um através dos seguintes endpoints:
+
+- **Auth Service**: http://localhost:8002/health
+- **Core Service**: http://localhost:8000/health
+- **Sales Service**: http://localhost:8001/health
+- **Customer Service**: http://localhost:8003/health
+- **Keycloak**: http://localhost:8080/health
+- **Frontend**: http://localhost:3000
+
+### Render (Produção)
+No ambiente de produção (Render), todos os serviços estão unificados em um único endpoint:
+
+- **Backend Unificado**: https://fiap-prova-sub-fase-3.onrender.com/health
+- **Frontend (Vercel)**: https://fiap-frontend.vercel.app
+
+Os seguintes endpoints estão disponíveis no backend unificado:
+- Auth Service: https://fiap-prova-sub-fase-3.onrender.com/auth/health
+- Core Service: https://fiap-prova-sub-fase-3.onrender.com/vehicles/health
+- Sales Service: https://fiap-prova-sub-fase-3.onrender.com/sales/health
+- Customer Service: https://fiap-prova-sub-fase-3.onrender.com/customers/health
+
 ## 🚀 Início Rápido
 
 ### ✅ Compatibilidade entre Sistemas Operacionais
@@ -71,6 +95,12 @@ make up
 
 # Aguardar todos os serviços ficarem prontos (pode levar alguns minutos)
 make status
+
+# Verificar saúde dos serviços individualmente
+curl http://localhost:8002/health  # Auth Service
+curl http://localhost:8000/health  # Core Service
+curl http://localhost:8001/health  # Sales Service
+curl http://localhost:8003/health  # Customer Service
 ```
 
 #### 2. Configurar Autenticação e Popular Dados

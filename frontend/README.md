@@ -260,3 +260,63 @@ npm run format
 # ou
 yarn format
 ``` 
+
+# Frontend - Configuração de Ambiente
+
+## Variáveis de Ambiente
+
+### Desenvolvimento Local
+Crie um arquivo `.env.development` na pasta `frontend` com:
+
+```env
+REACT_APP_BACKEND_URL=http://localhost:8000
+REACT_APP_ENV=development
+REACT_APP_API_TIMEOUT=30000
+```
+
+### Produção (Render)
+Crie um arquivo `.env.production` na pasta `frontend` com:
+
+```env
+REACT_APP_BACKEND_URL=https://fiap-prova-sub-fase-3.onrender.com
+REACT_APP_ENV=production
+REACT_APP_API_TIMEOUT=30000
+```
+
+### Variáveis Disponíveis
+
+| Variável | Descrição | Valor Padrão |
+|----------|-----------|--------------|
+| REACT_APP_BACKEND_URL | URL base do backend | https://fiap-prova-sub-fase-3.onrender.com |
+| REACT_APP_ENV | Ambiente atual | production |
+| REACT_APP_API_TIMEOUT | Timeout das requisições (ms) | 30000 |
+
+## Endpoints do Backend (Render)
+
+O backend unificado está disponível em: `https://fiap-prova-sub-fase-3.onrender.com`
+
+### Endpoints de Healthcheck
+- Principal: `/health`
+- Auth Service: `/auth/health`
+- Core Service: `/vehicles/health`
+- Sales Service: `/sales/health`
+- Customer Service: `/customers/health`
+
+## Configuração no Render
+
+1. No dashboard do Render, vá até as configurações do seu serviço web
+2. Na seção "Environment Variables", adicione:
+   - Key: `REACT_APP_BACKEND_URL`
+   - Value: `https://fiap-prova-sub-fase-3.onrender.com`
+
+## Build e Deploy
+
+O processo de build já está configurado para usar as variáveis de ambiente corretas baseado no ambiente de deploy:
+
+```bash
+# Build para produção
+npm run build
+
+# Build para desenvolvimento
+npm run build:dev
+``` 
