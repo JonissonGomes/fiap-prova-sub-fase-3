@@ -330,9 +330,9 @@ const MyPurchases: React.FC = () => {
 
       {/* Cards de Estatísticas */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent sx={{ p: 3 }}>
+        <Grid item xs={12} sm={6} md={2.5}>
+          <Card sx={{ height: 160 }}>
+            <CardContent sx={{ p: 3, height: '100%' }}>
               <Box sx={{ 
                 display: 'flex', 
                 flexDirection: 'column', 
@@ -355,9 +355,9 @@ const MyPurchases: React.FC = () => {
           </Card>
         </Grid>
 
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent sx={{ p: 3 }}>
+        <Grid item xs={12} sm={6} md={2.5}>
+          <Card sx={{ height: 160 }}>
+            <CardContent sx={{ p: 3, height: '100%' }}>
               <Box sx={{ 
                 display: 'flex', 
                 flexDirection: 'column', 
@@ -380,9 +380,9 @@ const MyPurchases: React.FC = () => {
           </Card>
         </Grid>
 
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent sx={{ p: 3 }}>
+        <Grid item xs={12} sm={6} md={2.5}>
+          <Card sx={{ height: 160 }}>
+            <CardContent sx={{ p: 3, height: '100%' }}>
               <Box sx={{ 
                 display: 'flex', 
                 flexDirection: 'column', 
@@ -406,8 +406,8 @@ const MyPurchases: React.FC = () => {
         </Grid>
 
         <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent sx={{ p: 3 }}>
+          <Card sx={{ height: 160 }}>
+            <CardContent sx={{ p: 3, height: '100%' }}>
               <Box sx={{ 
                 display: 'flex', 
                 flexDirection: 'column', 
