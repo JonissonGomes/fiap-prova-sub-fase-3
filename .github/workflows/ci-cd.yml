@@ -39,9 +39,10 @@ jobs:
     - name: Install dependencies
       run: |
         cd ${{ matrix.service }}
-        pip install -r requirements.txt
         if [ -f requirements-dev.txt ]; then
           pip install -r requirements-dev.txt
+        else
+          pip install -r requirements.txt
         fi
         
     - name: Run tests with coverage
