@@ -1,5 +1,5 @@
 from typing import List
-from datetime import datetime, UTC
+from datetime import datetime, timezone
 
 from app.domain.vehicle import Vehicle, VehicleStatus
 from app.ports.vehicle_repository import VehicleRepository

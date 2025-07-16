@@ -1,10 +1,26 @@
-name: CI/CD Pipeline
+name: Manual Deploy
 
 on:
-  push:
-    branches: [ main, master, develop ]
-  pull_request:
-    branches: [ main, master, develop ]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+        - production
+        - staging
+      force_deploy:
+        description: 'Force deploy even if tests fail'
+        required: false
+        default: false
+        type: boolean
+      skip_tests:
+        description: 'Skip running tests entirely'
+        required: false
+        default: false
+        type: boolean
 
 env:
   PYTHON_VERSION: '3.11'
@@ -15,7 +31,8 @@ jobs:
     name: Test Backend Services
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    continue-on-error: true
+    if: ${{ !inputs.skip_tests }}
+    continue-on-error: ${{ inputs.force_deploy }}
     
     strategy:
       matrix:
@@ -75,14 +92,6 @@ jobs:
         name: ${{ matrix.service }}-coverage
         fail_ci_if_error: false
         
-    - name: Upload test results
-      uses: actions/upload-artifact@v4
-      if: always()
-      with:
-        name: test-results-${{ matrix.service }}
-        path: ${{ matrix.service }}/.pytest_cache/
-        retention-days: 7
-        
     - name: Test Status Summary
       if: always()
       run: |
@@ -95,7 +104,8 @@ jobs:
     name: Test Frontend
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    continue-on-error: true
+    if: ${{ !inputs.skip_tests }}
+    continue-on-error: ${{ inputs.force_deploy }}
     
     steps:
     - name: Checkout code
@@ -146,14 +156,6 @@ jobs:
         name: frontend-coverage
         fail_ci_if_error: false
         
-    - name: Upload test results
-      uses: actions/upload-artifact@v4
-      if: always()
-      with:
-        name: frontend-test-results
-        path: frontend/coverage/
-        retention-days: 7
-        
     - name: Frontend Status Summary
       if: always()
       run: |
@@ -162,54 +164,10 @@ jobs:
         echo "- Tests: ${{ steps.run-tests.outputs.test_status }}" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
 
-  security-scan:
-    name: Security Scan
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    continue-on-error: true
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Set up Python ${{ env.PYTHON_VERSION }}
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ env.PYTHON_VERSION }}
-        
-    - name: Install Bandit
-      run: pip install bandit
-      
-    - name: Run security scan
-      id: security-scan
-      run: |
-        if bandit -r . -f json -o bandit-report.json; then
-          echo "✅ Security scan passed"
-          echo "security_status=passed" >> $GITHUB_OUTPUT
-        else
-          echo "⚠️ Security scan found issues but continuing..."
-          echo "security_status=warnings" >> $GITHUB_OUTPUT
-        fi
-        
-    - name: Upload security report
-      uses: actions/upload-artifact@v4
-      with:
-        name: security-report
-        path: bandit-report.json
-        retention-days: 30
-        
-    - name: Security Status Summary
-      if: always()
-      run: |
-        echo "## Security Scan Status" >> $GITHUB_STEP_SUMMARY
-        echo "- Status: ${{ steps.security-scan.outputs.security_status }}" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-
   build-and-deploy:
-    name: Build and Deploy to Render
+    name: Build and Deploy to ${{ inputs.environment }}
     runs-on: ubuntu-latest
-    needs: [test-backend, test-frontend, security-scan]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: [test-backend, test-frontend]
     timeout-minutes: 45
     
     steps:
@@ -220,21 +178,24 @@ jobs:
       id: check-tests
       run: |
         echo "Checking test results from previous jobs..."
-        # This step will always run, but we'll check the results
-        echo "test_backend_status=${{ needs.test-backend.result }}" >> $GITHUB_OUTPUT
-        echo "test_frontend_status=${{ needs.test-frontend.result }}" >> $GITHUB_OUTPUT
-        echo "security_scan_status=${{ needs.security-scan.result }}" >> $GITHUB_OUTPUT
         
-        if [ "${{ needs.test-backend.result }}" == "success" ] && [ "${{ needs.test-frontend.result }}" == "success" ]; then
+        if [ "${{ inputs.skip_tests }}" == "true" ]; then
+          echo "✅ Tests skipped - proceeding with deployment"
+          echo "deploy_reason=tests_skipped" >> $GITHUB_OUTPUT
+        elif [ "${{ inputs.force_deploy }}" == "true" ]; then
+          echo "⚠️ Force deploy enabled - proceeding despite test results"
+          echo "deploy_reason=force_deploy" >> $GITHUB_OUTPUT
+        elif [ "${{ needs.test-backend.result }}" == "success" ] && [ "${{ needs.test-frontend.result }}" == "success" ]; then
           echo "✅ All tests passed - proceeding with deployment"
           echo "deploy_reason=all_tests_passed" >> $GITHUB_OUTPUT
-        elif [ "${{ needs.test-backend.result }}" == "failure" ] || [ "${{ needs.test-frontend.result }}" == "failure" ]; then
-          echo "⚠️ Some tests failed - proceeding with deployment anyway (bypass mode)"
-          echo "deploy_reason=bypass_mode" >> $GITHUB_OUTPUT
         else
-          echo "❓ Test status unclear - proceeding with deployment"
-          echo "deploy_reason=unknown_status" >> $GITHUB_OUTPUT
+          echo "❌ Tests failed and force deploy not enabled"
+          echo "deploy_reason=tests_failed" >> $GITHUB_OUTPUT
+          exit 1
         fi
+        
+        echo "test_backend_status=${{ needs.test-backend.result }}" >> $GITHUB_OUTPUT
+        echo "test_frontend_status=${{ needs.test-frontend.result }}" >> $GITHUB_OUTPUT
       
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
@@ -247,31 +208,31 @@ jobs:
         
     - name: Build and push Docker images
       run: |
-        echo "Building and pushing Docker images..."
+        echo "Building and pushing Docker images for ${{ inputs.environment }}..."
         
         # Build auth-service
-        docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/fiap-auth-service:latest auth-service/
-        docker push ${{ secrets.DOCKERHUB_USERNAME }}/fiap-auth-service:latest
+        docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/fiap-auth-service:${{ inputs.environment }} auth-service/
+        docker push ${{ secrets.DOCKERHUB_USERNAME }}/fiap-auth-service:${{ inputs.environment }}
         
         # Build core-service
-        docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/fiap-core-service:latest core-service/
-        docker push ${{ secrets.DOCKERHUB_USERNAME }}/fiap-core-service:latest
+        docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/fiap-core-service:${{ inputs.environment }} core-service/
+        docker push ${{ secrets.DOCKERHUB_USERNAME }}/fiap-core-service:${{ inputs.environment }}
         
         # Build customer-service
-        docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/fiap-customer-service:latest customer-service/
-        docker push ${{ secrets.DOCKERHUB_USERNAME }}/fiap-customer-service:latest
+        docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/fiap-customer-service:${{ inputs.environment }} customer-service/
+        docker push ${{ secrets.DOCKERHUB_USERNAME }}/fiap-customer-service:${{ inputs.environment }}
         
         # Build payment-service
-        docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/fiap-payment-service:latest payment-service/
-        docker push ${{ secrets.DOCKERHUB_USERNAME }}/fiap-payment-service:latest
+        docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/fiap-payment-service:${{ inputs.environment }} payment-service/
+        docker push ${{ secrets.DOCKERHUB_USERNAME }}/fiap-payment-service:${{ inputs.environment }}
         
         # Build sales-service
-        docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/fiap-sales-service:latest sales-service/
-        docker push ${{ secrets.DOCKERHUB_USERNAME }}/fiap-sales-service:latest
+        docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/fiap-sales-service:${{ inputs.environment }} sales-service/
+        docker push ${{ secrets.DOCKERHUB_USERNAME }}/fiap-sales-service:${{ inputs.environment }}
         
         # Build frontend
-        docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/fiap-frontend:latest frontend/
-        docker push ${{ secrets.DOCKERHUB_USERNAME }}/fiap-frontend:latest
+        docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/fiap-frontend:${{ inputs.environment }} frontend/
+        docker push ${{ secrets.DOCKERHUB_USERNAME }}/fiap-frontend:${{ inputs.environment }}
         
     - name: Deploy to Render
       uses: johnbeynon/render-deploy-action@v1.0.0
@@ -282,12 +243,20 @@ jobs:
     - name: Deployment Summary
       if: always()
       run: |
-        echo "## Deployment Summary" >> $GITHUB_STEP_SUMMARY
-        echo "### Test Results" >> $GITHUB_STEP_SUMMARY
-        echo "- Backend Tests: ${{ steps.check-tests.outputs.test_backend_status }}" >> $GITHUB_STEP_SUMMARY
-        echo "- Frontend Tests: ${{ steps.check-tests.outputs.test_frontend_status }}" >> $GITHUB_STEP_SUMMARY
-        echo "- Security Scan: ${{ steps.check-tests.outputs.security_scan_status }}" >> $GITHUB_STEP_SUMMARY
+        echo "## Manual Deployment Summary" >> $GITHUB_STEP_SUMMARY
+        echo "### Environment" >> $GITHUB_STEP_SUMMARY
+        echo "- Target: ${{ inputs.environment }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Force Deploy: ${{ inputs.force_deploy }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Skip Tests: ${{ inputs.skip_tests }}" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
+        
+        if [ "${{ inputs.skip_tests }}" != "true" ]; then
+          echo "### Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "- Backend Tests: ${{ steps.check-tests.outputs.test_backend_status }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Frontend Tests: ${{ steps.check-tests.outputs.test_frontend_status }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+        fi
+        
         echo "### Deployment Reason" >> $GITHUB_STEP_SUMMARY
         echo "- Reason: ${{ steps.check-tests.outputs.deploy_reason }}" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY

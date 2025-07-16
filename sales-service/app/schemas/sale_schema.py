@@ -36,8 +36,34 @@ class SaleBase(BaseModel):
 class SaleCreate(SaleBase):
     pass
 
-class SaleUpdate(SaleBase):
-    pass
+class SaleUpdate(BaseModel):
+    """Schema para atualização de vendas com campos opcionais."""
+    vehicle_id: Optional[str] = Field(None, min_length=1, description="ID do veículo")
+    buyer_cpf: Optional[str] = Field(None, min_length=11, max_length=11, description="CPF do comprador")
+    sale_price: Optional[float] = Field(None, gt=0, description="Preço da venda")
+    payment_code: Optional[str] = Field(None, min_length=1, description="Código do pagamento")
+    payment_status: Optional[PaymentStatus] = Field(None, description="Status do pagamento")
+
+    @validator('buyer_cpf')
+    def validate_cpf(cls, v):
+        if v is None:
+            return v
+        # Remove caracteres não numéricos
+        cpf = ''.join(filter(str.isdigit, v))
+        if len(cpf) != 11:
+            raise ValueError('CPF deve conter 11 dígitos')
+        return v
+
+    @validator('payment_status', pre=True)
+    def validate_payment_status(cls, v):
+        if v is None:
+            return v
+        if isinstance(v, str):
+            try:
+                return PaymentStatus(v)
+            except ValueError:
+                raise ValueError(f"Status de pagamento inválido: {v}")
+        return v
 
 class SaleResponse(SaleBase):
     id: str

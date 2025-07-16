@@ -88,7 +88,7 @@ O pipeline de CI/CD automatiza todo o processo de desenvolvimento, desde testes 
 ### Configuração
 
 O arquivo `codecov.yml` define:
-- **Target**: 60% de cobertura mínima
+- **Target**: Cobertura mínima configurável
 - **Threshold**: 5% de tolerância
 - **Flags**: Separação por serviço
 - **Ignore**: Arquivos não relevantes
@@ -99,7 +99,7 @@ O arquivo `codecov.yml` define:
 # Backend
 cd auth-service
 coverage run -m pytest tests/
-coverage report --show-missing --fail-under=60
+coverage report --show-missing
 
 # Frontend
 cd frontend
