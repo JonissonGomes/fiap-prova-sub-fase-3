@@ -293,40 +293,53 @@ const Payments: React.FC = () => {
       align: 'center' as const,
       headerAlign: 'center' as const,
       sortable: false,
-      renderCell: (params) => (
-        <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'center' }}>
-          {params.row.payment_status === PaymentStatus.PENDING && (
-            <Button
-              onClick={() => handleStatusChange(params.row.id, PaymentStatus.PAID)}
-              color="success"
-              variant="outlined"
-              size="small"
-            >
-              Aprovar
-            </Button>
-          )}
-          {params.row.payment_status === PaymentStatus.PENDING && (
-            <Button
-              onClick={() => handleStatusChange(params.row.id, PaymentStatus.CANCELLED)}
-              color="error"
-              variant="outlined"
-              size="small"
-            >
-              Cancelar
-            </Button>
-          )}
-          {params.row.payment_status === PaymentStatus.PAID && (
-            <Button
-              onClick={() => handleStatusChange(params.row.id, PaymentStatus.CANCELLED)}
-              color="error"
-              variant="outlined"
-              size="small"
-            >
-              Cancelar
-            </Button>
-          )}
-        </Box>
-      )
+      renderCell: (params) => {
+        // Apenas administradores podem ver as ações
+        if (!canApprovePayments(user) && !canCancelPayments(user)) {
+          return (
+            <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+              <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                Somente administradores
+              </Typography>
+            </Box>
+          );
+        }
+
+        return (
+          <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'center' }}>
+            {params.row.payment_status === PaymentStatus.PENDING && canApprovePayments(user) && (
+              <Button
+                onClick={() => handleStatusChange(params.row.id, PaymentStatus.PAID)}
+                color="success"
+                variant="outlined"
+                size="small"
+              >
+                Aprovar
+              </Button>
+            )}
+            {params.row.payment_status === PaymentStatus.PENDING && canCancelPayments(user) && (
+              <Button
+                onClick={() => handleStatusChange(params.row.id, PaymentStatus.CANCELLED)}
+                color="error"
+                variant="outlined"
+                size="small"
+              >
+                Cancelar
+              </Button>
+            )}
+            {params.row.payment_status === PaymentStatus.PAID && canCancelPayments(user) && (
+              <Button
+                onClick={() => handleStatusChange(params.row.id, PaymentStatus.CANCELLED)}
+                color="error"
+                variant="outlined"
+                size="small"
+              >
+                Cancelar
+              </Button>
+            )}
+          </Box>
+        );
+      }
     }
   ];
 
@@ -353,10 +366,16 @@ const Payments: React.FC = () => {
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
         <Box>
           <Typography variant="h4" component="h1" gutterBottom>
-            Gerenciamento de Pagamentos
+            {canApprovePayments(user) || canCancelPayments(user) 
+              ? 'Gerenciamento de Pagamentos' 
+              : 'Visualização de Pagamentos'
+            }
           </Typography>
           <Typography variant="body1" color="text.secondary">
-            Gerencie e aprove pagamentos das vendas realizadas
+            {canApprovePayments(user) || canCancelPayments(user)
+              ? 'Gerencie e aprove pagamentos das vendas realizadas'
+              : 'Visualize o status dos pagamentos das vendas realizadas'
+            }
           </Typography>
         </Box>
       </Box>
