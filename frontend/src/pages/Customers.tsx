@@ -376,48 +376,51 @@ const Customers: React.FC = () => {
       <Card sx={{ mb: 4 }}>
         <CardContent sx={{ p: 3 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-            <Typography variant="h6">Busca e Filtros</Typography>
+            <Typography variant="h6" sx={{ fontWeight: 600 }}>Busca</Typography>
             <Button
               onClick={() => setShowFilters(!showFilters)}
               startIcon={showFilters ? <ExpandLessIcon /> : <ExpandMoreIcon />}
               variant="outlined"
               size="small"
+              sx={{ minWidth: 140 }}
             >
-              {showFilters ? 'Ocultar' : 'Mostrar'} Filtros
+              {showFilters ? 'Ocultar' : 'Mostrar'} Busca
             </Button>
           </Box>
           
           <Collapse in={showFilters}>
-            <Grid container spacing={3}>
-              <Grid item xs={12} md={8}>
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6} md={8}>
                 <TextField
                   fullWidth
                   size="small"
-                  label="Buscar clientes..."
+                  label="Buscar por nome, email ou CPF"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Digite nome, email, CPF, telefone, cidade ou estado"
+                  variant="outlined"
                 />
               </Grid>
               
-              <Grid item xs={12} md={2}>
+              <Grid item xs={12} sm={3} md={2}>
                 <Button
                   onClick={handleSearch}
-                  variant="outlined"
+                  variant="contained"
                   fullWidth
                   size="small"
                   startIcon={<SearchIcon />}
+                  sx={{ height: 40 }}
                 >
                   Buscar
                 </Button>
               </Grid>
               
-              <Grid item xs={12} md={2}>
+              <Grid item xs={12} sm={3} md={2}>
                 <Button
                   onClick={clearSearch}
                   variant="outlined"
                   fullWidth
                   size="small"
+                  sx={{ height: 40 }}
                 >
                   Limpar
                 </Button>

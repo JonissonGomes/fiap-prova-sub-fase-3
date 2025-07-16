@@ -416,19 +416,20 @@ const VehiclesWithRoles: React.FC = () => {
       <Card sx={{ mb: 4 }}>
         <CardContent sx={{ p: 3 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-            <Typography variant="h6">Filtros</Typography>
+            <Typography variant="h6" sx={{ fontWeight: 600 }}>Filtros</Typography>
             <Button
               onClick={() => setShowFilters(!showFilters)}
               startIcon={showFilters ? <ExpandLessIcon /> : <ExpandMoreIcon />}
               variant="outlined"
               size="small"
+              sx={{ minWidth: 140 }}
             >
               {showFilters ? 'Ocultar' : 'Mostrar'} Filtros
             </Button>
           </Box>
           
           <Collapse in={showFilters}>
-            <Grid container spacing={3}>
+            <Grid container spacing={2}>
               {/* Status - apenas para admin e vendedor */}
               {!isCustomer(user) && (
                 <Grid item xs={12} sm={6} md={3}>
@@ -490,12 +491,13 @@ const VehiclesWithRoles: React.FC = () => {
                 />
               </Grid>
               
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid item xs={12} sm={6} md={2}>
                 <Button
                   onClick={clearFilters}
                   variant="outlined"
                   fullWidth
                   size="small"
+                  sx={{ height: 40 }}
                 >
                   Limpar Filtros
                 </Button>

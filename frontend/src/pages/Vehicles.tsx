@@ -16,10 +16,13 @@ import {
   InputLabel,
   Select,
   SelectChangeEvent,
-  Chip
+  Chip,
+  Card,
+  CardContent,
+  Collapse
 } from '@mui/material';
 import { DataGrid, GridColDef, GridSortModel } from '@mui/x-data-grid';
-import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, FilterList as FilterIcon } from '@mui/icons-material';
+import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, FilterList as FilterIcon, ExpandLess as ExpandLessIcon, ExpandMore as ExpandMoreIcon } from '@mui/icons-material';
 import { NumericFormat } from 'react-number-format';
 import { Vehicle, VehicleCreate, VehicleStatus, VehicleFilters } from '../types';
 import { vehiclesApi } from '../services/api';
@@ -229,97 +232,113 @@ const Vehicles: React.FC = () => {
 
   return (
     <Box sx={{ p: 3 }}>
-      <Typography variant="h4" gutterBottom>
-        Gerenciamento de Veículos
-      </Typography>
+      {/* Cabeçalho */}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+        <Typography variant="h4" component="h1" sx={{ fontWeight: 'bold' }}>
+          Veículos
+        </Typography>
+        {canManageVehicles && (
+          <Button
+            startIcon={<AddIcon />}
+            onClick={handleOpen}
+            variant="contained"
+            size="medium"
+          >
+            Novo Veículo
+          </Button>
+        )}
+      </Box>
 
       {/* Filtros */}
-      <Paper sx={{ p: 2, mb: 3 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-          <Typography variant="h6">Filtros</Typography>
-          <Box>
+      <Card sx={{ mb: 4 }}>
+        <CardContent sx={{ p: 3 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+            <Typography variant="h6" sx={{ fontWeight: 600 }}>Filtros</Typography>
             <Button
-              startIcon={<FilterIcon />}
               onClick={() => setShowFilters(!showFilters)}
+              startIcon={showFilters ? <ExpandLessIcon /> : <ExpandMoreIcon />}
               variant="outlined"
-              sx={{ mr: 1 }}
+              size="small"
+              sx={{ minWidth: 140 }}
             >
               {showFilters ? 'Ocultar' : 'Mostrar'} Filtros
             </Button>
-            {canManageVehicles && (
-              <Button
-                startIcon={<AddIcon />}
-                onClick={handleOpen}
-                variant="contained"
-              >
-                Novo Veículo
-              </Button>
-            )}
           </Box>
-        </Box>
-
-        {showFilters && (
-          <Grid container spacing={2}>
-            <Grid item xs={12} md={3}>
-              <FormControl fullWidth>
-                <InputLabel>Status</InputLabel>
-                <Select
-                  value={filters.status || ''}
-                  onChange={(e: SelectChangeEvent) => handleFilterChange('status', e.target.value || undefined)}
+          
+          <Collapse in={showFilters}>
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6} md={3}>
+                <FormControl fullWidth size="small">
+                  <InputLabel>Status</InputLabel>
+                  <Select
+                    value={filters.status || ''}
+                    onChange={(e: SelectChangeEvent) => handleFilterChange('status', e.target.value || undefined)}
+                  >
+                    <MenuItem value="">Todos</MenuItem>
+                    <MenuItem value={VehicleStatus.AVAILABLE}>Disponível</MenuItem>
+                    <MenuItem value={VehicleStatus.RESERVED}>Reservado</MenuItem>
+                    <MenuItem value={VehicleStatus.SOLD}>Vendido</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+              
+              <Grid item xs={12} sm={6} md={3}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="Marca"
+                  value={filters.brand || ''}
+                  onChange={(e) => handleFilterChange('brand', e.target.value || undefined)}
+                />
+              </Grid>
+              
+              <Grid item xs={12} sm={6} md={3}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="Modelo"
+                  value={filters.model || ''}
+                  onChange={(e) => handleFilterChange('model', e.target.value || undefined)}
+                />
+              </Grid>
+              
+              <Grid item xs={12} sm={6} md={3}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="Preço Mínimo"
+                  type="number"
+                  value={filters.min_price || ''}
+                  onChange={(e) => handleFilterChange('min_price', e.target.value ? parseFloat(e.target.value) : undefined)}
+                />
+              </Grid>
+              
+              <Grid item xs={12} sm={6} md={3}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="Preço Máximo"
+                  type="number"
+                  value={filters.max_price || ''}
+                  onChange={(e) => handleFilterChange('max_price', e.target.value ? parseFloat(e.target.value) : undefined)}
+                />
+              </Grid>
+              
+              <Grid item xs={12} sm={6} md={2}>
+                <Button
+                  onClick={clearFilters}
+                  variant="outlined"
+                  fullWidth
+                  size="small"
+                  sx={{ height: 40 }}
                 >
-                  <MenuItem value="">Todos</MenuItem>
-                  <MenuItem value={VehicleStatus.AVAILABLE}>Disponível</MenuItem>
-                  <MenuItem value={VehicleStatus.RESERVED}>Reservado</MenuItem>
-                  <MenuItem value={VehicleStatus.SOLD}>Vendido</MenuItem>
-                </Select>
-              </FormControl>
+                  Limpar Filtros
+                </Button>
+              </Grid>
             </Grid>
-            <Grid item xs={12} md={3}>
-              <TextField
-                fullWidth
-                label="Marca"
-                value={filters.brand || ''}
-                onChange={(e) => handleFilterChange('brand', e.target.value || undefined)}
-              />
-            </Grid>
-            <Grid item xs={12} md={3}>
-              <TextField
-                fullWidth
-                label="Modelo"
-                value={filters.model || ''}
-                onChange={(e) => handleFilterChange('model', e.target.value || undefined)}
-              />
-            </Grid>
-            <Grid item xs={12} md={3}>
-              <TextField
-                fullWidth
-                label="Preço Mínimo"
-                type="number"
-                value={filters.min_price || ''}
-                onChange={(e) => handleFilterChange('min_price', e.target.value ? parseFloat(e.target.value) : undefined)}
-              />
-            </Grid>
-            <Grid item xs={12} md={3}>
-              <TextField
-                fullWidth
-                label="Preço Máximo"
-                type="number"
-                value={filters.max_price || ''}
-                onChange={(e) => handleFilterChange('max_price', e.target.value ? parseFloat(e.target.value) : undefined)}
-              />
-            </Grid>
-            <Grid item xs={12} md={3}>
-              <Button
-                onClick={clearFilters}
-                variant="outlined"
-                fullWidth
-              >
-                Limpar Filtros
-              </Button>
-            </Grid>
-          </Grid>
-        )}
-      </Paper>
+          </Collapse>
+        </CardContent>
+      </Card>
 
       <DataGrid
         rows={vehicles}
