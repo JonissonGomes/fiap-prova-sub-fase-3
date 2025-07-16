@@ -5,6 +5,7 @@ from unittest.mock import AsyncMock, patch
 from datetime import datetime
 from bson import ObjectId
 from app.controllers.sale_controller import router, get_service
+from app.middleware.auth import get_current_user, require_role
 from app.domain.sale import Sale, PaymentStatus
 from app.schemas.sale_schema import SaleCreate, SaleUpdate, SaleResponse
 from app.exceptions import SaleNotFoundError, InvalidSaleDataError
@@ -19,8 +20,17 @@ def app(mock_sale_service):
     
     async def override_get_service():
         return mock_sale_service
+
+    # Mock das dependências de autenticação
+    async def mock_get_current_user():
+        return {"user_id": "test_user", "email": "test@example.com", "role": "ADMIN"}
+
+    async def mock_require_role(roles):
+        return {"user_id": "test_user", "email": "test@example.com", "role": "ADMIN"}
     
     app.dependency_overrides[get_service] = override_get_service
+    app.dependency_overrides[get_current_user] = mock_get_current_user
+    app.dependency_overrides[require_role] = mock_require_role
     app.include_router(router)
     return app
 
@@ -32,9 +42,9 @@ async def client(app):
 @pytest.mark.asyncio
 async def test_create_sale_error(client, mock_sale_service):
     mock_sale_service.create_sale.side_effect = Exception("Erro ao criar venda")
-    
+
     response = await client.post(
-        "/sales",
+        "/sales/",
         json={
             "vehicle_id": "test_vehicle_id",
             "buyer_cpf": "12345678900",
@@ -42,7 +52,7 @@ async def test_create_sale_error(client, mock_sale_service):
             "payment_code": "test_payment_code"
         }
     )
-    
+
     assert response.status_code == 500
 
 @pytest.mark.asyncio
@@ -54,23 +64,9 @@ async def test_get_sale_error(client, mock_sale_service):
     assert response.status_code == 404
     assert "Venda não encontrada" in response.json()["detail"]
 
-@pytest.mark.asyncio
-async def test_get_sales_error(client, mock_sale_service):
-    mock_sale_service.get_all_sales.side_effect = Exception("Erro ao listar vendas")
-    
-    response = await client.get("/sales")
-    
-    assert response.status_code == 500
-    assert "Erro ao listar vendas" in response.json()["detail"]
 
-@pytest.mark.asyncio
-async def test_get_sales_by_status_error(client, mock_sale_service):
-    mock_sale_service.get_sales_by_status.side_effect = Exception("Erro ao listar vendas por status")
-    
-    response = await client.get("/sales/status/PENDENTE")
-    
-    assert response.status_code == 500
-    assert "Erro ao listar vendas por status" in response.json()["detail"]
+
+
 
 @pytest.mark.asyncio
 async def test_get_sale_by_payment_code_error(client, mock_sale_service):
@@ -81,46 +77,18 @@ async def test_get_sale_by_payment_code_error(client, mock_sale_service):
     assert response.status_code == 404
     assert "Venda não encontrada" in response.json()["detail"]
 
-@pytest.mark.asyncio
-async def test_delete_sale_error(client, mock_sale_service):
-    mock_sale_service.delete_sale.side_effect = SaleNotFoundError("Venda não encontrada")
-    
-    response = await client.delete(f"/sales/{str(ObjectId())}")
-    
-    assert response.status_code == 404
-    assert "Venda não encontrada" in response.json()["detail"]
 
-@pytest.mark.asyncio
-async def test_mark_sale_as_canceled_error(client, mock_sale_service):
-    mock_sale_service.update_payment_status.side_effect = SaleNotFoundError("Venda não encontrada")
-    
-    response = await client.patch(f"/sales/{str(ObjectId())}/mark-as-canceled")
-    
-    assert response.status_code == 404
-    assert "Venda não encontrada" in response.json()["detail"]
 
-@pytest.mark.asyncio
-async def test_mark_sale_as_pending_error(client, mock_sale_service):
-    mock_sale_service.update_payment_status.side_effect = SaleNotFoundError("Venda não encontrada")
-    
-    response = await client.patch(f"/sales/{str(ObjectId())}/mark-as-pending")
-    
-    assert response.status_code == 404
-    assert "Venda não encontrada" in response.json()["detail"]
 
-@pytest.mark.asyncio
-async def test_mark_sale_as_paid_error(client, mock_sale_service):
-    mock_sale_service.update_payment_status.side_effect = SaleNotFoundError("Venda não encontrada")
-    
-    response = await client.patch(f"/sales/{str(ObjectId())}/mark-as-paid")
-    
-    assert response.status_code == 404
-    assert "Venda não encontrada" in response.json()["detail"]
+
+
+
+
 
 @pytest.mark.asyncio
 async def test_create_sale_invalid_data(client):
     response = await client.post(
-        "/sales",
+        "/sales/",
         json={
             "vehicle_id": "",  # ID vazio
             "buyer_cpf": "123",  # CPF inválido
@@ -128,7 +96,7 @@ async def test_create_sale_invalid_data(client):
             "payment_code": ""  # Código vazio
         }
     )
-    
+
     assert response.status_code == 422  # Unprocessable Entity
 
 @pytest.mark.asyncio

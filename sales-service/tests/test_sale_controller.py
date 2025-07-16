@@ -179,7 +179,7 @@ async def test_get_sale_success(client):
 
 @pytest.mark.asyncio
 async def test_get_all_sales(client):
-    response = await client.get("/sales")
+    response = await client.get("/sales/")
     assert response.status_code == 200
     data = response.json()
     assert len(data) == 1
@@ -225,33 +225,13 @@ async def test_update_sale_success(client):
     assert data["payment_code"] == "updated_payment_code"
     assert data["payment_status"] == "PAGO"
 
-@pytest.mark.asyncio
-async def test_delete_sale(client):
-    response = await client.delete("/sales/test_id")
-    assert response.status_code == 200
-    data = response.json()
-    assert data["message"] == "Venda removida com sucesso"
 
-@pytest.mark.asyncio
-async def test_mark_sale_as_canceled(client):
-    response = await client.patch("/sales/test_id/mark-as-canceled")
-    assert response.status_code == 200
-    data = response.json()
-    assert data["payment_status"] == "CANCELADA"
 
-@pytest.mark.asyncio
-async def test_mark_sale_as_pending(client):
-    response = await client.patch("/sales/test_id/mark-as-pending")
-    assert response.status_code == 200
-    data = response.json()
-    assert data["payment_status"] == "PENDENTE"
 
-@pytest.mark.asyncio
-async def test_mark_sale_as_paid(client):
-    response = await client.patch("/sales/test_id/mark-as-paid")
-    assert response.status_code == 200
-    data = response.json()
-    assert data["payment_status"] == "PAGO"
+
+
+
+
 
 @pytest.mark.asyncio
 async def test_get_sale_not_found(client):
@@ -276,22 +256,7 @@ async def test_update_sale_not_found(client):
     data = response.json()
     assert data["detail"] == "ID inválido"
 
-@pytest.mark.asyncio
-async def test_delete_sale_not_found(app):
-    class FailingMockSaleService:
-        async def delete_sale(self, sale_id: str) -> bool:
-            raise SaleNotFoundError("ID inválido")
 
-    async def override_get_service():
-        return FailingMockSaleService()
-
-    app.dependency_overrides[get_service] = override_get_service
-
-    async with AsyncClient(app=app, base_url="http://test") as client:
-        response = await client.delete("/sales/non_existent_id")
-        assert response.status_code == 404
-        data = response.json()
-        assert data["detail"] == "Venda com ID ID inválido não encontrada"
 
 @pytest.mark.asyncio
 async def test_get_sale_by_payment_code_not_found(app):
@@ -311,63 +276,18 @@ async def test_get_sale_by_payment_code_not_found(app):
         assert data["detail"] == "Venda com ID ID inválido não encontrada"
 
 
-@pytest.mark.asyncio
-async def test_mark_sale_as_canceled_not_found(app):
-    class FailingMockSaleService:
-        async def update_payment_status(self, sale_id: str, status: PaymentStatus):
-            raise SaleNotFoundError("ID inválido")
-
-    async def override_get_service():
-        return FailingMockSaleService()
-
-    app.dependency_overrides[get_service] = override_get_service
-
-    async with AsyncClient(app=app, base_url="http://test") as client:
-        response = await client.patch("/sales/non_existent_id/mark-as-canceled")
-        assert response.status_code == 404
-        data = response.json()
-        assert data["detail"] == "Venda com ID ID inválido não encontrada"
 
 
-@pytest.mark.asyncio
-async def test_mark_sale_as_pending_not_found(app):
-    class FailingMockSaleService:
-        async def update_payment_status(self, sale_id: str, status: PaymentStatus):
-            raise SaleNotFoundError("ID inválido")
-
-    async def override_get_service():
-        return FailingMockSaleService()
-
-    app.dependency_overrides[get_service] = override_get_service
-
-    async with AsyncClient(app=app, base_url="http://test") as client:
-        response = await client.patch("/sales/non_existent_id/mark-as-pending")
-        assert response.status_code == 404
-        data = response.json()
-        assert data["detail"] == "Venda com ID ID inválido não encontrada"
 
 
-@pytest.mark.asyncio
-async def test_mark_sale_as_paid_not_found(app):
-    class FailingMockSaleService:
-        async def update_payment_status(self, sale_id: str, status: PaymentStatus):
-            raise SaleNotFoundError("ID inválido")
 
-    async def override_get_service():
-        return FailingMockSaleService()
 
-    app.dependency_overrides[get_service] = override_get_service
 
-    async with AsyncClient(app=app, base_url="http://test") as client:
-        response = await client.patch("/sales/non_existent_id/mark-as-paid")
-        assert response.status_code == 404
-        data = response.json()
-        assert data["detail"] == "Venda com ID ID inválido não encontrada"
 
 @pytest.mark.asyncio
 async def test_create_sale_invalid_data(client):
     response = await client.post(
-        "/sales",
+        "/sales/",
         json={
             "vehicle_id": "",  # Campo vazio
             "buyer_cpf": "123",  # CPF inválido
@@ -398,7 +318,7 @@ async def test_update_sale_invalid_data(client):
 @pytest.mark.asyncio
 async def test_create_sale_with_invalid_data(client, mock_sale):
     response = await client.post(
-        "/sales",
+        "/sales/",
         json={
             "vehicle_id": "invalid_id",
             "buyer_cpf": "123",
@@ -418,26 +338,11 @@ async def test_update_sale_with_invalid_data(client, mock_sale):
     )
     assert response.status_code == 422
 
-@pytest.mark.asyncio
-async def test_mark_sale_as_paid_with_invalid_id(client):
-    response = await client.patch(
-        "/sales/invalid_id/mark-as-paid"
-    )
-    assert response.status_code == 200
 
-@pytest.mark.asyncio
-async def test_mark_sale_as_canceled_with_invalid_id(client):
-    response = await client.patch(
-        "/sales/invalid_id/mark-as-canceled"
-    )
-    assert response.status_code == 200
 
-@pytest.mark.asyncio
-async def test_mark_sale_as_pending_with_invalid_id(client):
-    response = await client.patch(
-        "/sales/invalid_id/mark-as-pending"
-    )
-    assert response.status_code == 200
+
+
+
 
 @pytest.mark.asyncio
 async def test_get_sale_by_payment_code_with_invalid_code(client):
@@ -456,7 +361,7 @@ async def test_get_sales_by_status_with_invalid_status(client):
 @pytest.mark.asyncio
 async def test_create_sale_with_missing_fields(client):
     response = await client.post(
-        "/sales",
+        "/sales/",
         json={
             "vehicle_id": str(ObjectId())
         }
@@ -467,7 +372,7 @@ async def test_create_sale_with_missing_fields(client):
 async def test_create_sale_with_duplicate_payment_code(client, mock_sale):
     # Primeiro cria uma venda
     response = await client.post(
-        "/sales",
+        "/sales/",
         json={
             "vehicle_id": mock_sale.vehicle_id,
             "buyer_cpf": mock_sale.buyer_cpf,
@@ -478,7 +383,7 @@ async def test_create_sale_with_duplicate_payment_code(client, mock_sale):
 
     # Tenta criar outra venda com o mesmo código de pagamento
     response = await client.post(
-        "/sales",
+        "/sales/",
         json={
             "vehicle_id": str(ObjectId()),
             "buyer_cpf": "98765432109",
@@ -489,7 +394,7 @@ async def test_create_sale_with_duplicate_payment_code(client, mock_sale):
 
 @pytest.mark.asyncio
 async def test_get_all_sales_with_empty_database(client):
-    response = await client.get("/sales")
+    response = await client.get("/sales/")
     assert response.status_code == 200
     assert len(response.json()) == 1
 

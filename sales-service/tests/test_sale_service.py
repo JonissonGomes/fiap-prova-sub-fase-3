@@ -34,12 +34,23 @@ def mock_sale():
 async def test_update_sale_partial_fields(sale_service, mock_sale):
     # Simula a atualização de preço
     update_data = SaleUpdate(sale_price=75000.00)
-    sale_service.update_sale.return_value = mock_sale  # Mockando o resultado
-    result = await sale_service.update_sale(mock_sale.id, update_data)
     
-    # Verificando se o preço foi atualizado corretamente
+    # Mock do serviço para retornar a venda atualizada
+    sale_service.update_sale.return_value = Sale(
+        id="123",
+        vehicle_id="vehicle_123",
+        buyer_cpf="12345678900",
+        sale_price=75000.00,
+        payment_code="PAY-1234567890",
+        payment_status=PaymentStatus.PENDING,
+        created_at=datetime.now(),
+        updated_at=datetime.now()
+    )
+    
+    result = await sale_service.update_sale("123", update_data)
+    
     assert result.sale_price == 75000.00
-    assert result.buyer_cpf == mock_sale.buyer_cpf  # Verificando se outros campos não foram alterados
+    sale_service.update_sale.assert_called_once_with("123", update_data)
 
 # Teste de atualização de todos os campos
 @pytest.mark.asyncio
@@ -116,21 +127,35 @@ async def test_update_sale_timestamps(sale_service, mock_sale):
     # Simulando os timestamps originais
     original_created_at = mock_sale.created_at
     original_updated_at = mock_sale.updated_at
-    
+
     # Aguarda um momento para garantir que os timestamps se diferenciem
     await asyncio.sleep(0.1)
-    
+
     # Simulando a atualização com um novo preço
     update_data = SaleUpdate(sale_price=90000.00)
     
-    # Mockando o retorno da função update_sale para simular a alteração do updated_at
-    mock_sale.updated_at = datetime.utcnow()  # Atualiza o timestamp de updated_at
-    sale_service.update_sale.return_value = mock_sale  # Retorna o mock com a data atualizada
+    # Mock do serviço para retornar a venda atualizada
+    updated_sale = Sale(
+        id="123",
+        vehicle_id="vehicle_123",
+        buyer_cpf="12345678900",
+        sale_price=90000.00,
+        payment_code="PAY-1234567890",
+        payment_status=PaymentStatus.PENDING,
+        created_at=original_created_at,
+        updated_at=datetime.utcnow()
+    )
+    sale_service.update_sale.return_value = updated_sale
     
-    result = await sale_service.update_sale(mock_sale.id, update_data)
+    result = await sale_service.update_sale("123", update_data)
     
-    # Verificando que a data de criação não mudou, mas a data de atualização sim
+    # Verifica se o preço foi atualizado
+    assert result.sale_price == 90000.00
+    
+    # Verifica se o timestamp de criação não foi alterado
     assert result.created_at == original_created_at
+    
+    # Verifica se o timestamp de atualização foi modificado
     assert result.updated_at > original_updated_at
 
 # Teste de obtenção de venda por ID de veículo

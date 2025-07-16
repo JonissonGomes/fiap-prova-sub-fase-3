@@ -31,69 +31,80 @@ async def test_create_sale_error(sale_service, mock_repository):
 @pytest.mark.asyncio
 async def test_update_sale_error(sale_service, mock_repository):
     mock_repository.find_by_id.return_value = None
-    
-    with pytest.raises(Exception) as exc_info:
+
+    with pytest.raises(SaleNotFoundError) as exc_info:
         await sale_service.update_sale("test_id", SaleUpdate(
             sale_price=60000.0
         ))
     
-    assert "Venda não encontrada" in str(exc_info.value)
+    assert "Venda com ID test_id não encontrada" in str(exc_info.value)
 
 @pytest.mark.asyncio
 async def test_delete_sale_error(sale_service, mock_repository):
     mock_repository.delete.return_value = False
-    
-    with pytest.raises(Exception) as exc_info:
+
+    with pytest.raises(SaleNotFoundError) as exc_info:
         await sale_service.delete_sale("test_id")
     
-    assert "Venda não encontrada" in str(exc_info.value)
+    assert "Venda com ID test_id não encontrada" in str(exc_info.value)
 
 @pytest.mark.asyncio
 async def test_update_payment_status_error(sale_service, mock_repository):
     mock_repository.find_by_id.return_value = None
-    
-    with pytest.raises(Exception) as exc_info:
+
+    with pytest.raises(SaleNotFoundError) as exc_info:
         await sale_service.update_payment_status("test_sale_id", PaymentStatus.PAID)
     
-    assert "Venda não encontrada" in str(exc_info.value)
+    assert "Venda com ID test_sale_id não encontrada" in str(exc_info.value)
 
 @pytest.mark.asyncio
-async def test_update_payment_status_success(sale_service, mock_repository, mock_sale):
+async def test_update_payment_status_success(sale_service, mock_repository):
+    # Mock de uma venda existente
+    mock_sale = Sale(
+        id="test_id",
+        vehicle_id="test_vehicle",
+        buyer_cpf="12345678900",
+        sale_price=50000.0,
+        payment_code="test_payment",
+        payment_status=PaymentStatus.PENDING,
+        created_at=datetime.now(),
+        updated_at=datetime.now()
+    )
+    
     mock_repository.find_by_id.return_value = mock_sale
     mock_repository.update.return_value = mock_sale
     
-    updated_sale = await sale_service.update_payment_status("test_sale_id", PaymentStatus.PAID)
+    result = await sale_service.update_payment_status("test_id", PaymentStatus.PAID)
     
-    assert updated_sale == mock_sale
-    assert updated_sale.payment_status == PaymentStatus.PAID
+    assert result.payment_status == PaymentStatus.PAID
     mock_repository.update.assert_called_once()
 
 @pytest.mark.asyncio
 async def test_get_sale_error(sale_service, mock_repository):
     mock_repository.find_by_id.return_value = None
-    
-    with pytest.raises(Exception) as exc_info:
+
+    with pytest.raises(SaleNotFoundError) as exc_info:
         await sale_service.get_sale("test_id")
     
-    assert "Venda não encontrada" in str(exc_info.value)
+    assert "Venda com ID test_id não encontrada" in str(exc_info.value)
 
 @pytest.mark.asyncio
 async def test_get_sale_by_vehicle_id_error(sale_service, mock_repository):
     mock_repository.find_by_vehicle_id.return_value = None
-    
-    with pytest.raises(Exception) as exc_info:
+
+    with pytest.raises(SaleNotFoundError) as exc_info:
         await sale_service.get_sale_by_vehicle_id("test_vehicle_id")
     
-    assert "Venda não encontrada" in str(exc_info.value)
+    assert "Venda com veículo ID test_vehicle_id não encontrada" in str(exc_info.value)
 
 @pytest.mark.asyncio
 async def test_get_sale_by_payment_code_error(sale_service, mock_repository):
     mock_repository.find_by_payment_code.return_value = None
-    
-    with pytest.raises(Exception) as exc_info:
+
+    with pytest.raises(SaleNotFoundError) as exc_info:
         await sale_service.get_sale_by_payment_code("test_payment_code")
     
-    assert "Venda não encontrada" in str(exc_info.value)
+    assert "Venda com código de pagamento test_payment_code não encontrada" in str(exc_info.value)
 
 @pytest.mark.asyncio
 async def test_get_all_sales_error(sale_service, mock_repository):
