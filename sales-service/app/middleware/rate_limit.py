@@ -17,6 +17,7 @@ class RateLimitMiddleware:
         self.app = app
         self.redis_client: Optional[redis.Redis] = None
         self.memory_store: Dict[str, Dict] = {}
+        self._redis_initialized = False
         
         # Configurações do Redis
         self.redis_url = os.getenv("REDIS_URL", "redis://localhost:6379")
@@ -30,20 +31,21 @@ class RateLimitMiddleware:
             "health": {"requests": 200, "window": 60},  # 200 requests por minuto para health
             "admin": {"requests": 50, "window": 60},  # 50 requests por minuto para admin
         }
-        
-        # Inicializar Redis
-        if self.redis_enabled:
-            asyncio.create_task(self._init_redis())
     
     async def _init_redis(self):
         """Inicializa conexão com Redis."""
+        if self._redis_initialized:
+            return
+            
         try:
             self.redis_client = redis.from_url(self.redis_url)
             await self.redis_client.ping()
             logger.info("Redis conectado com sucesso")
+            self._redis_initialized = True
         except Exception as e:
             logger.warning(f"Erro ao conectar com Redis: {e}. Usando fallback em memória.")
             self.redis_client = None
+            self._redis_initialized = True
     
     def _get_limit_key(self, endpoint: str) -> str:
         """Determina qual limite aplicar baseado no endpoint."""
@@ -123,6 +125,10 @@ class RateLimitMiddleware:
     
     async def __call__(self, request: Request, call_next):
         """Middleware principal."""
+        # Inicializar Redis se necessário
+        if self.redis_enabled and not self._redis_initialized:
+            await self._init_redis()
+        
         # Determinar limite baseado no endpoint
         endpoint = str(request.url.path)
         method = request.method
@@ -138,7 +144,7 @@ class RateLimitMiddleware:
         rate_limit_key = f"rate_limit:{client_id}:{limit_key}"
         
         # Verificar rate limit
-        if self.redis_client:
+        if self.redis_client and self._redis_initialized:
             allowed, current_requests = await self._check_rate_limit_redis(
                 rate_limit_key, limit, window
             )

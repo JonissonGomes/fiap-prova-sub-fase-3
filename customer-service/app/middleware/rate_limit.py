@@ -48,14 +48,24 @@ def create_limiter() -> Limiter:
     
     return limiter
 
-def custom_rate_limit_exceeded_handler(request: Request, exc: RateLimitExceeded):
+def custom_rate_limit_exceeded_handler(request: Request, exc: Exception):
     """Handler customizado para exceções de rate limit"""
     try:
-        # Tenta usar o handler padrão
-        return _rate_limit_exceeded_handler(request, exc)
-    except AttributeError as e:
-        # Fallback se o handler padrão falhar
-        logger.warning(f"Erro no handler padrão de rate limit: {e}")
+        # Se for uma exceção de rate limit padrão, usa o handler padrão
+        if isinstance(exc, RateLimitExceeded):
+            return _rate_limit_exceeded_handler(request, exc)
+        else:
+            # Para outras exceções, retorna uma resposta genérica
+            return JSONResponse(
+                status_code=429,
+                content={
+                    "error": "Rate limit exceeded",
+                    "detail": "Too many requests. Please try again later."
+                }
+            )
+    except Exception as e:
+        # Fallback se qualquer handler falhar
+        logger.warning(f"Erro no handler de rate limit: {e}")
         return JSONResponse(
             status_code=429,
             content={
