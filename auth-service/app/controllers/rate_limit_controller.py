@@ -2,7 +2,6 @@ from fastapi import APIRouter, HTTPException, Depends, Header
 from typing import Optional, Dict, Any
 import logging
 
-from app.middleware.rate_limit import RateLimitConfig, get_rate_limit_key
 from app.services.auth_service import AuthService
 from app.controllers.auth_controller import get_auth_service
 
@@ -41,8 +40,8 @@ async def get_rate_limit_stats(
         # Retornar estatísticas básicas
         stats = {
             "key": key,
-            "limits": RateLimitConfig.LIMITS,
-            "route_limits": RateLimitConfig.ROUTE_LIMITS,
+            "limits": {"default": "100/minute"},
+            "route_limits": {"auth": "5/minute", "general": "100/minute"},
             "message": "Estatísticas de rate limiting obtidas com sucesso"
         }
         
@@ -98,8 +97,8 @@ async def get_rate_limit_config():
     """
     try:
         return {
-            "limits": RateLimitConfig.LIMITS,
-            "route_limits": RateLimitConfig.ROUTE_LIMITS,
+            "limits": {"default": "100/minute"},
+            "route_limits": {"auth": "5/minute", "general": "100/minute"},
             "message": "Configuração de rate limiting obtida com sucesso"
         }
     

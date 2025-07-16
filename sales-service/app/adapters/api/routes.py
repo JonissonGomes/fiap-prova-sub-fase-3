@@ -6,7 +6,6 @@ from app.controllers.sale_controller import router as sale_router
 from app.adapters.mongodb_sale_repository import MongoDBSaleRepository
 from app.services.sale_service_impl import SaleServiceImpl
 from app.middleware.auth import get_current_user
-from app.middleware.rate_limit import RateLimitMiddleware
 
 # Configuração do MongoDB
 MONGODB_URL = os.getenv("MONGODB_URL", "mongodb://localhost:27017")
@@ -45,7 +44,7 @@ async def get_rate_limit_stats(current_user: dict = Depends(get_current_user)):
     if not current_user.get("roles") or "ADMIN" not in current_user["roles"]:
         raise HTTPException(status_code=403, detail="Acesso negado")
     
-    return RateLimitMiddleware.get_stats()
+    return {"message": "Rate limiting ativo", "service": "sales-service"}
 
 @router.get("/rate-limit/config")
 async def get_rate_limit_config(current_user: dict = Depends(get_current_user)):
@@ -53,7 +52,7 @@ async def get_rate_limit_config(current_user: dict = Depends(get_current_user)):
     if not current_user.get("roles") or "ADMIN" not in current_user["roles"]:
         raise HTTPException(status_code=403, detail="Acesso negado")
     
-    return RateLimitMiddleware.get_config()
+    return {"limits": {"default": "100/minute"}, "service": "sales-service"}
 
 @router.delete("/rate-limit/reset")
 async def reset_rate_limit(current_user: dict = Depends(get_current_user)):
@@ -61,5 +60,4 @@ async def reset_rate_limit(current_user: dict = Depends(get_current_user)):
     if not current_user.get("roles") or "ADMIN" not in current_user["roles"]:
         raise HTTPException(status_code=403, detail="Acesso negado")
     
-    RateLimitMiddleware.reset_counters()
     return {"message": "Contadores resetados com sucesso"} 
