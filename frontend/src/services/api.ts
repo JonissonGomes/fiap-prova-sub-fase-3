@@ -185,7 +185,7 @@ export const vehiclesApi = {
 };
 
 // Serviços de Vendas
-export const salesApi = {
+export const salesService = {
   list: async (skip = 0, limit = 100): Promise<Sale[]> => {
     const response = await salesApi.get<Sale[]>(`?skip=${skip}&limit=${limit}`);
     return response.data;

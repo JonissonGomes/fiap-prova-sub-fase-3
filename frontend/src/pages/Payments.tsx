@@ -39,7 +39,7 @@ import {
   AttachMoney as AttachMoneyIcon
 } from '@mui/icons-material';
 import { Payment, Sale, Vehicle, PaymentStatus } from '../types';
-import { salesApi, vehiclesApi } from '../services/api';
+import { salesService, vehiclesApi } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { canViewPayments, canApprovePayments, canCancelPayments } from '../utils/permissions';
 
@@ -79,7 +79,7 @@ const Payments: React.FC = () => {
 
   const fetchSales = async () => {
     try {
-      const data = await salesApi.list();
+      const data = await salesService.list();
       // Filtrar apenas vendas que não estão canceladas
       const activeSales = data.filter(sale => sale.payment_status !== PaymentStatus.CANCELLED);
       setSales(activeSales);
@@ -203,11 +203,11 @@ const Payments: React.FC = () => {
       switch (status) {
         case PaymentStatus.PAID:
           // Notificar webhook de pagamento
-          await salesApi.confirmPayment(saleId);
+          await salesService.confirmPayment(saleId);
           await vehiclesApi.updateStatus(sale.vehicle_id, 'VENDIDO');
           break;
         case PaymentStatus.CANCELLED:
-          await salesApi.cancelPayment(saleId);
+          await salesService.cancelPayment(saleId);
           await vehiclesApi.updateStatus(sale.vehicle_id, 'DISPONÍVEL');
           break;
       }

@@ -36,7 +36,7 @@ import {
   Search as SearchIcon
 } from '@mui/icons-material';
 import { Sale, SaleCreate, Vehicle, VehicleStatus, PaymentStatus } from '../types';
-import { salesApi, vehiclesApi } from '../services/api';
+import { salesService, vehiclesApi } from '../services/api';
 import InputMask from 'react-input-mask';
 import { useAuth } from '../contexts/AuthContext';
 import { canViewSales, canCreateSales } from '../utils/permissions';
@@ -85,7 +85,7 @@ const Sales: React.FC = () => {
 
   const fetchSales = async () => {
     try {
-      const data = await salesApi.list();
+      const data = await salesService.list();
       setSales(data);
     } catch (error) {
       console.error('Error fetching sales:', error);
@@ -271,7 +271,7 @@ const Sales: React.FC = () => {
           payment_code: formData.payment_code,
           payment_status: formData.payment_status
         };
-        await salesApi.update(selectedSale.id, saleData);
+        await salesService.update(selectedSale.id, saleData);
         setSnackbar({
           open: true,
           message: 'Venda atualizada com sucesso',
@@ -287,7 +287,7 @@ const Sales: React.FC = () => {
           payment_status: PaymentStatus.PENDING
         };
         
-        const newSale = await salesApi.create(saleData);
+        const newSale = await salesService.create(saleData);
 
         // Marca o veículo como reservado
         if (newSale && formData.vehicle_id) {
@@ -315,7 +315,7 @@ const Sales: React.FC = () => {
   const handleDelete = async (id: string) => {
     if (window.confirm('Tem certeza que deseja excluir esta venda?')) {
       try {
-        await salesApi.delete(id);
+        await salesService.delete(id);
         setSales(prevSales => prevSales.filter(sale => sale.id !== id));
         setSnackbar({
           open: true,
@@ -343,15 +343,15 @@ const Sales: React.FC = () => {
 
       switch (status) {
         case PaymentStatus.PENDING:
-          await salesApi.updateStatus(id, 'PENDING');
+          await salesService.updateStatus(id, 'PENDING');
           await vehiclesApi.updateStatus(sale.vehicle_id, 'DISPONÍVEL');
           break;
         case PaymentStatus.PAID:
-          await salesApi.confirmPayment(id);
+          await salesService.confirmPayment(id);
           await vehiclesApi.updateStatus(sale.vehicle_id, 'VENDIDO');
           break;
         case PaymentStatus.CANCELLED:
-          await salesApi.cancelPayment(id);
+          await salesService.cancelPayment(id);
           await vehiclesApi.updateStatus(sale.vehicle_id, 'DISPONÍVEL');
           break;
       }

@@ -40,7 +40,7 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import { isAdmin } from '../utils/permissions';
-import { vehiclesApi, salesApi, customerService } from '../services/api';
+import { vehiclesApi, salesService, customerService } from '../services/api';
 import { Vehicle, Sale, Customer, VehicleStatus, PaymentStatus } from '../types';
 
 interface DashboardStats {
@@ -105,7 +105,7 @@ const Dashboard: React.FC = () => {
       
       const [vehicles, sales, customers] = await Promise.all([
         vehiclesApi.list(),
-        salesApi.list(),
+        salesService.list(),
         customerService.list()
       ]);
 
