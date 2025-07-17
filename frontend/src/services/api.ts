@@ -20,8 +20,22 @@ import {
   RateLimitConfig
 } from '../types';
 
-// URL do backend unificado no Render
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'https://fiap-prova-sub-fase-3.onrender.com';
+// URLs base para desenvolvimento local
+const LOCAL_URL = 'http://localhost:8000';
+const LOCAL_AUTH_URL = 'http://localhost:8002';
+const LOCAL_CORE_URL = 'http://localhost:8000';
+const LOCAL_SALES_URL = 'http://localhost:8001';
+const LOCAL_CUSTOMERS_URL = 'http://localhost:8003';
+
+// URLs de produção (Render)
+const PROD_URL = 'https://fiap-prova-sub-fase-3.onrender.com';
+
+// Usar URLs de produção se as variáveis de ambiente estiverem definidas, caso contrário usar local
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || LOCAL_URL;
+const AUTH_URL = process.env.REACT_APP_AUTH_SERVICE_URL || `${LOCAL_AUTH_URL}/auth`;
+const CORE_URL = process.env.REACT_APP_CORE_SERVICE_URL || `${LOCAL_CORE_URL}/vehicles`;
+const SALES_URL = process.env.REACT_APP_SALES_SERVICE_URL || `${LOCAL_SALES_URL}/sales`;
+const CUSTOMERS_URL = process.env.REACT_APP_CUSTOMER_SERVICE_URL || `${LOCAL_CUSTOMERS_URL}/customers`;
 
 // Configuração base do Axios
 const api = axios.create({
@@ -32,9 +46,9 @@ const api = axios.create({
   },
 });
 
-// Instâncias específicas para cada serviço (todas apontam para o mesmo backend)
+// Instâncias específicas para cada serviço
 export const authApi = axios.create({
-  baseURL: `${BACKEND_URL}/auth`,
+  baseURL: AUTH_URL,
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
@@ -42,7 +56,7 @@ export const authApi = axios.create({
 });
 
 export const coreApi = axios.create({
-  baseURL: `${BACKEND_URL}/vehicles`,
+  baseURL: CORE_URL,
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
@@ -50,7 +64,7 @@ export const coreApi = axios.create({
 });
 
 export const salesApi = axios.create({
-  baseURL: `${BACKEND_URL}/sales`,
+  baseURL: SALES_URL,
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
@@ -58,7 +72,7 @@ export const salesApi = axios.create({
 });
 
 export const customerApi = axios.create({
-  baseURL: `${BACKEND_URL}/customers`,
+  baseURL: CUSTOMERS_URL,
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
