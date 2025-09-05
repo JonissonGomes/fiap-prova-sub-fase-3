@@ -36,7 +36,7 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import { isAdmin, isSales, isCustomer, canViewSales, canViewPayments, canViewCustomers } from '../utils/permissions';
-import { vehiclesApi, salesApi, customerService } from '../services/api';
+import { vehiclesApi, salesService, customerService } from '../services/api';
 import { Vehicle, Sale, Customer, VehicleStatus, PaymentStatus } from '../types';
 
 interface DashboardStats {
@@ -88,7 +88,7 @@ const Home: React.FC = () => {
       // Buscar dados básicos sempre
       const [vehicles, sales] = await Promise.all([
         vehiclesApi.list(),
-        salesApi.list()
+        salesService.list()
       ]);
 
              const baseStats = {
@@ -334,7 +334,7 @@ const Home: React.FC = () => {
                 {getGreeting()}, {user?.name}!
               </Typography>
               <Typography variant="h6" sx={{ opacity: 0.9 }}>
-                {getUserRoleDisplay()} - Sistema de Vendas FIAP
+                {getUserRoleDisplay()} - FIAP III
               </Typography>
             </Box>
           </Box>

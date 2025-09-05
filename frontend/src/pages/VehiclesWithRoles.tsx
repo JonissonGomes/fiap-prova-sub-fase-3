@@ -470,24 +470,46 @@ const VehiclesWithRoles: React.FC = () => {
               </Grid>
               
               <Grid item xs={12} sm={6} md={3}>
-                <TextField
+                <NumericFormat
+                  customInput={TextField}
                   fullWidth
                   size="small"
                   label="Preço Mínimo"
-                  type="number"
                   value={filters.min_price || ''}
-                  onChange={(e) => handleFilterChange('min_price', e.target.value ? parseFloat(e.target.value) : undefined)}
+                  onValueChange={(values) => {
+                    handleFilterChange('min_price', values.floatValue || undefined);
+                  }}
+                  thousandSeparator="."
+                  decimalSeparator=","
+                  prefix="R$ "
+                  decimalScale={2}
+                  fixedDecimalScale
+                  isAllowed={(values) => {
+                    const { floatValue } = values;
+                    return floatValue === undefined || floatValue >= 0;
+                  }}
                 />
               </Grid>
               
               <Grid item xs={12} sm={6} md={3}>
-                <TextField
+                <NumericFormat
+                  customInput={TextField}
                   fullWidth
                   size="small"
                   label="Preço Máximo"
-                  type="number"
                   value={filters.max_price || ''}
-                  onChange={(e) => handleFilterChange('max_price', e.target.value ? parseFloat(e.target.value) : undefined)}
+                  onValueChange={(values) => {
+                    handleFilterChange('max_price', values.floatValue || undefined);
+                  }}
+                  thousandSeparator="."
+                  decimalSeparator=","
+                  prefix="R$ "
+                  decimalScale={2}
+                  fixedDecimalScale
+                  isAllowed={(values) => {
+                    const { floatValue } = values;
+                    return floatValue === undefined || floatValue >= 0;
+                  }}
                 />
               </Grid>
               
@@ -638,17 +660,25 @@ const VehiclesWithRoles: React.FC = () => {
                   />
                 </Grid>
                 <Grid item xs={12} md={6}>
-                  <TextField
+                  <NumericFormat
+                    customInput={TextField}
                     fullWidth
                     label="Preço"
                     name="price"
-                    type="number"
                     value={formData.price}
-                    onChange={handleInputChange}
+                    onValueChange={(values) => {
+                      setFormData((prev: VehicleCreate) => ({ ...prev, price: values.floatValue || 0 }));
+                    }}
+                    thousandSeparator="."
+                    decimalSeparator=","
+                    prefix="R$ "
+                    decimalScale={2}
+                    fixedDecimalScale
                     required
                     margin="normal"
-                    InputProps={{
-                      inputProps: { min: 0 }
+                    isAllowed={(values) => {
+                      const { floatValue } = values;
+                      return floatValue === undefined || floatValue >= 0;
                     }}
                   />
                 </Grid>

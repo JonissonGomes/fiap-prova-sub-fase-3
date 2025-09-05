@@ -17,7 +17,7 @@ import {
 } from '@mui/material';
 import { Vehicle, Customer, SaleCreate, PaymentStatus, VehicleStatus } from '../types';
 import { useAuth } from '../contexts/AuthContext';
-import { salesApi, customerService, vehiclesApi } from '../services/api';
+import { salesService, customerService, vehiclesApi } from '../services/api';
 
 interface PurchaseDialogProps {
   open: boolean;
@@ -90,7 +90,7 @@ const PurchaseDialog: React.FC<PurchaseDialogProps> = ({
         payment_status: PaymentStatus.PENDING
       };
 
-      const newSale = await salesApi.create(saleData);
+      const newSale = await salesService.create(saleData);
 
       // Atualizar status do veículo para reservado
       await vehiclesApi.updateStatus(vehicle.id, VehicleStatus.RESERVED);

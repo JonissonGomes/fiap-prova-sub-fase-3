@@ -83,9 +83,13 @@ export interface User {
   name: string;
   role: 'ADMIN' | 'CUSTOMER' | 'SALES';
   status: 'ACTIVE' | 'INACTIVE';
-  created_at: string;
-  updated_at: string;
+  created_at?: string;
+  updated_at?: string;
   last_login?: string;
+  // Campos em camelCase (retornados pela API Node.js)
+  createdAt?: string;
+  updatedAt?: string;
+  lastLogin?: string;
 }
 
 export interface LoginRequest {

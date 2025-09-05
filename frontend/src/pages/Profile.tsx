@@ -284,18 +284,24 @@ const Profile: React.FC = () => {
                     <TextField
                       fullWidth
                       label="Membro desde"
-                      value={new Date(user.created_at).toLocaleDateString('pt-BR')}
+                      value={(() => {
+                        const dateValue = user.createdAt || user.created_at;
+                        return dateValue ? new Date(dateValue).toLocaleDateString('pt-BR') : 'Data não disponível';
+                      })()}
                       disabled
                       margin="normal"
                     />
                   </Grid>
                   
-                  {user.last_login && (
+                  {(user.lastLogin || user.last_login) && (
                     <Grid item xs={12}>
                       <TextField
                         fullWidth
                         label="Último acesso"
-                        value={new Date(user.last_login).toLocaleString('pt-BR')}
+                        value={(() => {
+                          const dateValue = user.lastLogin || user.last_login;
+                          return dateValue ? new Date(dateValue).toLocaleString('pt-BR') : 'Data não disponível';
+                        })()}
                         disabled
                         margin="normal"
                       />

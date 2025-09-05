@@ -35,7 +35,7 @@ import {
   AttachMoney as AttachMoneyIcon
 } from '@mui/icons-material';
 import { Sale, Vehicle, PaymentStatus } from '../types';
-import { salesApi, vehiclesApi, customerService } from '../services/api';
+import { salesService, vehiclesApi, customerService } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { isCustomer } from '../utils/permissions';
 
@@ -88,7 +88,7 @@ const MyPurchases: React.FC = () => {
       setCustomerCpf(customer.cpf);
       
       // Buscar vendas do cliente
-      const allSales = await salesApi.list();
+      const allSales = await salesService.list();
       const customerSales = allSales.filter(sale => sale.buyer_cpf === customer.cpf);
       setSales(customerSales);
       

@@ -13,8 +13,24 @@ import {
   Select,
   FormControl,
   InputLabel,
-  Grid
+  Grid,
+  Avatar,
+  CssBaseline,
+  Divider,
+  Card,
+  CardContent,
+  Stepper,
+  Step,
+  StepLabel
 } from '@mui/material';
+import { 
+  DirectionsCar as CarIcon,
+  PersonAdd as PersonAddIcon,
+  Visibility,
+  VisibilityOff,
+  Business as BusinessIcon,
+  Person as PersonIcon
+} from '@mui/icons-material';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import InputMask from 'react-input-mask';
 import { useAuth } from '../contexts/AuthContext';
@@ -37,6 +53,8 @@ const Register: React.FC = () => {
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const { register } = useAuth();
   const navigate = useNavigate();
 
@@ -166,243 +184,538 @@ const Register: React.FC = () => {
 
   const isCustomer = formData.role === 'CUSTOMER';
 
-  return (
-    <Container component="main" maxWidth="md">
-      <Box
-        sx={{
-          marginTop: 8,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-        }}
-      >
-        <Paper elevation={3} sx={{ padding: 4, width: '100%' }}>
-          <Typography component="h1" variant="h4" align="center" gutterBottom>
-            Criar Conta
-          </Typography>
-          
-          {errors.submit && (
-            <Alert severity="error" sx={{ mb: 2 }}>
-              {errors.submit}
-            </Alert>
-          )}
-          
-          <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1 }}>
-            <Grid container spacing={2}>
-              <Grid item xs={12} md={6}>
-                <TextField
-                  margin="normal"
-                  required
-                  fullWidth
-                  id="name"
-                  label="Nome Completo"
-                  name="name"
-                  autoComplete="name"
-                  autoFocus
-                  value={formData.name}
-                  onChange={handleChange('name')}
-                  error={!!errors.name}
-                  helperText={errors.name}
-                />
-              </Grid>
-              
-              <Grid item xs={12} md={6}>
-                <TextField
-                  margin="normal"
-                  required
-                  fullWidth
-                  id="email"
-                  label="Email"
-                  name="email"
-                  autoComplete="email"
-                  value={formData.email}
-                  onChange={handleChange('email')}
-                  error={!!errors.email}
-                  helperText={errors.email}
-                />
-              </Grid>
-              
-              <Grid item xs={12}>
-                <FormControl fullWidth margin="normal" error={!!errors.role}>
-                  <InputLabel id="role-label">Tipo de Usuário</InputLabel>
-                  <Select
-                    labelId="role-label"
-                    id="role"
-                    value={formData.role}
-                    label="Tipo de Usuário"
-                    onChange={(e) => setFormData(prev => ({ ...prev, role: e.target.value }))}
-                  >
-                    <MenuItem value="CUSTOMER">Cliente</MenuItem>
-                    <MenuItem value="SALES">Vendedor</MenuItem>
-                    <MenuItem value="ADMIN">Administrador</MenuItem>
-                  </Select>
-                  {errors.role && (
-                    <Typography variant="caption" color="error" sx={{ mt: 1, ml: 2 }}>
-                      {errors.role}
-                    </Typography>
-                  )}
-                </FormControl>
-              </Grid>
+  const getRoleIcon = (role: string) => {
+    switch (role) {
+      case 'CUSTOMER':
+        return <PersonIcon />;
+      case 'SALES':
+        return <BusinessIcon />;
+      case 'ADMIN':
+        return <BusinessIcon />;
+      default:
+        return <PersonIcon />;
+    }
+  };
 
-              {isCustomer && (
-                <>
-                  <Grid item xs={12} md={6}>
-                    <InputMask
-                      mask="999.999.999-99"
-                      value={formData.cpf}
-                      onChange={handleChange('cpf')}
-                    >
-                      {(inputProps: any) => (
-                        <TextField
-                          {...inputProps}
-                          margin="normal"
-                          required
-                          fullWidth
-                          label="CPF"
-                          error={!!errors.cpf}
-                          helperText={errors.cpf}
-                        />
-                      )}
-                    </InputMask>
-                  </Grid>
-                  
-                  <Grid item xs={12} md={6}>
-                    <InputMask
-                      mask="(99) 99999-9999"
-                      value={formData.phone}
-                      onChange={handleChange('phone')}
-                    >
-                      {(inputProps: any) => (
-                        <TextField
-                          {...inputProps}
-                          margin="normal"
-                          required
-                          fullWidth
-                          label="Telefone"
-                          error={!!errors.phone}
-                          helperText={errors.phone}
-                        />
-                      )}
-                    </InputMask>
-                  </Grid>
-                  
-                  <Grid item xs={12}>
-                    <TextField
-                      margin="normal"
-                      required
-                      fullWidth
-                      label="Endereço"
-                      value={formData.address}
-                      onChange={handleChange('address')}
-                      error={!!errors.address}
-                      helperText={errors.address}
-                    />
-                  </Grid>
-                  
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      margin="normal"
-                      required
-                      fullWidth
-                      label="Cidade"
-                      value={formData.city}
-                      onChange={handleChange('city')}
-                      error={!!errors.city}
-                      helperText={errors.city}
-                    />
-                  </Grid>
-                  
-                  <Grid item xs={12} md={3}>
-                    <TextField
-                      margin="normal"
-                      required
-                      fullWidth
-                      label="Estado"
-                      value={formData.state}
-                      onChange={handleChange('state')}
-                      error={!!errors.state}
-                      helperText={errors.state}
-                      inputProps={{ maxLength: 2 }}
-                    />
-                  </Grid>
-                  
-                  <Grid item xs={12} md={3}>
-                    <InputMask
-                      mask="99999-999"
-                      value={formData.zip_code}
-                      onChange={handleChange('zip_code')}
-                    >
-                      {(inputProps: any) => (
-                        <TextField
-                          {...inputProps}
-                          margin="normal"
-                          required
-                          fullWidth
-                          label="CEP"
-                          error={!!errors.zip_code}
-                          helperText={errors.zip_code}
-                        />
-                      )}
-                    </InputMask>
-                  </Grid>
-                </>
-              )}
-              
-              <Grid item xs={12} md={6}>
-                <TextField
-                  margin="normal"
-                  required
-                  fullWidth
-                  name="password"
-                  label="Senha"
-                  type="password"
-                  id="password"
-                  autoComplete="new-password"
-                  value={formData.password}
-                  onChange={handleChange('password')}
-                  error={!!errors.password}
-                  helperText={errors.password}
-                />
-              </Grid>
-              
-              <Grid item xs={12} md={6}>
-                <TextField
-                  margin="normal"
-                  required
-                  fullWidth
-                  name="confirmPassword"
-                  label="Confirmar Senha"
-                  type="password"
-                  id="confirmPassword"
-                  value={formData.confirmPassword}
-                  onChange={handleChange('confirmPassword')}
-                  error={!!errors.confirmPassword}
-                  helperText={errors.confirmPassword}
-                />
-              </Grid>
-            </Grid>
-            
-            <Button
-              type="submit"
-              fullWidth
-              variant="contained"
-              sx={{ mt: 3, mb: 2 }}
-              disabled={isLoading}
+  const getRoleDescription = (role: string) => {
+    switch (role) {
+      case 'CUSTOMER':
+        return 'Cliente - Comprar veículos';
+      case 'SALES':
+        return 'Vendedor - Gerenciar vendas';
+      case 'ADMIN':
+        return 'Administrador - Acesso total';
+      default:
+        return '';
+    }
+  };
+
+  return (
+    <Box
+      sx={{
+        minHeight: '100vh',
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 2
+      }}
+    >
+      <CssBaseline />
+      <Container component="main" maxWidth="md">
+        <Paper
+          elevation={24}
+          sx={{
+            padding: { xs: 3, md: 4 },
+            borderRadius: 3,
+            background: 'rgba(255, 255, 255, 0.95)',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255, 255, 255, 0.2)'
+          }}
+        >
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+            }}
+          >
+            {/* Logo e Título */}
+            <Avatar
+              sx={{
+                m: 2,
+                bgcolor: 'primary.main',
+                width: 80,
+                height: 80,
+                boxShadow: '0 8px 32px rgba(0,0,0,0.1)'
+              }}
             >
-              {isLoading ? <CircularProgress size={24} /> : 'Criar Conta'}
-            </Button>
+              <CarIcon sx={{ fontSize: 40 }} />
+            </Avatar>
             
-            <Grid container justifyContent="flex-end">
-              <Grid item>
-                <Link component={RouterLink} to="/login" variant="body2">
-                  Já tem uma conta? Faça login
-                </Link>
+            <Typography 
+              component="h1" 
+              variant="h4" 
+              sx={{ 
+                mb: 1,
+                fontWeight: 'bold',
+                background: 'linear-gradient(45deg, #667eea 30%, #764ba2 90%)',
+                backgroundClip: 'text',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent'
+              }}
+            >
+              Criar Conta
+            </Typography>
+            
+            <Typography 
+              component="h2" 
+              variant="h6" 
+              sx={{ 
+                mb: 4,
+                color: 'text.secondary',
+                fontWeight: 400,
+                textAlign: 'center'
+              }}
+            >
+              Junte-se ao nosso sistema de vendas de veículos
+            </Typography>
+            
+            {errors.submit && (
+              <Alert 
+                severity="error" 
+                sx={{ 
+                  width: '100%', 
+                  mb: 3,
+                  borderRadius: 2,
+                  '& .MuiAlert-message': {
+                    fontSize: '0.9rem'
+                  }
+                }}
+              >
+                {errors.submit}
+              </Alert>
+            )}
+            
+            <Box component="form" onSubmit={handleSubmit} sx={{ width: '100%' }}>
+              <Grid container spacing={3}>
+                {/* Informações Básicas */}
+                <Grid item xs={12}>
+                  <Typography variant="h6" sx={{ mb: 2, color: 'primary.main', fontWeight: 'bold' }}>
+                    Informações Básicas
+                  </Typography>
+                </Grid>
+                
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    margin="normal"
+                    required
+                    fullWidth
+                    id="name"
+                    label="Nome Completo"
+                    name="name"
+                    autoComplete="name"
+                    autoFocus
+                    value={formData.name}
+                    onChange={handleChange('name')}
+                    error={!!errors.name}
+                    helperText={errors.name}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 2,
+                        '&:hover fieldset': {
+                          borderColor: 'primary.main',
+                        },
+                      },
+                    }}
+                  />
+                </Grid>
+                
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    margin="normal"
+                    required
+                    fullWidth
+                    id="email"
+                    label="Email"
+                    name="email"
+                    autoComplete="email"
+                    value={formData.email}
+                    onChange={handleChange('email')}
+                    error={!!errors.email}
+                    helperText={errors.email}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 2,
+                        '&:hover fieldset': {
+                          borderColor: 'primary.main',
+                        },
+                      },
+                    }}
+                  />
+                </Grid>
+                
+                <Grid item xs={12}>
+                  <FormControl 
+                    fullWidth 
+                    margin="normal" 
+                    error={!!errors.role}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 2,
+                        '&:hover fieldset': {
+                          borderColor: 'primary.main',
+                        },
+                      },
+                    }}
+                  >
+                    <InputLabel id="role-label">Tipo de Usuário</InputLabel>
+                    <Select
+                      labelId="role-label"
+                      id="role"
+                      value={formData.role}
+                      label="Tipo de Usuário"
+                      onChange={(e) => setFormData(prev => ({ ...prev, role: e.target.value }))}
+                    >
+                      <MenuItem value="CUSTOMER">
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <PersonIcon />
+                          <Box>
+                            <Typography variant="body1">Cliente</Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              Comprar veículos
+                            </Typography>
+                          </Box>
+                        </Box>
+                      </MenuItem>
+                      <MenuItem value="SALES">
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <BusinessIcon />
+                          <Box>
+                            <Typography variant="body1">Vendedor</Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              Gerenciar vendas
+                            </Typography>
+                          </Box>
+                        </Box>
+                      </MenuItem>
+                      <MenuItem value="ADMIN">
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <BusinessIcon />
+                          <Box>
+                            <Typography variant="body1">Administrador</Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              Acesso total
+                            </Typography>
+                          </Box>
+                        </Box>
+                      </MenuItem>
+                    </Select>
+                    {errors.role && (
+                      <Typography variant="caption" color="error" sx={{ mt: 1, ml: 2 }}>
+                        {errors.role}
+                      </Typography>
+                    )}
+                  </FormControl>
+                </Grid>
+
+                {/* Informações do Cliente */}
+                {isCustomer && (
+                  <>
+                    <Grid item xs={12}>
+                      <Typography variant="h6" sx={{ mb: 2, color: 'primary.main', fontWeight: 'bold' }}>
+                        Informações do Cliente
+                      </Typography>
+                    </Grid>
+                    
+                    <Grid item xs={12} md={6}>
+                      <InputMask
+                        mask="999.999.999-99"
+                        value={formData.cpf}
+                        onChange={handleChange('cpf')}
+                      >
+                        {(inputProps: any) => (
+                          <TextField
+                            {...inputProps}
+                            margin="normal"
+                            required
+                            fullWidth
+                            label="CPF"
+                            error={!!errors.cpf}
+                            helperText={errors.cpf}
+                            sx={{
+                              '& .MuiOutlinedInput-root': {
+                                borderRadius: 2,
+                                '&:hover fieldset': {
+                                  borderColor: 'primary.main',
+                                },
+                              },
+                            }}
+                          />
+                        )}
+                      </InputMask>
+                    </Grid>
+                    
+                    <Grid item xs={12} md={6}>
+                      <InputMask
+                        mask="(99) 99999-9999"
+                        value={formData.phone}
+                        onChange={handleChange('phone')}
+                      >
+                        {(inputProps: any) => (
+                          <TextField
+                            {...inputProps}
+                            margin="normal"
+                            required
+                            fullWidth
+                            label="Telefone"
+                            error={!!errors.phone}
+                            helperText={errors.phone}
+                            sx={{
+                              '& .MuiOutlinedInput-root': {
+                                borderRadius: 2,
+                                '&:hover fieldset': {
+                                  borderColor: 'primary.main',
+                                },
+                              },
+                            }}
+                          />
+                        )}
+                      </InputMask>
+                    </Grid>
+                    
+                    <Grid item xs={12}>
+                      <TextField
+                        margin="normal"
+                        required
+                        fullWidth
+                        label="Endereço"
+                        value={formData.address}
+                        onChange={handleChange('address')}
+                        error={!!errors.address}
+                        helperText={errors.address}
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            borderRadius: 2,
+                            '&:hover fieldset': {
+                              borderColor: 'primary.main',
+                            },
+                          },
+                        }}
+                      />
+                    </Grid>
+                    
+                    <Grid item xs={12} md={6}>
+                      <TextField
+                        margin="normal"
+                        required
+                        fullWidth
+                        label="Cidade"
+                        value={formData.city}
+                        onChange={handleChange('city')}
+                        error={!!errors.city}
+                        helperText={errors.city}
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            borderRadius: 2,
+                            '&:hover fieldset': {
+                              borderColor: 'primary.main',
+                            },
+                          },
+                        }}
+                      />
+                    </Grid>
+                    
+                    <Grid item xs={12} md={3}>
+                      <TextField
+                        margin="normal"
+                        required
+                        fullWidth
+                        label="Estado"
+                        value={formData.state}
+                        onChange={handleChange('state')}
+                        error={!!errors.state}
+                        helperText={errors.state}
+                        inputProps={{ maxLength: 2 }}
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            borderRadius: 2,
+                            '&:hover fieldset': {
+                              borderColor: 'primary.main',
+                            },
+                          },
+                        }}
+                      />
+                    </Grid>
+                    
+                    <Grid item xs={12} md={3}>
+                      <InputMask
+                        mask="99999-999"
+                        value={formData.zip_code}
+                        onChange={handleChange('zip_code')}
+                      >
+                        {(inputProps: any) => (
+                          <TextField
+                            {...inputProps}
+                            margin="normal"
+                            required
+                            fullWidth
+                            label="CEP"
+                            error={!!errors.zip_code}
+                            helperText={errors.zip_code}
+                            sx={{
+                              '& .MuiOutlinedInput-root': {
+                                borderRadius: 2,
+                                '&:hover fieldset': {
+                                  borderColor: 'primary.main',
+                                },
+                              },
+                            }}
+                          />
+                        )}
+                      </InputMask>
+                    </Grid>
+                  </>
+                )}
+                
+                {/* Senhas */}
+                <Grid item xs={12}>
+                  <Typography variant="h6" sx={{ mb: 2, color: 'primary.main', fontWeight: 'bold' }}>
+                    Segurança
+                  </Typography>
+                </Grid>
+                
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    margin="normal"
+                    required
+                    fullWidth
+                    name="password"
+                    label="Senha"
+                    type={showPassword ? 'text' : 'password'}
+                    id="password"
+                    autoComplete="new-password"
+                    value={formData.password}
+                    onChange={handleChange('password')}
+                    error={!!errors.password}
+                    helperText={errors.password}
+                    InputProps={{
+                      endAdornment: (
+                        <Button
+                          onClick={() => setShowPassword(!showPassword)}
+                          sx={{ minWidth: 'auto', p: 1 }}
+                        >
+                          {showPassword ? <VisibilityOff /> : <Visibility />}
+                        </Button>
+                      ),
+                    }}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 2,
+                        '&:hover fieldset': {
+                          borderColor: 'primary.main',
+                        },
+                      },
+                    }}
+                  />
+                </Grid>
+                
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    margin="normal"
+                    required
+                    fullWidth
+                    name="confirmPassword"
+                    label="Confirmar Senha"
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    id="confirmPassword"
+                    value={formData.confirmPassword}
+                    onChange={handleChange('confirmPassword')}
+                    error={!!errors.confirmPassword}
+                    helperText={errors.confirmPassword}
+                    InputProps={{
+                      endAdornment: (
+                        <Button
+                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                          sx={{ minWidth: 'auto', p: 1 }}
+                        >
+                          {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
+                        </Button>
+                      ),
+                    }}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 2,
+                        '&:hover fieldset': {
+                          borderColor: 'primary.main',
+                        },
+                      },
+                    }}
+                  />
+                </Grid>
               </Grid>
-            </Grid>
+              
+              <Button
+                type="submit"
+                fullWidth
+                variant="contained"
+                startIcon={!isLoading && <PersonAddIcon />}
+                disabled={isLoading}
+                sx={{
+                  mt: 4,
+                  mb: 3,
+                  py: 1.5,
+                  borderRadius: 2,
+                  fontSize: '1.1rem',
+                  fontWeight: 'bold',
+                  background: 'linear-gradient(45deg, #667eea 30%, #764ba2 90%)',
+                  boxShadow: '0 8px 32px rgba(102, 126, 234, 0.3)',
+                  '&:hover': {
+                    background: 'linear-gradient(45deg, #5a6fd8 30%, #6a4190 90%)',
+                    boxShadow: '0 12px 40px rgba(102, 126, 234, 0.4)',
+                    transform: 'translateY(-2px)',
+                  },
+                  transition: 'all 0.3s ease-in-out',
+                }}
+              >
+                {isLoading ? (
+                  <CircularProgress size={24} color="inherit" />
+                ) : (
+                  'Criar Conta'
+                )}
+              </Button>
+              
+              <Divider sx={{ my: 3 }}>
+                <Typography variant="body2" color="text.secondary">
+                  ou
+                </Typography>
+              </Divider>
+              
+              <Box textAlign="center">
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                  Já tem uma conta?
+                </Typography>
+                <Link 
+                  component={RouterLink} 
+                  to="/login" 
+                  variant="body1"
+                  sx={{
+                    fontWeight: 'bold',
+                    textDecoration: 'none',
+                    color: 'primary.main',
+                    '&:hover': {
+                      textDecoration: 'underline',
+                    },
+                  }}
+                >
+                  Faça login aqui
+                </Link>
+              </Box>
+            </Box>
           </Box>
         </Paper>
-      </Box>
-    </Container>
+      </Container>
+    </Box>
   );
 };
 

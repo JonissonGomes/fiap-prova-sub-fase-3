@@ -2,7 +2,6 @@ import axios from 'axios';
 import { 
   Vehicle, 
   VehicleCreate, 
-  VehicleStatus, 
   VehicleFilters, 
   Sale, 
   SaleCreate,
@@ -20,8 +19,8 @@ import {
   RateLimitConfig
 } from '../types';
 
-// URL do backend unificado no Render
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'https://fiap-unified-backend.onrender.com';
+// URL do backend unificado
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:3002';
 
 // Configuração base do Axios
 const api = axios.create({
@@ -67,7 +66,7 @@ export const customerApi = axios.create({
 
 // Interceptador para adicionar token de autenticação
 const addAuthToken = (config: any) => {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem('access_token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -77,7 +76,9 @@ const addAuthToken = (config: any) => {
 // Interceptador para tratar erros
 const handleError = (error: any) => {
   if (error.response?.status === 401) {
-    localStorage.removeItem('token');
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    localStorage.removeItem('current_user');
     window.location.href = '/login';
   }
   
@@ -185,7 +186,7 @@ export const vehiclesApi = {
 };
 
 // Serviços de Vendas
-export const salesApi = {
+export const salesService = {
   list: async (skip = 0, limit = 100): Promise<Sale[]> => {
     const response = await salesApi.get<Sale[]>(`?skip=${skip}&limit=${limit}`);
     return response.data;

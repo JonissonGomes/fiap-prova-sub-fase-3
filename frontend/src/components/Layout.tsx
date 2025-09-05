@@ -13,7 +13,8 @@ import {
   Avatar,
   Menu,
   MenuItem,
-  Divider
+  Divider,
+  Chip
 } from '@mui/material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
@@ -80,24 +81,65 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   const drawer = (
     <div>
-      <Toolbar>
-        <Typography variant="h6" noWrap component="div">
-          Sistema de Vendas
-        </Typography>
+      <Toolbar sx={{ 
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        color: 'white'
+      }}>
+        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+          <Avatar sx={{ 
+            bgcolor: 'rgba(255,255,255,0.2)', 
+            mr: 2,
+            width: 40,
+            height: 40
+          }}>
+            <VehicleIcon />
+          </Avatar>
+          <Typography variant="h6" noWrap component="div" sx={{ fontWeight: 'bold' }}>
+            FIAP III
+          </Typography>
+        </Box>
       </Toolbar>
       <Divider />
-      <List>
+      <List sx={{ px: 1, py: 2 }}>
         {filteredMenuItems.map((item) => (
           <ListItem
             button
             key={item.text}
             onClick={() => navigate(item.path)}
             selected={location.pathname === item.path}
+            sx={{
+              borderRadius: 2,
+              mb: 0.5,
+              '&.Mui-selected': {
+                background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%)',
+                '& .MuiListItemIcon-root': {
+                  color: 'primary.main',
+                },
+                '& .MuiListItemText-primary': {
+                  color: 'primary.main',
+                  fontWeight: 600,
+                },
+              },
+              '&:hover': {
+                background: 'rgba(102, 126, 234, 0.08)',
+              },
+            }}
           >
-            <ListItemIcon>
+            <ListItemIcon sx={{ 
+              minWidth: 40,
+              color: location.pathname === item.path ? 'primary.main' : 'text.secondary'
+            }}>
               {item.icon}
             </ListItemIcon>
-            <ListItemText primary={item.text} />
+            <ListItemText 
+              primary={item.text} 
+              sx={{
+                '& .MuiListItemText-primary': {
+                  fontSize: '0.9rem',
+                  fontWeight: location.pathname === item.path ? 600 : 400,
+                }
+              }}
+            />
           </ListItem>
         ))}
       </List>
@@ -123,18 +165,27 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           >
             <MenuIcon />
           </IconButton>
-          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
-            Sistema de Vendas
+          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1, fontWeight: 'bold' }}>
+            FIAP III
           </Typography>
 
           {/* Informações do usuário */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Typography variant="body2" sx={{ display: { xs: 'none', sm: 'block' } }}>
-              {user?.name}
-            </Typography>
-            <Typography variant="caption" sx={{ display: { xs: 'none', sm: 'block' } }}>
-              ({user?.role})
-            </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Box sx={{ display: { xs: 'none', sm: 'flex' }, alignItems: 'center', gap: 1 }}>
+              <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                {user?.name}
+              </Typography>
+              <Chip
+                label={user?.role}
+                size="small"
+                sx={{ 
+                  bgcolor: 'rgba(255,255,255,0.2)', 
+                  color: 'white',
+                  fontWeight: 'bold',
+                  fontSize: '0.75rem'
+                }}
+              />
+            </Box>
             <IconButton
               size="large"
               aria-label="account of current user"
@@ -142,8 +193,19 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               aria-haspopup="true"
               onClick={handleMenuOpen}
               color="inherit"
+              sx={{
+                '&:hover': {
+                  bgcolor: 'rgba(255,255,255,0.1)',
+                }
+              }}
             >
-              <Avatar sx={{ width: 32, height: 32 }}>
+              <Avatar sx={{ 
+                width: 36, 
+                height: 36,
+                bgcolor: 'rgba(255,255,255,0.2)',
+                color: 'white',
+                fontWeight: 'bold'
+              }}>
                 {user?.name?.charAt(0).toUpperCase()}
               </Avatar>
             </IconButton>
@@ -156,7 +218,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         id="menu-appbar"
         anchorEl={anchorEl}
         anchorOrigin={{
-          vertical: 'top',
+          vertical: 'bottom',
           horizontal: 'right',
         }}
         keepMounted
@@ -166,15 +228,51 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         }}
         open={Boolean(anchorEl)}
         onClose={handleMenuClose}
+        PaperProps={{
+          sx: {
+            borderRadius: 2,
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
+            border: '1px solid rgba(102, 126, 234, 0.1)',
+            minWidth: 200,
+          }
+        }}
       >
-        <MenuItem onClick={handleProfile}>
+        <Box sx={{ px: 2, py: 1, borderBottom: '1px solid rgba(0, 0, 0, 0.1)' }}>
+          <Typography variant="subtitle2" color="text.secondary">
+            {user?.name}
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            {user?.email}
+          </Typography>
+        </Box>
+        <MenuItem 
+          onClick={handleProfile}
+          sx={{
+            borderRadius: 1,
+            mx: 1,
+            my: 0.5,
+            '&:hover': {
+              bgcolor: 'rgba(102, 126, 234, 0.08)',
+            }
+          }}
+        >
           <ListItemIcon>
             <AccountIcon fontSize="small" />
           </ListItemIcon>
           <ListItemText primary="Perfil" />
         </MenuItem>
         <Divider />
-        <MenuItem onClick={handleLogout}>
+        <MenuItem 
+          onClick={handleLogout}
+          sx={{
+            borderRadius: 1,
+            mx: 1,
+            my: 0.5,
+            '&:hover': {
+              bgcolor: 'rgba(220, 0, 78, 0.08)',
+            }
+          }}
+        >
           <ListItemIcon>
             <LogoutIcon fontSize="small" />
           </ListItemIcon>
