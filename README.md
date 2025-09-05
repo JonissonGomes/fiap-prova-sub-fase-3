@@ -1,400 +1,655 @@
-# Sistema de Vendas de Veículos - Microsserviços
+# 🚗 FIAP III
 
-[![Compatibility](https://img.shields.io/badge/Compatibility-Windows%20%7C%20MacOS%20%7C%20Linux-brightgreen)](docs/CROSS_PLATFORM_COMPATIBILITY.md)
-[![Docker](https://img.shields.io/badge/Docker-Required-blue)](https://www.docker.com/products/docker-desktop)
-[![Python](https://img.shields.io/badge/Python-3.8%2B-blue)](https://www.python.org/downloads/)
+[![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg)](https://nodejs.org/)
+[![React](https://img.shields.io/badge/React-18+-blue.svg)](https://reactjs.org/)
+[![MongoDB](https://img.shields.io/badge/MongoDB-Latest-green.svg)](https://mongodb.com/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5+-blue.svg)](https://typescriptlang.org/)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Status](https://img.shields.io/badge/Status-Production%20Ready-green.svg)](README.md)
+[![Makefile](https://img.shields.io/badge/Makefile-Available-blue.svg)](Makefile)
+
+Sistema completo de gerenciamento de vendas de veículos com autenticação, controle de estoque e processamento de pagamentos.
 
 ## 📋 Visão Geral
 
-Sistema completo de vendas de veículos construído com arquitetura de microsserviços, incluindo autenticação robusta, gestão de clientes, catálogo de veículos e processamento de vendas.
+Este sistema foi desenvolvido como uma solução unificada que combina:
+- **Backend API** em Node.js com Express
+- **Frontend** em React com TypeScript
+- **Banco de dados** MongoDB
+- **Autenticação** JWT com controle de roles
+- **Makefile** para facilitar o gerenciamento
 
-🌐 **Agora 100% compatível com Windows, MacOS e Linux!**
+## ⚡ Início Rápido
 
-## 🚀 Início Rápido
-
-### ✅ Compatibilidade entre Sistemas Operacionais
-
-Este projeto é **totalmente compatível** com Windows, MacOS e Linux!
-
-#### 🔍 Verificar Compatibilidade
 ```bash
-# Verificar dependências e compatibilidade do sistema
-python3 scripts/check-dependencies.py
+# Clone o repositório
+git clone <repository-url>
+cd fiap-prova-sub-fase-3
 
-# Ou usar o comando Make
-make check-dependencies
+# Setup completo automático
+make setup
+
+# Iniciar o sistema
+make start
 ```
 
-### 📋 Pré-requisitos por Sistema
+**Acesso:**
+- 🌐 Frontend: http://localhost:3000
+- 🔧 API: http://localhost:3002
+- 🔑 Credenciais: admin@vehiclesales.com / admin123
 
-#### 🪟 Windows
-- **Docker Desktop** (obrigatório)
-- **Python 3.8+** (Microsoft Store recomendado)
-- **Git Bash** (opcional, para scripts Unix)
+### 🎬 Demo Rápida
 
-#### 🍎 MacOS
-- **Docker Desktop**
-- **Homebrew** (para dependências)
-- **Python 3.8+** (via Homebrew)
-
-#### 🐧 Linux
-- **Docker e Docker Compose**
-- **Python 3.8+**
-- **curl** (verificar instalação)
-
-### 🚀 Configuração Automática
-
-#### Todas as Plataformas (Recomendado)
 ```bash
-# Configuração completa em um comando - funciona em todos os SOs
-make setup-complete
+# 1. Clone e setup
+git clone <repository-url>
+cd fiap-prova-sub-fase-3
+make setup
+
+# 2. Iniciar sistema
+make start
+
+# 3. Acessar aplicação
+# Frontend: http://localhost:3000
+# Login: admin@vehiclesales.com / admin123
 ```
 
-#### Windows (PowerShell)
-```powershell
-# Método alternativo para Windows
-powershell -ExecutionPolicy Bypass -File scripts/setup-complete.ps1
+## 🏗️ Arquitetura
+
+### Diagrama da Arquitetura
+```mermaid
+graph TB
+    subgraph "Frontend"
+        A[React App<br/>Port: 3000]
+        B[Components]
+        C[Pages]
+        D[Services]
+    end
+    
+    subgraph "Backend"
+        E[Express API<br/>Port: 3002]
+        F[Routes]
+        G[Models]
+        H[Middleware]
+    end
+    
+    subgraph "Database"
+        I[MongoDB<br/>Port: 27017]
+        J[Users Collection]
+        K[Vehicles Collection]
+        L[Customers Collection]
+        M[Sales Collection]
+    end
+    
+    A --> E
+    B --> A
+    C --> A
+    D --> A
+    E --> F
+    E --> G
+    E --> H
+    F --> I
+    G --> I
+    I --> J
+    I --> K
+    I --> L
+    I --> M
 ```
 
-#### Windows (Git Bash)
+### Estrutura do Projeto
+```
+fiap-prova-sub-fase-3/
+├── backend/          # API Node.js unificada
+│   ├── src/
+│   │   ├── routes/   # Rotas da API
+│   │   ├── models/   # Modelos do banco
+│   │   ├── middleware/ # Middlewares
+│   │   └── utils/    # Utilitários
+│   └── package.json
+├── frontend/         # Aplicação React
+│   ├── src/
+│   │   ├── pages/    # Páginas da aplicação
+│   │   ├── components/ # Componentes
+│   │   └── services/ # Serviços de API
+│   └── package.json
+└── docs/            # Documentação
+```
+
+## ✨ Funcionalidades
+
+### 🔐 Autenticação e Autorização
+- ✅ Login/Logout com JWT
+- ✅ Controle de roles (ADMIN, SALES, CUSTOMER)
+- ✅ Middleware de autenticação
+- ✅ Validação de tokens
+- ✅ Refresh tokens
+- ✅ Rate limiting
+
+### Fluxo de Autenticação
+```mermaid
+sequenceDiagram
+    participant U as Usuário
+    participant F as Frontend
+    participant B as Backend
+    participant D as Database
+    
+    U->>F: 1. Login (email/password)
+    F->>B: 2. POST /auth/login
+    B->>D: 3. Verificar credenciais
+    D-->>B: 4. Dados do usuário
+    B-->>F: 5. JWT Token + User data
+    F->>F: 6. Armazenar token
+    F-->>U: 7. Redirecionar para dashboard
+    
+    Note over F,B: Requisições autenticadas
+    F->>B: 8. Request + JWT Token
+    B->>B: 9. Validar token
+    B-->>F: 10. Response
+```
+
+### 🚗 Gestão de Veículos
+- ✅ CRUD completo de veículos
+- ✅ Controle de status (DISPONÍVEL, RESERVADO, VENDIDO)
+- ✅ Filtros e busca avançada
+- ✅ Validação de dados
+- ✅ Upload de imagens
+- ✅ Histórico de alterações
+
+### 👥 Gestão de Clientes
+- ✅ CRUD de clientes
+- ✅ Validação de CPF
+- ✅ Busca por CPF, email, nome
+- ✅ Estatísticas e relatórios
+- ✅ Histórico de compras
+- ✅ Dados de contato completos
+
+### 💰 Gestão de Vendas
+- ✅ Criação de vendas
+- ✅ Controle de status de pagamento
+- ✅ Histórico de vendas
+- ✅ Relatórios detalhados
+- ✅ Integração com veículos e clientes
+- ✅ Dashboard com métricas
+
+## 🛠️ Tecnologias
+
+### Backend
+- **Node.js** 18+ - Runtime JavaScript
+- **Express.js** - Framework web
+- **MongoDB** - Banco de dados NoSQL
+- **Mongoose** - ODM para MongoDB
+- **JWT** - Autenticação
+- **bcryptjs** - Hash de senhas
+- **express-rate-limit** - Rate limiting
+
+### Frontend
+- **React** 18 - Framework de interface
+- **TypeScript** - Tipagem estática
+- **Material-UI** - Componentes de interface
+- **Axios** - Cliente HTTP
+- **Context API** - Gerenciamento de estado
+
+### DevOps
+- **Docker** - Containerização
+- **Make** - Automação de tarefas
+- **MongoDB** - Banco de dados
+
+## 🚀 Instalação e Configuração
+
+### Pré-requisitos
+- Node.js 18+
+- MongoDB
+- npm ou yarn
+- Docker (para MongoDB)
+- Make (opcional, mas recomendado)
+
+### 🎯 Setup Rápido com Makefile
+
 ```bash
-# Se preferir usar Git Bash no Windows
-./scripts/setup-complete.sh
+# Clone o repositório
+git clone <repository-url>
+cd fiap-prova-sub-fase-3
+
+# Setup completo automático
+make setup
+
+# Iniciar o sistema
+make start
 ```
 
-### 📋 Configuração Passo a Passo
+### 📋 Comandos Principais do Makefile
 
-#### 1. Iniciar o Sistema
+| Comando | Descrição |
+|---------|-----------|
+| `make help` | 📖 Ver todos os comandos disponíveis |
+| `make setup` | 🚀 Setup completo do projeto |
+| `make start` | 🚀 Iniciar backend e frontend |
+| `make stop` | 🛑 Parar todos os serviços |
+| `make status` | 📊 Ver status dos serviços |
+| `make health` | 🏥 Verificar saúde dos serviços |
+| `make clean` | 🧹 Limpeza completa |
+| `make reset` | 🔄 Reset completo do projeto |
+
+### 🎯 Comandos Mais Usados
+
 ```bash
-# Iniciar todos os serviços
-make up
+# Desenvolvimento diário
+make dev           # Modo desenvolvimento
+make start         # Iniciar sistema
+make stop          # Parar sistema
+make status        # Ver status
 
-# Aguardar todos os serviços ficarem prontos (pode levar alguns minutos)
-make status
+# Gerenciamento
+make clean         # Limpeza completa
+make reset         # Reset completo
+make backup        # Backup do banco
+make health        # Health check
 ```
 
-#### 2. Configurar Autenticação e Popular Dados
+### 🔧 Setup Manual (Alternativo)
+
+#### 1. Clone o repositório
 ```bash
-# Configuração completa em um comando
-make setup-complete
-
-# OU execute passo a passo:
-make setup-admin     # Configura usuário admin no Keycloak
-make fix-keycloak    # Corrige configuração do client
-make populate-data   # Popula dados de teste (compatível com todos os SOs)
+git clone <repository-url>
+cd fiap-prova-sub-fase-3
 ```
 
-#### 3. Acessar o Sistema
-- **Frontend**: http://localhost:3000
-- **Login**: admin@vehiclesales.com / admin123
-
-#### 4. Comandos Úteis
+#### 2. Configure o Backend
 ```bash
-make logs           # Ver logs de todos os serviços
-make restart        # Reiniciar serviços
-make clean          # Limpar containers e volumes
-make test-compatibility  # Testar compatibilidade do sistema
-make quick-test     # Teste rápido da solução de problemas
-make setup-complete-fast  # Configuração rápida otimizada
+cd backend
+npm install
+cp config.env.example config.env
+# Edite o config.env com suas configurações
+npm start
 ```
 
-## 🔐 Credenciais de Acesso
+#### 3. Configure o Frontend
+```bash
+cd frontend
+npm install
+npm start
+```
+
+#### 4. Configure o MongoDB
+```bash
+# Inicie o MongoDB
+docker run -d --name mongodb-unified-dev -p 27017:27017 mongo:latest --noauth
+
+# Popule dados iniciais
+cd backend
+npm run populate
+```
+
+## 🔧 Configuração
+
+### Variáveis de Ambiente (Backend)
+
+Crie um arquivo `backend/config.env`:
+
+```env
+# Servidor
+PORT=3002
+NODE_ENV=development
+
+# Banco de dados
+MONGODB_URL=mongodb://localhost:27017
+MONGODB_DB_NAME=vehicle_sales
+
+# JWT
+JWT_SECRET=your-super-secret-jwt-key
+JWT_REFRESH_SECRET=your-super-secret-refresh-key
+JWT_EXPIRES_IN=24h
+JWT_REFRESH_EXPIRES_IN=7d
+
+# CORS
+ALLOWED_ORIGINS=http://localhost:3000,http://localhost:3003
+
+# Rate Limiting
+RATE_LIMIT_WINDOW_MS=900000
+RATE_LIMIT_MAX_REQUESTS=100
+
+# Logs
+LOG_LEVEL=info
+```
+
+### Variáveis de Ambiente (Frontend)
+
+Crie um arquivo `frontend/.env`:
+
+```env
+REACT_APP_BACKEND_URL=http://localhost:3002
+```
+
+## 📚 Documentação da API
+
+### Endpoints Principais
+
+#### Autenticação
+- `POST /auth/login` - Login
+- `POST /auth/register` - Registro
+- `GET /auth/validate` - Validar token
+- `POST /auth/refresh` - Renovar token
+- `POST /auth/logout` - Logout
+
+#### Veículos
+- `GET /vehicles` - Listar veículos
+- `POST /vehicles` - Criar veículo
+- `GET /vehicles/:id` - Buscar veículo
+- `PUT /vehicles/:id` - Atualizar veículo
+- `DELETE /vehicles/:id` - Deletar veículo
+
+#### Clientes
+- `GET /customers` - Listar clientes
+- `POST /customers` - Criar cliente
+- `GET /customers/:id` - Buscar cliente
+- `PUT /customers/:id` - Atualizar cliente
+- `DELETE /customers/:id` - Deletar cliente
+
+#### Vendas
+- `GET /sales` - Listar vendas
+- `POST /sales` - Criar venda
+- `GET /sales/:id` - Buscar venda
+- `PUT /sales/:id` - Atualizar venda
+- `DELETE /sales/:id` - Deletar venda
+
+## 👥 Roles e Permissões
+
+### Diagrama de Roles
+```mermaid
+graph TD
+    A[Usuário] --> B{Login}
+    B --> C[ADMIN]
+    B --> D[SALES]
+    B --> E[CUSTOMER]
+    
+    C --> F[Acesso Total]
+    C --> G[Gerenciar Usuários]
+    C --> H[Ver Todas as Vendas]
+    C --> I[Relatórios]
+    
+    D --> J[Gerenciar Veículos]
+    D --> K[Criar Vendas]
+    D --> L[Ver Clientes]
+    
+    E --> M[Ver Veículos]
+    E --> N[Suas Compras]
+    E --> O[Atualizar Perfil]
+    
+    style C fill:#ff6b6b
+    style D fill:#4ecdc4
+    style E fill:#45b7d1
+```
+
+### ADMIN
+- Acesso total ao sistema
+- Pode gerenciar usuários
+- Pode ver todas as vendas
+- Pode acessar relatórios
+
+### SALES
+- Pode gerenciar veículos
+- Pode criar e gerenciar vendas
+- Pode ver clientes
+- Não pode gerenciar usuários
+
+### CUSTOMER
+- Pode ver veículos disponíveis
+- Pode ver suas próprias compras
+- Pode atualizar seu perfil
+- Não pode acessar área administrativa
+
+## 🧪 Testes
+
+### Testar a API
+```bash
+cd backend
+npm test
+```
+
+### Testar o Frontend
+```bash
+cd frontend
+npm test
+```
+
+### Testar Integração
+```bash
+# Verificar se a API está funcionando
+curl http://localhost:3002/health
+
+# Testar login
+curl -X POST http://localhost:3002/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email": "admin@vehiclesales.com", "password": "admin123"}'
+```
+
+## 🚀 Deploy
+
+### Com Makefile (Recomendado)
+```bash
+# Desenvolvimento
+make dev
+
+# Produção
+make prod
+
+# Deploy local
+make deploy
+```
+
+### Manual
+```bash
+# Desenvolvimento
+# Terminal 1 - Backend
+cd backend && npm start
+
+# Terminal 2 - Frontend
+cd frontend && npm start
+
+# Produção
+# Build do frontend
+cd frontend && npm run build
+
+# Iniciar backend
+cd backend && npm start
+```
+
+## 🛠️ Makefile - Comandos Avançados
+
+### Comandos de Desenvolvimento
+```bash
+make dev           # Modo desenvolvimento
+make start         # Iniciar todos os serviços
+make start-backend # Apenas backend
+make start-frontend # Apenas frontend
+make stop          # Parar todos os serviços
+```
+
+### Comandos de Gerenciamento
+```bash
+make status        # Status dos serviços
+make health        # Health check
+make logs          # Ver logs
+make clean         # Limpeza completa
+make reset         # Reset completo
+```
+
+### Comandos de Banco de Dados
+```bash
+make mongodb       # Iniciar MongoDB
+make populate      # Popular dados
+make backup        # Backup do banco
+make restore       # Restaurar backup
+```
+
+### Comandos de Produção
+```bash
+make build         # Build para produção
+make deploy        # Deploy local
+make prod          # Modo produção
+```
+
+### Comandos de Informação
+```bash
+make help          # Ajuda completa
+make info          # Informações do projeto
+make test          # Executar testes
+```
+
+### 🚀 Comandos Úteis para Desenvolvimento
+
+```bash
+# Desenvolvimento diário
+make dev           # Iniciar em modo desenvolvimento
+make status        # Ver status dos serviços
+make health        # Verificar saúde da API
+make logs          # Ver logs em tempo real
+
+# Gerenciamento de dados
+make populate      # Popular banco com dados de teste
+make backup        # Fazer backup do banco
+make restore       # Restaurar backup
+
+# Manutenção
+make clean         # Limpeza completa
+make reset         # Reset completo do projeto
+make stop          # Parar todos os serviços
+```
+
+## 📊 Dados Iniciais
+
+O sistema vem com dados de exemplo:
 
 ### Usuário Admin
 - **Email**: admin@vehiclesales.com
 - **Senha**: admin123
 - **Role**: ADMIN
 
-### Keycloak Admin
-- **URL**: http://localhost:8080/admin
-- **Usuário**: admin
-- **Senha**: admin123
+### Veículos de Exemplo
+- Honda Civic 2023
+- Toyota Corolla 2022
+- Ford Focus 2021
 
-## 📊 Dados de Teste
+### Clientes de Exemplo
+- João Silva
+- Maria Santos
+- Pedro Oliveira
 
-Após executar `make setup-complete`, o sistema terá:
-- ✅ 100 veículos com dados realistas
-- ✅ Usuário admin configurado
-- ✅ Sistema de autenticação funcionando
-- ✅ Keycloak configurado corretamente
+## 🔍 Troubleshooting
 
-## 🏗️ Arquitetura
+### Problemas Comuns
 
-```mermaid
-graph TB
-    subgraph "Infraestrutura"
-        B[Rate Limiting<br/>Redis :6379]
-    end
-    
-    subgraph "Frontend"
-        A[React App<br/>:3000]
-    end
-    
-    subgraph "Microsserviços"
-        C[Auth Service<br/>:8002]
-        D[Core Service<br/>:8000]
-        E[Sales Service<br/>:8001]
-        F[Customer Service<br/>:8003]
-    end
-    
-    subgraph "Autenticação"
-        G[Keycloak<br/>:8080]
-    end
-    
-    subgraph "Bancos de Dados"
-        H[(Auth MongoDB<br/>:27021)]
-        I[(Core MongoDB<br/>:27019)]
-        J[(Sales MongoDB<br/>:27020)]
-        K[(Customer MongoDB<br/>:27022)]
-    end
-    
-    A --> C
-    A --> D
-    A --> E
-    A --> F
-    
-    C --> G
-    C --> H
-    D --> I
-    E --> J
-    F --> K
-    
-    B --> C
-    B --> D
-    B --> E
-    B --> F
-```
-
-## 🛠️ Resolução de Problemas
-
-### 🔍 Diagnóstico Geral
+#### API não conecta ao MongoDB
 ```bash
-# Verificar compatibilidade e dependências
-python3 scripts/check-dependencies.py
-
-# Verificar sistema operacional detectado
-make test-compatibility
-```
-
-### 🪟 Problemas Específicos do Windows
-
-#### "Scripts .sh não funcionam"
-**Solução**: Use métodos alternativos:
-```powershell
-# Método 1: PowerShell (recomendado)
-powershell -ExecutionPolicy Bypass -File scripts/setup-complete.ps1
-
-# Método 2: Git Bash
-./scripts/setup-complete.sh
-
-# Método 3: Python direto
-python scripts/populate-data.py
-```
-
-#### "docker não é reconhecido"
-**Solução**: 
-- Verificar se Docker Desktop está rodando
-- Adicionar Docker ao PATH do sistema
-- Reiniciar terminal
-
-#### "python não é reconhecido"
-**Solução**:
-- Instalar Python via Microsoft Store
-- Ou usar `py` ao invés de `python`
-
-### 🚨 Problemas Gerais
-
-#### "Falha ao fazer login do admin"
-**Solução**: Execute a configuração completa:
-```bash
-make setup-complete
-```
-
-#### "Serviço não está respondendo"
-**Solução**: Verifique o status e reinicie se necessário:
-```bash
-make status
-make restart
-```
-
-#### "Keycloak não está acessível"
-**Solução**: Aguarde o Keycloak inicializar completamente:
-```bash
-# Aguarde até que todos os serviços estejam "healthy"
+# Verificar status
 make status
 
-# Se necessário, reinicie apenas o Keycloak
-docker-compose restart keycloak
+# Reiniciar MongoDB
+make stop-mongodb
+make mongodb
 ```
 
-#### "Dados não foram criados"
-**Solução**: Execute a população de dados:
+#### Erro de CORS
 ```bash
-make populate-data  # Funciona em todos os SOs
+# Verificar configuração
+# Editar backend/config.env
+ALLOWED_ORIGINS=http://localhost:3000,http://localhost:3003
+
+# Reiniciar backend
+make stop
+make start-backend
 ```
 
-#### "service 'auth-service' is not running container"
-**Solução**: Os containers não estão rodando. Corrija com:
+#### Token inválido
 ```bash
-# Método 1: Iniciar containers primeiro
-make up
-make setup-complete
+# Limpar localStorage do navegador
+# Ou fazer logout e login novamente
+```
 
-# Método 2: O script agora inicia automaticamente
-make setup-complete  # Já inclui inicialização automática
-
-# Método 3: Verificar status
+#### Porta em uso
+```bash
+# Verificar processos
 make status
-docker-compose ps
+
+# Parar todos os serviços
+make stop
+
+# Reiniciar
+make start
 ```
 
-#### "Keycloak está demorando muito para inicializar"
-**Solução**: Keycloak pode demorar 1-2 minutos para inicializar. Use:
+### 🆘 Comandos de Diagnóstico
+
 ```bash
-# Método 1: Configuração rápida otimizada
-make setup-complete-fast  # Mais tolerante a delays
-
-# Método 2: Verificar logs do Keycloak
-docker-compose logs keycloak
-
-# Método 3: Aguardar e tentar novamente
-make setup-complete  # Timeout aumentado para 2 minutos
+make status        # Status dos serviços
+make health        # Health check da API
+make logs          # Ver logs
+make info          # Informações do sistema
 ```
 
-## 🔧 Comandos de Manutenção
+## 📝 Logs
 
-### 🔍 Diagnóstico e Compatibilidade
+### Backend
 ```bash
-make check-dependencies    # Verifica dependências do sistema
-make test-compatibility   # Testa compatibilidade entre SOs
+# Ver logs em tempo real
+cd backend && npm start
+
+# Logs são exibidos no console
 ```
 
-### ⚙️ Configuração
+### Frontend
 ```bash
-make setup-admin           # Configura usuário admin
-make fix-keycloak         # Corrige configuração do Keycloak
-make setup-complete       # Configuração completa (todos os SOs)
-make setup-complete-fast  # Configuração rápida otimizada (para Keycloak lento)
+# Ver logs no console do navegador
+# F12 -> Console
 ```
 
-### 📊 População de Dados
-```bash
-make populate-data        # Popula dados (compatível com todos os SOs)
-make populate-data-clean  # Limpa bancos e popula dados
-```
+## 🤝 Contribuição
 
-### 📋 Monitoramento
-```bash
-make logs                 # Logs de todos os serviços
-make auth-logs           # Logs apenas do auth-service
-make core-logs           # Logs apenas do core-service
-make status              # Status dos containers
-```
+1. Fork o projeto
+2. Crie uma branch para sua feature
+3. Commit suas mudanças
+4. Push para a branch
+5. Abra um Pull Request
 
-### 🧹 Limpeza
-```bash
-make clean               # Remove containers e volumes
-make clean-dbs           # Limpa apenas bancos de dados
-make clean-redis         # Limpa cache Redis
-```
+## 📄 Licença
 
-## 📱 Funcionalidades Implementadas
+Este projeto está sob a licença MIT. Veja o arquivo LICENSE para mais detalhes.
 
-### ✅ Sistema de Autenticação
-- Login/logout com Keycloak
-- Controle de acesso baseado em roles (ADMIN, CUSTOMER, SALES)
-- Tokens JWT com renovação automática
-- Middleware de autenticação em todos os serviços
+## 📊 Status do Projeto
 
-### ✅ Gestão de Veículos
-- CRUD completo de veículos
-- Filtros avançados (marca, modelo, ano, preço)
-- Ordenação por preço (crescente/decrescente)
-- Status de disponibilidade
+### ✅ Funcionalidades Implementadas
+- [x] Autenticação e autorização
+- [x] Gestão de veículos
+- [x] Gestão de clientes
+- [x] Gestão de vendas
+- [x] Dashboard com métricas
+- [x] API REST completa
+- [x] Frontend responsivo
+- [x] Documentação completa
+- [x] Makefile para automação
+- [x] Testes de integração
 
-### ✅ Gestão de Clientes
-- CRUD completo de clientes
-- Validação de CPF, email, telefone
-- Campos completos (nome, endereço, cidade, estado, CEP)
-- Busca por múltiplos critérios
+### 🚀 Próximos Passos
+- [ ] Testes automatizados
+- [ ] CI/CD pipeline
+- [ ] Deploy em produção
+- [ ] Monitoramento
+- [ ] Logs estruturados
 
-### ✅ Sistema de Vendas
-- Registro de vendas
-- Histórico de transações
-- Relatórios de vendas
-- Integração com clientes e veículos
+## 📞 Suporte
 
-### ✅ Rate Limiting
-- Controle de taxa por endpoint
-- Configuração diferenciada por tipo de operação
-- Fallback em memória quando Redis não disponível
-- Endpoints de gerenciamento para admins
+Para suporte e dúvidas:
 
-### ✅ Observabilidade
-- Logs estruturados
-- Health checks em todos os serviços
-- Métricas de rate limiting
-- Monitoramento de conectividade
+1. **Consulte a documentação** em `docs/`
+2. **Verifique os logs** com `make logs`
+3. **Execute health check** com `make health`
+4. **Entre em contato** através de:
+   - Email: suporte@vehiclesales.com
+   - Issues: [GitHub Issues](link-para-issues)
 
-### ✅ Compatibilidade Multiplataforma
-- **100% compatível** com Windows, MacOS e Linux
-- Detecção automática de sistema operacional
-- Scripts PowerShell para Windows
-- Scripts Python multiplataforma
-- Makefile inteligente com comandos condicionais
-- Verificação automática de dependências
+## 📄 Licença
 
-## 🔄 Fluxo de Desenvolvimento
-
-### 1. **Verificação Inicial** (Todos os SOs):
-```bash
-# Verificar compatibilidade e dependências
-make check-dependencies
-
-# Verificar se sistema está configurado corretamente
-make test-compatibility
-```
-
-### 2. **Desenvolvimento Local**:
-```bash
-make up
-make setup-complete  # Configuração automática
-# Desenvolver...
-make logs  # Para debug
-```
-
-### 3. **Testes**:
-```bash
-make test
-make test-rate-limiting
-```
-
-### 4. **Limpeza**:
-```bash
-make clean
-make up
-```
-
-## 📚 Documentação Adicional
-
-### 🔧 Documentação Técnica
-- [Arquitetura Detalhada](docs/ARCHITECTURE.md)
-- [Documentação das APIs](docs/API_DOCUMENTATION.md)
-- [Guia de Deployment](docs/DEPLOYMENT.md)
-- [Variáveis de Ambiente](docs/ENVIRONMENT_VARIABLES.md)
-- [Guia de População de Dados](docs/POPULATE_DATA_GUIDE.md)
-
-### 🌐 Compatibilidade entre Sistemas
-- [**Compatibilidade Multiplataforma**](docs/CROSS_PLATFORM_COMPATIBILITY.md) - Análise completa de compatibilidade
-- [**Guia Windows**](docs/WINDOWS_SETUP_GUIDE.md) - Configuração específica para Windows
-- [Guia Keycloak](docs/KEYCLOAK_QUICKSTART.md)
-- [Guia Produção Keycloak](docs/KEYCLOAK_PRODUCTION_GUIDE.md)
-
-### 🔍 Ferramentas de Diagnóstico
-- `scripts/check-dependencies.py` - Verificação de dependências
-- `scripts/setup-complete.ps1` - Configuração para Windows
-- `make check-dependencies` - Comando de verificação
-- `make test-compatibility` - Teste de compatibilidade
+Este projeto está sob a licença MIT. Veja o arquivo LICENSE para mais detalhes.
 
 ## 🤝 Contribuição
 
@@ -404,36 +659,8 @@ make up
 4. Push para a branch (`git push origin feature/AmazingFeature`)
 5. Abra um Pull Request
 
-## 🎯 Status de Compatibilidade
-
-| Sistema Operacional | Status | Configuração | Scripts |
-|-------------------|--------|-------------|---------|
-| 🪟 **Windows** | ✅ **Totalmente Compatível** | PowerShell + Python | `.ps1` + `.py` |
-| 🍎 **MacOS** | ✅ **Totalmente Compatível** | Bash + Python | `.sh` + `.py` |
-| 🐧 **Linux** | ✅ **Totalmente Compatível** | Bash + Python | `.sh` + `.py` |
-
-### 🔧 Recursos de Compatibilidade
-- ✅ **Detecção automática** de sistema operacional
-- ✅ **Scripts condicionais** no Makefile
-- ✅ **Verificação de dependências** automática
-- ✅ **Documentação específica** por plataforma
-- ✅ **Resolução de problemas** por sistema
-
-### 🚀 Comandos Universais
-```bash
-make check-dependencies    # Funciona em todos os SOs
-make setup-complete       # Configuração automática
-make populate-data        # População de dados
-make test-compatibility   # Testa compatibilidade
-```
-
-## 📄 Licença
-
-Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
-
 ---
 
-⭐ Se este projeto foi útil para você, considere dar uma estrela no repositório!
+**Desenvolvido com ❤️ para FIAP**
 
-🌐 **Agora 100% compatível com Windows, MacOS e Linux!** 
-
+*FIAP III - Refatoração de microserviços para API unificada*

@@ -1,505 +1,227 @@
-.PHONY: setup install up down test test-core test-sales test-auth test-customer logs clean run stop mongodb mongodb-logs core sales auth customer frontend core-logs sales-logs auth-logs customer-logs frontend-logs keycloak keycloak-logs lint type-check rebuild status restart clean-sales-db clean-core-db clean-auth-db clean-customer-db coverage coverage-core coverage-sales coverage-auth coverage-customer coverage-report setup-env validate-env docs redis redis-logs redis-cli clean-redis test-rate-limiting test-frontend populate-data populate-data-clean test-populate-data frontend-build frontend-test frontend-lint frontend-format check-dependencies test-compatibility test-setup-complete quick-test setup-complete-fast
+# 🚗 FIAP III de Veículos - Makefile
+# Facilita o setup, execução e gerenciamento do projeto
 
-# Detectar sistema operacional
-UNAME_S := $(shell uname -s 2>/dev/null || echo Windows)
-ifeq ($(UNAME_S),Linux)
-    OS_TYPE = linux
-    ECHO_FLAG = -e
-    SCRIPT_EXT = .sh
-endif
-ifeq ($(UNAME_S),Darwin)
-    OS_TYPE = macos
-    ECHO_FLAG = -e
-    SCRIPT_EXT = .sh
-endif
-ifeq ($(UNAME_S),Windows)
-    OS_TYPE = windows
-    ECHO_FLAG = 
-    SCRIPT_EXT = .ps1
-endif
-ifdef OS
-    OS_TYPE = windows
-    ECHO_FLAG = 
-    SCRIPT_EXT = .ps1
-endif
+# Cores para output
+RED=\033[0;31m
+GREEN=\033[0;32m
+YELLOW=\033[1;33m
+BLUE=\033[0;34m
+PURPLE=\033[0;35m
+CYAN=\033[0;36m
+WHITE=\033[1;37m
+NC=\033[0m # No Color
 
-# Função para detectar se estamos no Windows
-define is_windows
-$(if $(filter windows,$(OS_TYPE)),true,false)
-endef
+# Variáveis
+BACKEND_DIR=backend
+FRONTEND_DIR=frontend
+MONGODB_CONTAINER=mongodb-unified-dev
+BACKEND_PORT=3002
+FRONTEND_PORT=3000
+MONGODB_PORT=27017
 
-# Função para executar scripts de forma compatível
-define run_script
-$(if $(filter windows,$(OS_TYPE)),powershell -ExecutionPolicy Bypass -File scripts/$(1).ps1,./scripts/$(1).sh)
-endef
+# Comandos padrão
+.PHONY: help install setup start stop clean test logs status
 
-setup:
-	@echo "Configurando ambiente..."
-	docker-compose build
-
-install:
-	@echo "Instalando dependências..."
-	docker-compose run --rm core-service pip install -r requirements.txt
-	docker-compose run --rm sales-service pip install -r requirements.txt
-	docker-compose run --rm auth-service pip install -r requirements.txt
-	docker-compose run --rm customer-service pip install -r requirements.txt
-
-up:
-	docker-compose up -d redis keycloak auth-mongodb core-mongodb sales-mongodb customer-mongodb auth-service core-service sales-service customer-service
-	@echo "🚀 Serviços iniciados:"
-	@echo "   Core Service: http://localhost:8000"
-	@echo "   Sales Service: http://localhost:8001"
-	@echo "   Auth Service: http://localhost:8002"
-	@echo "   Customer Service: http://localhost:8003"
-	@echo "   Keycloak: http://localhost:8080"
-	@echo "   Redis: localhost:6379"
+# Ajuda - comando padrão
+help: ## 📖 Mostra esta ajuda
+	@echo "$(CYAN)🚗 FIAP III de Veículos$(NC)"
+	@echo "$(YELLOW)================================$(NC)"
 	@echo ""
-	@echo "📋 Para ver logs: make logs"
-	@echo "🔧 Para configurar Keycloak: make keycloak-setup"
-	docker-compose logs -f
-
-down:
-	docker-compose down
-
-# População de dados
-populate-data:
-	@echo "🚀 Populando dados de teste..."
-ifeq ($(OS_TYPE),windows)
-	@python scripts/populate-data.py
-else
-	@./scripts/populate-data.sh
-endif
-
-populate-data-working:
-	@echo "🚀 Populando dados (versão funcional)..."
-ifeq ($(OS_TYPE),windows)
-	@python scripts/populate-data.py
-else
-	@./scripts/populate-data-working.sh
-endif
-
-populate-data-clean: clean-dbs populate-data-working
-
-test-populate-data:
-	@echo "🧪 Testando sistema de população de dados..."
-ifeq ($(OS_TYPE),windows)
-	@python scripts/test-populate-data.py
-else
-	@./scripts/test-populate-data.sh
-endif
-
-test:
-	@echo "Executando testes..."
-	docker-compose run --rm core-service pytest tests/ -v
-	docker-compose run --rm sales-service pytest tests/ -v
-	docker-compose run --rm auth-service pytest tests/ -v
-	docker-compose run --rm customer-service pytest tests/ -v
-
-test-core:
-	@echo "Executando testes do core-service..."
-	docker-compose run --rm core-service pytest tests/ -v
-
-test-sales:
-	@echo "Executando testes do sales-service..."
-	docker-compose run --rm sales-service pytest tests/ -v
-
-test-auth:
-	@echo "Executando testes do auth-service..."
-	docker-compose run --rm auth-service pytest tests/ -v
-
-test-customer:
-	@echo "Executando testes do customer-service..."
-	docker-compose run --rm customer-service pytest tests/ -v
-
-test-rate-limiting:
-	@echo "Testando rate limiting..."
-	@chmod +x scripts/test-rate-limiting.sh
-	@./scripts/test-rate-limiting.sh
-
-test-frontend:
-	@echo "Testando frontend..."
-	@chmod +x scripts/test-frontend.sh
-	@./scripts/test-frontend.sh
-
-logs:
-	docker-compose logs -f
-
-clean:
-	@echo "Limpando ambiente..."
-	docker-compose down -v
-	docker system prune -f
-
-run:
-	docker-compose up
-
-stop:
-	docker-compose stop
-
-mongodb:
-	docker-compose up -d core-mongodb sales-mongodb auth-mongodb customer-mongodb
-
-mongodb-logs:
-	docker-compose logs -f core-mongodb sales-mongodb auth-mongodb customer-mongodb
-
-redis:
-	docker-compose up -d redis
-
-redis-logs:
-	docker-compose logs -f redis
-
-redis-cli:
-	@echo "Conectando ao Redis CLI..."
-	docker-compose exec redis redis-cli
-
-clean-redis:
-	@echo "Limpando dados do Redis..."
-	docker-compose exec redis redis-cli FLUSHALL
-	@echo "Dados do Redis limpos com sucesso!"
-
-keycloak:
-	@echo "🔑 Iniciando Keycloak..."
-	docker-compose up -d keycloak
-
-keycloak-logs:
-	@echo "📋 Mostrando logs do Keycloak..."
-	docker-compose logs -f keycloak
-
-keycloak-setup:
-	@echo "🚀 Configurando Keycloak..."
-	./scripts/setup-keycloak.sh
-
-keycloak-secret:
-	@echo "🔐 Obtendo client secret do Keycloak..."
-	./scripts/get-keycloak-client-secret.sh
-
-keycloak-secret-prod:
-	@echo "🔐 Obtendo client secret do Keycloak (Produção)..."
-	@chmod +x scripts/get-keycloak-client-secret-prod.sh
-	./scripts/get-keycloak-client-secret-prod.sh production
-
-keycloak-secret-staging:
-	@echo "🔐 Obtendo client secret do Keycloak (Staging)..."
-	@chmod +x scripts/get-keycloak-client-secret-prod.sh
-	./scripts/get-keycloak-client-secret-prod.sh staging
-
-keycloak-secret-dev:
-	@echo "🔐 Obtendo client secret do Keycloak (Development)..."
-	@chmod +x scripts/get-keycloak-client-secret-prod.sh
-	./scripts/get-keycloak-client-secret-prod.sh development
-
-keycloak-console:
-	@echo "🌐 Console Admin do Keycloak:"
-	@echo "   URL: http://localhost:8080/admin"
-	@echo "   Usuário: admin"
-	@echo "   Senha: admin123"
+	@echo "$(WHITE)Comandos disponíveis:$(NC)"
 	@echo ""
-	@echo "📖 Para configuração manual, consulte:"
-	@echo "   scripts/manual-keycloak-setup.md"
+	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  $(GREEN)%-20s$(NC) %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 	@echo ""
-	@echo "🚀 Para produção, use:"
-	@echo "   make keycloak-secret-prod"
-	@echo "   make keycloak-secret-staging"
+	@echo "$(YELLOW)Exemplos:$(NC)"
+	@echo "  make setup     # Setup completo do projeto"
+	@echo "  make start     # Iniciar backend e frontend"
+	@echo "  make stop      # Parar todos os serviços"
+	@echo "  make logs      # Ver logs em tempo real"
 
-keycloak-validate:
-	@echo "🔍 Validando configuração do Keycloak..."
-	@chmod +x scripts/validate-keycloak.sh
-	@./scripts/validate-keycloak.sh
+# Instalação de dependências
+install: ## 📦 Instalar dependências do backend e frontend
+	@echo "$(BLUE)📦 Instalando dependências...$(NC)"
+	@echo "$(YELLOW)Backend:$(NC)"
+	@cd $(BACKEND_DIR) && npm install
+	@echo "$(YELLOW)Frontend:$(NC)"
+	@cd $(FRONTEND_DIR) && npm install
+	@echo "$(GREEN)✅ Dependências instaladas!$(NC)"
 
-keycloak-quickstart:
-	@echo "🚀 Guia de Início Rápido do Keycloak:"
-	@echo "   1. make keycloak"
-	@echo "   2. make keycloak-setup"
-	@echo "   3. make keycloak-secret"
-	@echo "   4. make keycloak-validate"
-	@echo ""
-	@echo "📖 Documentação completa:"
-	@echo "   - docs/KEYCLOAK_QUICKSTART.md"
-	@echo "   - docs/KEYCLOAK_PRODUCTION_GUIDE.md"
+# Setup completo do projeto
+setup: install mongodb populate ## 🚀 Setup completo do projeto
+	@echo "$(GREEN)🎉 Setup completo realizado!$(NC)"
+	@echo "$(WHITE)Para iniciar o sistema, execute:$(NC)"
+	@echo "  $(CYAN)make start$(NC)"
 
-keycloak-stop:
-	@echo "🛑 Parando Keycloak..."
-	docker-compose stop keycloak
-
-keycloak-restart:
-	@echo "🔄 Reiniciando Keycloak..."
-	docker-compose restart keycloak
-
-keycloak-clean:
-	@echo "🧹 Limpando dados do Keycloak..."
-	docker-compose down
-	docker volume rm fiap-prova-sub-fase-3_keycloak-data 2>/dev/null || true
-	@echo "✅ Dados do Keycloak removidos!"
-
-core:
-	docker-compose up -d core-service
-
-sales:
-	docker-compose up -d sales-service
-
-auth:
-	docker-compose up -d auth-service
-
-customer:
-	docker-compose up -d customer-service
-
-frontend:
-	docker-compose up -d frontend
-
-core-logs:
-	docker-compose logs -f core-service
-
-sales-logs:
-	docker-compose logs -f sales-service
-
-auth-logs:
-	docker-compose logs -f auth-service
-
-customer-logs:
-	docker-compose logs -f customer-service
-
-frontend-logs:
-	docker-compose logs -f frontend
-
-frontend-build:
-	@echo "Fazendo build do frontend..."
-	docker-compose run --rm frontend npm run build
-
-frontend-test:
-	@echo "Executando testes do frontend..."
-	docker-compose run --rm frontend npm test -- --coverage --watchAll=false
-
-frontend-lint:
-	@echo "Executando linter do frontend..."
-	docker-compose run --rm frontend npm run lint
-
-frontend-format:
-	@echo "Formatando código do frontend..."
-	docker-compose run --rm frontend npm run format
-
-lint:
-	@echo "Executando linter..."
-	docker-compose run --rm core-service flake8 app/
-	docker-compose run --rm sales-service flake8 app/
-	docker-compose run --rm auth-service flake8 app/
-	docker-compose run --rm customer-service flake8 app/
-
-type-check:
-	@echo "Verificando tipos..."
-	docker-compose run --rm core-service mypy app/
-	docker-compose run --rm sales-service mypy app/
-	docker-compose run --rm auth-service mypy app/
-	docker-compose run --rm customer-service mypy app/
-
-rebuild:
-	@echo "Reconstruindo containers..."
-	docker-compose down
-	docker-compose build --no-cache
-	docker-compose up -d
-
-status:
-	@echo "Status dos serviços:"
-	docker-compose ps
-
-restart:
-	@echo "Reiniciando serviços..."
-	docker-compose restart
-	docker-compose logs -f
-
-clean-sales-db:
-	@echo "Limpando banco de dados do sales-service..."
-	docker-compose exec sales-mongodb mongosh sales_db --eval "db.sales.deleteMany({})"
-	@echo "Banco de dados limpo com sucesso!"
-
-clean-core-db:
-	@echo "Limpando banco de dados do core-service..."
-	docker-compose exec core-mongodb mongosh core_db --eval "db.vehicles.deleteMany({})"
-	@echo "Banco de dados limpo com sucesso!"
-
-clean-auth-db:
-	@echo "Limpando banco de dados do auth-service..."
-	docker-compose exec auth-mongodb mongosh auth_db --eval "db.users.deleteMany({})"
-	@echo "Banco de dados limpo com sucesso!"
-
-clean-customer-db:
-	@echo "Limpando banco de dados do customer-service..."
-	docker-compose exec customer-mongodb mongosh customer_db --eval "db.customers.deleteMany({})"
-	@echo "Banco de dados limpo com sucesso!"
-
-clean-dbs: clean-sales-db clean-core-db clean-auth-db clean-customer-db
-
-coverage:
-	@echo "Executando cobertura de testes para todos os serviços..."
-	docker-compose run --rm core-service pytest tests/ --cov=app --cov-report=term-missing
-	docker-compose run --rm sales-service pytest tests/ --cov=app --cov-report=term-missing
-	docker-compose run --rm auth-service pytest tests/ --cov=app --cov-report=term-missing
-	docker-compose run --rm customer-service pytest tests/ --cov=app --cov-report=term-missing
-
-coverage-core:
-	@echo "Executando cobertura de testes do core-service..."
-	docker-compose run --rm core-service pytest tests/ --cov=app --cov-report=term-missing
-
-coverage-sales:
-	@echo "Executando cobertura de testes do sales-service..."
-	docker-compose run --rm sales-service pytest tests/ --cov=app --cov-report=term-missing
-
-coverage-auth:
-	@echo "Executando cobertura de testes do auth-service..."
-	docker-compose run --rm auth-service pytest tests/ --cov=app --cov-report=term-missing
-
-coverage-customer:
-	@echo "Executando cobertura de testes do customer-service..."
-	docker-compose run --rm customer-service pytest tests/ --cov=app --cov-report=term-missing
-
-coverage-report:
-	@echo "Gerando relatório de cobertura..."
-	docker-compose run --rm core-service pytest tests/ --cov=app --cov-report=html
-	docker-compose run --rm sales-service pytest tests/ --cov=app --cov-report=html
-	docker-compose run --rm auth-service pytest tests/ --cov=app --cov-report=html
-	docker-compose run --rm customer-service pytest tests/ --cov=app --cov-report=html
-	@echo "Relatórios gerados em:"
-	@echo "core-service: htmlcov/index.html"
-	@echo "sales-service: htmlcov/index.html" 
-	@echo "auth-service: htmlcov/index.html"
-	@echo "customer-service: htmlcov/index.html" 
-
-setup-env:
-	@echo "Configurando ambiente..."
-	@chmod +x scripts/setup-env.sh
-	@./scripts/setup-env.sh development
-
-setup-env-staging:
-	@echo "Configurando ambiente de staging..."
-	@chmod +x scripts/setup-env.sh
-	@./scripts/setup-env.sh staging
-
-setup-env-production:
-	@echo "Configurando ambiente de produção..."
-	@chmod +x scripts/setup-env.sh
-	@./scripts/setup-env.sh production
-
-validate-env:
-	@echo "Validando configuração do ambiente..."
-	@if [ -f "scripts/validate-env-simple.sh" ]; then \
-		chmod +x scripts/validate-env-simple.sh && ./scripts/validate-env-simple.sh; \
+# Configuração do MongoDB
+mongodb: ## 🗄️ Iniciar MongoDB com Docker
+	@echo "$(BLUE)🗄️ Configurando MongoDB...$(NC)"
+	@if docker ps -q -f name=$(MONGODB_CONTAINER) | grep -q .; then \
+		echo "$(YELLOW)MongoDB já está rodando$(NC)"; \
 	else \
-		echo "Script de validação não encontrado"; \
+		echo "$(YELLOW)Iniciando MongoDB...$(NC)"; \
+		docker run -d --name $(MONGODB_CONTAINER) -p $(MONGODB_PORT):27017 mongo:latest --noauth; \
+		sleep 3; \
+		echo "$(GREEN)✅ MongoDB iniciado!$(NC)"; \
 	fi
 
-docs:
-	@echo "Abrindo documentação..."
-	@echo "Documentação disponível em:"
-	@echo "- README.md"
-	@echo "- docs/ARCHITECTURE.md"
-	@echo "- docs/DEPLOYMENT.md"
-	@echo "- docs/API_DOCUMENTATION.md"
-	@echo "- docs/ENVIRONMENT_VARIABLES.md"
-	@echo "- docs/KEYCLOAK_QUICKSTART.md"
-	@echo "- docs/KEYCLOAK_PRODUCTION_GUIDE.md"
+# Popular dados iniciais
+populate: ## 🌱 Popular banco com dados iniciais
+	@echo "$(BLUE)🌱 Populando dados iniciais...$(NC)"
+	@cd $(BACKEND_DIR) && npm run populate
+	@echo "$(GREEN)✅ Dados populados!$(NC)"
+
+# Iniciar todos os serviços
+start: ## 🚀 Iniciar backend e frontend
+	@echo "$(BLUE)🚀 Iniciando sistema...$(NC)"
+	@echo "$(YELLOW)Backend: http://localhost:$(BACKEND_PORT)$(NC)"
+	@echo "$(YELLOW)Frontend: http://localhost:$(FRONTEND_PORT)$(NC)"
 	@echo ""
-	@echo "Swagger UI disponível em:"
-	@echo "- Auth Service: http://localhost:8002/docs"
-	@echo "- Core Service: http://localhost:8000/docs"
-	@echo "- Sales Service: http://localhost:8001/docs"
-	@echo "- Customer Service: http://localhost:8003/docs"
+	@echo "$(WHITE)Pressione Ctrl+C para parar$(NC)"
 	@echo ""
-	@echo "População de Dados:"
-	@echo "- Dados de teste: make populate-data"
-	@echo "- Dados limpos: make populate-data-clean"
-	@echo "- Testar sistema: make test-populate-data"
+	@$(MAKE) start-backend & $(MAKE) start-frontend & wait
+
+# Iniciar apenas o backend
+start-backend: ## 🔧 Iniciar apenas o backend
+	@echo "$(BLUE)🔧 Iniciando backend...$(NC)"
+	@cd $(BACKEND_DIR) && npm start
+
+# Iniciar apenas o frontend
+start-frontend: ## 🎨 Iniciar apenas o frontend
+	@echo "$(BLUE)🎨 Iniciando frontend...$(NC)"
+	@cd $(FRONTEND_DIR) && npm start
+
+# Parar todos os serviços
+stop: ## 🛑 Parar todos os serviços
+	@echo "$(RED)🛑 Parando serviços...$(NC)"
+	@pkill -f "node.*server.js" || true
+	@pkill -f "react-scripts" || true
+	@echo "$(GREEN)✅ Serviços parados!$(NC)"
+
+# Parar MongoDB
+stop-mongodb: ## 🛑 Parar MongoDB
+	@echo "$(RED)🛑 Parando MongoDB...$(NC)"
+	@docker stop $(MONGODB_CONTAINER) || true
+	@docker rm $(MONGODB_CONTAINER) || true
+	@echo "$(GREEN)✅ MongoDB parado!$(NC)"
+
+# Limpeza completa
+clean: stop stop-mongodb ## 🧹 Limpeza completa
+	@echo "$(RED)🧹 Limpando projeto...$(NC)"
+	@cd $(BACKEND_DIR) && rm -rf node_modules package-lock.json
+	@cd $(FRONTEND_DIR) && rm -rf node_modules package-lock.json build
+	@echo "$(GREEN)✅ Limpeza concluída!$(NC)"
+
+# Testes
+test: ## 🧪 Executar testes
+	@echo "$(BLUE)🧪 Executando testes...$(NC)"
+	@echo "$(YELLOW)Backend:$(NC)"
+	@cd $(BACKEND_DIR) && npm test || echo "$(YELLOW)Testes do backend não configurados$(NC)"
+	@echo "$(YELLOW)Frontend:$(NC)"
+	@cd $(FRONTEND_DIR) && npm test || echo "$(YELLOW)Testes do frontend não configurados$(NC)"
+
+# Logs em tempo real
+logs: ## 📋 Ver logs em tempo real
+	@echo "$(BLUE)📋 Logs do sistema...$(NC)"
+	@echo "$(WHITE)Pressione Ctrl+C para sair$(NC)"
 	@echo ""
-	@echo "Rate Limiting Management:"
-	@echo "- Stats: http://localhost:8002/rate-limit/stats"
-	@echo "- Config: http://localhost:8002/rate-limit/config"
-	@echo "- Test: make test-rate-limiting"
+	@tail -f $(BACKEND_DIR)/logs/*.log 2>/dev/null || echo "$(YELLOW)Logs não encontrados$(NC)"
+
+# Status dos serviços
+status: ## 📊 Status dos serviços
+	@echo "$(BLUE)📊 Status dos serviços:$(NC)"
 	@echo ""
-	@echo "Keycloak:"
-	@echo "- Console: http://localhost:8080/admin"
-	@echo "- Validate: make keycloak-validate"
-	@echo "- Quickstart: make keycloak-quickstart" 
-
-# Configuração do Keycloak e Admin
-setup-admin:
-	@echo "🔧 Configurando usuário admin no Keycloak..."
-	@./scripts/setup-admin.sh
-
-fix-keycloak:
-	@echo "🔧 Corrigindo configuração do client no Keycloak..."
-	@./scripts/fix-keycloak.sh
-
-setup-complete:
-	@echo "🚀 Configuração completa do sistema..."
-ifeq ($(OS_TYPE),windows)
-	@powershell -ExecutionPolicy Bypass -File scripts/setup-complete.ps1
-else
-	@./scripts/setup-complete.sh
-endif
-
-# Sincronizar client_secret do Keycloak
-sync-keycloak-env:
-	@echo "🔄 Sincronizando variáveis de ambiente do Keycloak..."
-	@chmod +x scripts/setup-env-from-keycloak.sh
-	@./scripts/setup-env-from-keycloak.sh
-
-setup-complete-fast:
-	@echo "🚀 Configuração rápida do sistema..."
-	@chmod +x scripts/setup-complete-fast.sh
-	@./scripts/setup-complete-fast.sh
-
-# Verificação de dependências e compatibilidade
-check-dependencies:
-	@echo "🔍 Verificando dependências e compatibilidade..."
-	@python3 scripts/check-dependencies.py
-
-test-compatibility:
-	@echo "🧪 Testando compatibilidade entre sistemas..."
-	@echo "Sistema detectado: $(OS_TYPE)"
-	@echo "Echo flag: $(ECHO_FLAG)"
-	@echo "Script extension: $(SCRIPT_EXT)"
-	@python3 scripts/check-dependencies.py
-
-test-setup-complete:
-	@echo "🧪 Testando correção do setup-complete..."
-	@chmod +x scripts/test-setup-complete.sh
-	@./scripts/test-setup-complete.sh
-
-quick-test:
-	@echo "🔧 Teste rápido da solução..."
-	@chmod +x scripts/quick-test.sh
-	@./scripts/quick-test.sh
-
-# Teste de email-validator
-test-email-validator:
-	@echo "🔍 Testando email-validator..."
-	@python3 scripts/test-email-validator.py
-
-# Comando para produção no Render
-start-production:
-	@echo "🚀 Iniciando sistema em modo produção..."
-	@echo "📋 Verificando variáveis de ambiente..."
-	@echo "🔧 Iniciando serviços..."
-	
-	# Iniciar todos os serviços em modo produção
-	@echo "Starting Auth Service..."
-	@cd auth-service && python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 &
-	@echo "Starting Core Service..."
-	@cd core-service && python -m uvicorn app.adapters.api.main:app --host 0.0.0.0 --port 8001 &
-	@echo "Starting Customer Service..."
-	@cd customer-service && python -m uvicorn app.main:app --host 0.0.0.0 --port 8002 &
-	@echo "Starting Sales Service..."
-	@cd sales-service && python -m uvicorn app.main:app --host 0.0.0.0 --port 8003 &
-	
-	@echo "✅ Todos os serviços iniciados!"
-	@echo "🌐 URLs dos serviços:"
-	@echo "   Auth Service: http://0.0.0.0:8000"
-	@echo "   Core Service: http://0.0.0.0:8001"
-	@echo "   Customer Service: http://0.0.0.0:8002"
-	@echo "   Sales Service: http://0.0.0.0:8003"
+	@echo "$(YELLOW)MongoDB:$(NC)"
+	@if docker ps -q -f name=$(MONGODB_CONTAINER) | grep -q .; then \
+		echo "  $(GREEN)✅ Rodando$(NC)"; \
+	else \
+		echo "  $(RED)❌ Parado$(NC)"; \
+	fi
 	@echo ""
-	@echo "🔍 Health checks:"
-	@echo "   Auth: http://0.0.0.0:8000/health"
-	@echo "   Core: http://0.0.0.0:8001/health"
-	@echo "   Customer: http://0.0.0.0:8002/health"
-	@echo "   Sales: http://0.0.0.0:8003/health"
-	
-	# Manter o container rodando
-	@tail -f /dev/null 
+	@echo "$(YELLOW)Backend:$(NC)"
+	@if pgrep -f "node.*server.js" > /dev/null; then \
+		echo "  $(GREEN)✅ Rodando na porta $(BACKEND_PORT)$(NC)"; \
+	else \
+		echo "  $(RED)❌ Parado$(NC)"; \
+	fi
+	@echo ""
+	@echo "$(YELLOW)Frontend:$(NC)"
+	@if pgrep -f "react-scripts" > /dev/null; then \
+		echo "  $(GREEN)✅ Rodando na porta $(FRONTEND_PORT)$(NC)"; \
+	else \
+		echo "  $(RED)❌ Parado$(NC)"; \
+	fi
+
+# Health check
+health: ## 🏥 Verificar saúde dos serviços
+	@echo "$(BLUE)🏥 Verificando saúde dos serviços...$(NC)"
+	@echo ""
+	@echo "$(YELLOW)API Health Check:$(NC)"
+	@curl -s http://localhost:$(BACKEND_PORT)/health | jq . || echo "$(RED)❌ API não está respondendo$(NC)"
+	@echo ""
+	@echo "$(YELLOW)Frontend:$(NC)"
+	@curl -s -o /dev/null -w "%{http_code}" http://localhost:$(FRONTEND_PORT) | grep -q "200" && echo "$(GREEN)✅ Frontend OK$(NC)" || echo "$(RED)❌ Frontend não está respondendo$(NC)"
+
+# Build para produção
+build: ## 🏗️ Build para produção
+	@echo "$(BLUE)🏗️ Build para produção...$(NC)"
+	@cd $(FRONTEND_DIR) && npm run build
+	@echo "$(GREEN)✅ Build concluído!$(NC)"
+
+# Deploy local
+deploy: build ## 🚀 Deploy local
+	@echo "$(BLUE)🚀 Deploy local...$(NC)"
+	@$(MAKE) start-backend
+	@echo "$(GREEN)✅ Deploy concluído!$(NC)"
+
+# Reset completo
+reset: clean setup ## 🔄 Reset completo do projeto
+	@echo "$(GREEN)🔄 Reset completo realizado!$(NC)"
+
+# Desenvolvimento
+dev: ## 💻 Modo desenvolvimento (backend + frontend)
+	@echo "$(BLUE)💻 Iniciando modo desenvolvimento...$(NC)"
+	@echo "$(YELLOW)Backend: http://localhost:$(BACKEND_PORT)$(NC)"
+	@echo "$(YELLOW)Frontend: http://localhost:$(FRONTEND_PORT)$(NC)"
+	@echo ""
+	@$(MAKE) start
+
+# Produção
+prod: build ## 🏭 Modo produção
+	@echo "$(BLUE)🏭 Iniciando modo produção...$(NC)"
+	@NODE_ENV=production $(MAKE) start-backend
+
+# Backup do banco
+backup: ## 💾 Backup do banco de dados
+	@echo "$(BLUE)💾 Fazendo backup do banco...$(NC)"
+	@mkdir -p backups
+	@docker exec $(MONGODB_CONTAINER) mongodump --db vehicle_sales --out /tmp/backup
+	@docker cp $(MONGODB_CONTAINER):/tmp/backup ./backups/backup-$(shell date +%Y%m%d-%H%M%S)
+	@echo "$(GREEN)✅ Backup concluído!$(NC)"
+
+# Restaurar backup
+restore: ## 🔄 Restaurar backup do banco
+	@echo "$(BLUE)🔄 Restaurando backup...$(NC)"
+	@echo "$(YELLOW)Backups disponíveis:$(NC)"
+	@ls -la backups/ 2>/dev/null || echo "$(RED)Nenhum backup encontrado$(NC)"
+
+# Informações do projeto
+info: ## ℹ️ Informações do projeto
+	@echo "$(CYAN)🚗 FIAP III de Veículos$(NC)"
+	@echo "$(YELLOW)================================$(NC)"
+	@echo ""
+	@echo "$(WHITE)Versões:$(NC)"
+	@echo "  Node.js: $(shell node --version 2>/dev/null || echo 'Não instalado')"
+	@echo "  npm: $(shell npm --version 2>/dev/null || echo 'Não instalado')"
+	@echo "  Docker: $(shell docker --version 2>/dev/null || echo 'Não instalado')"
+	@echo ""
+	@echo "$(WHITE)Portas:$(NC)"
+	@echo "  Backend: $(BACKEND_PORT)"
+	@echo "  Frontend: $(FRONTEND_PORT)"
+	@echo "  MongoDB: $(MONGODB_PORT)"
+	@echo ""
+	@echo "$(WHITE)Credenciais padrão:$(NC)"
+	@echo "  Email: admin@vehiclesales.com"
+	@echo "  Senha: admin123"
+
+# Comando padrão
+.DEFAULT_GOAL := help
