@@ -20,7 +20,7 @@ FRONTEND_PORT=3000
 MONGODB_PORT=27017
 
 # Comandos padrão
-.PHONY: help install setup start stop clean test logs status
+.PHONY: help install setup start stop clean test logs status populate-basic populate-full populate-advanced populate-interactive populate-admin db-status db-clean db-validate fix-users check-users
 
 # Ajuda - comando padrão
 help: ## 📖 Mostra esta ajuda
@@ -29,13 +29,27 @@ help: ## 📖 Mostra esta ajuda
 	@echo ""
 	@echo "$(WHITE)Comandos disponíveis:$(NC)"
 	@echo ""
-	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  $(GREEN)%-20s$(NC) %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_][a-zA-Z0-9_-]*:.*?## / {printf "  $(GREEN)%-20s$(NC) %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 	@echo ""
 	@echo "$(YELLOW)Exemplos:$(NC)"
-	@echo "  make setup     # Setup completo do projeto"
-	@echo "  make start     # Iniciar backend e frontend"
-	@echo "  make stop      # Parar todos os serviços"
-	@echo "  make logs      # Ver logs em tempo real"
+	@echo "  make setup             # Setup completo do projeto"
+	@echo "  make populate-advanced # Popular banco com dados completos"
+	@echo "  make start             # Iniciar backend e frontend"
+	@echo "  make db-status         # Ver estatísticas do banco"
+	@echo "  make stop              # Parar todos os serviços"
+	@echo ""
+	@echo "$(WHITE)🌱 Comandos de População:$(NC)"
+	@echo "  $(GREEN)populate-cloud$(NC)         # Popular banco da API (USAR ESTE!)"
+	@echo "  $(GREEN)populate-advanced$(NC)      # Dados completos (local)"
+	@echo "  $(GREEN)populate-interactive$(NC)   # Escolher opção interativamente"
+	@echo "  $(GREEN)populate-full$(NC)          # Dados abrangentes"
+	@echo "  $(GREEN)populate-basic$(NC)         # Dados mínimos"
+	@echo "  $(GREEN)populate-admin$(NC)         # Apenas administrador"
+	@echo ""
+	@echo "$(WHITE)📊 Comandos do Banco:$(NC)"
+	@echo "  $(GREEN)db-status$(NC)              # Estatísticas do banco"
+	@echo "  $(GREEN)db-validate$(NC)            # Validar integridade dos dados"
+	@echo "  $(GREEN)db-clean$(NC)               # Limpar banco de dados"
 
 # Instalação de dependências
 install: ## 📦 Instalar dependências do backend e frontend
@@ -64,11 +78,92 @@ mongodb: ## 🗄️ Iniciar MongoDB com Docker
 		echo "$(GREEN)✅ MongoDB iniciado!$(NC)"; \
 	fi
 
-# Popular dados iniciais
-populate: ## 🌱 Popular banco com dados iniciais
-	@echo "$(BLUE)🌱 Populando dados iniciais...$(NC)"
-	@cd $(BACKEND_DIR) && npm run populate
-	@echo "$(GREEN)✅ Dados populados!$(NC)"
+# Popular dados iniciais (mantido para compatibilidade)
+populate: populate-advanced ## 🌱 Popular banco com dados completos (padrão)
+
+# População básica
+populate-basic: ## 🌱 População básica (dados mínimos)
+	@echo "$(BLUE)🌱 Populando dados básicos...$(NC)"
+	@cd $(BACKEND_DIR) && node scripts/populate-data.js
+	@echo "$(GREEN)✅ Dados básicos populados!$(NC)"
+
+# População abrangente
+populate-full: ## 📊 População abrangente (dados moderados)
+	@echo "$(BLUE)📊 Populando dados abrangentes...$(NC)"
+	@cd $(BACKEND_DIR) && node scripts/populate-comprehensive-data.js
+	@echo "$(GREEN)✅ Dados abrangentes populados!$(NC)"
+
+# População avançada (RECOMENDADO)
+populate-advanced: ## 🎯 População avançada (dados completos - RECOMENDADO)
+	@echo "$(BLUE)🎯 Populando dados avançados...$(NC)"
+	@echo "$(YELLOW)⚠️  Este comando limpa dados existentes!$(NC)"
+	@cd $(BACKEND_DIR) && node scripts/populate-advanced-data.js
+	@echo "$(GREEN)✅ Dados avançados populados!$(NC)"
+	@echo ""
+	@echo "$(WHITE)🔑 Credenciais de acesso:$(NC)"
+	@echo "  $(CYAN)👑 Admin: admin@fiap.com / admin123$(NC)"
+	@echo "  $(CYAN)💼 Vendedor: carlos.vendedor@fiap.com / vendedor123$(NC)"
+	@echo "  $(CYAN)👤 Cliente: cliente.joao@fiap.com / cliente123$(NC)"
+
+# População interativa
+populate-interactive: ## 🎮 População interativa (escolher opção)
+	@echo "$(BLUE)🎮 População interativa...$(NC)"
+	@cd $(BACKEND_DIR) && ./scripts/populate.sh
+
+# Criar apenas admin
+populate-admin: ## 👑 Criar apenas usuário administrador
+	@echo "$(BLUE)👑 Criando administrador...$(NC)"
+	@cd $(BACKEND_DIR) && echo "4" | ./scripts/populate.sh
+	@echo "$(GREEN)✅ Administrador criado!$(NC)"
+
+# Status do banco de dados
+db-status: ## 📊 Verificar status e estatísticas do banco
+	@echo "$(BLUE)📊 Status do banco de dados...$(NC)"
+	@cd $(BACKEND_DIR) && node scripts/db-status.js
+
+# Limpar banco de dados
+db-clean: ## 🧹 Limpar todos os dados do banco
+	@echo "$(RED)🧹 Limpando banco de dados...$(NC)"
+	@echo "$(YELLOW)⚠️  Isso removerá TODOS os dados!$(NC)"
+	@read -p "Confirma? (s/N): " confirm && [ "$$confirm" = "s" ] || (echo "$(YELLOW)Operação cancelada$(NC)" && exit 1)
+	@cd $(BACKEND_DIR) && node -e " \
+		require('dotenv').config({ path: './config.env' }); \
+		const mongoose = require('mongoose'); \
+		const { connectDatabase } = require('./src/config/database'); \
+		(async () => { \
+			try { \
+				await connectDatabase(); \
+				await mongoose.connection.db.dropDatabase(); \
+				console.log('$(GREEN)✅ Banco limpo com sucesso!$(NC)'); \
+			} catch (error) { \
+				console.error('$(RED)❌ Erro:', error.message, '$(NC)'); \
+			} finally { \
+				await mongoose.disconnect(); \
+				process.exit(0); \
+			} \
+		})(); \
+	"
+
+# Validar dados do banco
+db-validate: ## ✅ Validar integridade dos dados
+	@echo "$(BLUE)✅ Validando integridade dos dados...$(NC)"
+	@cd $(BACKEND_DIR) && node scripts/db-validate.js
+
+# Verificar usuários
+check-users: ## 👥 Verificar usuários no banco
+	@echo "$(BLUE)👥 Verificando usuários...$(NC)"
+	@cd $(BACKEND_DIR) && node scripts/check-users.js
+
+# Corrigir usuários
+fix-users: ## 🔧 Corrigir e recriar usuários FIAP
+	@echo "$(BLUE)🔧 Corrigindo usuários...$(NC)"
+	@cd $(BACKEND_DIR) && node scripts/fix-users.js
+
+# Popular banco da API (cloud)
+populate-cloud: ## ☁️ Popular banco que a API está usando
+	@echo "$(BLUE)☁️ Populando banco da API...$(NC)"
+	@echo "$(YELLOW)⚠️  Isso criará dados no mesmo banco da API$(NC)"
+	@cd $(BACKEND_DIR) && node scripts/populate-cloud-data.js
 
 # Iniciar todos os serviços
 start: ## 🚀 Iniciar backend e frontend
@@ -222,6 +317,7 @@ info: ## ℹ️ Informações do projeto
 	@echo "$(WHITE)Credenciais padrão:$(NC)"
 	@echo "  Email: admin@vehiclesales.com"
 	@echo "  Senha: admin123"
+
 
 # Comando padrão
 .DEFAULT_GOAL := help
