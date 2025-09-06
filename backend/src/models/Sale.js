@@ -114,13 +114,18 @@ saleSchema.virtual('seller', {
 
 // Middleware para calcular valor final
 saleSchema.pre('save', function(next) {
-  this.finalAmount = this.totalAmount - (this.discount || 0);
-  
-  if (this.finalAmount < 0) {
-    return next(new Error('Valor final não pode ser negativo'));
+  try {
+    this.finalAmount = this.totalAmount - (this.discount || 0);
+    
+    if (this.finalAmount < 0) {
+      return next(new Error('Valor final não pode ser negativo'));
+    }
+    
+    next();
+  } catch (error) {
+    console.error('Erro no middleware pre-save:', error);
+    next(error);
   }
-  
-  next();
 });
 
 // Métodos de instância

@@ -144,15 +144,21 @@ router.post('/', authenticateToken, requireSalesOrAdmin, createSaleValidation, a
     }
     
     // Criar venda
-    const sale = new Sale({
+    const discountValue = discount || 0;
+    const finalAmount = vehicle.price - discountValue;
+    
+    const saleData = {
       customerId: customer_id,
       vehicleId: vehicle_id,
-      sellerId: req.user._id,
+      sellerId: req.user._id || req.user.id,
       totalAmount: vehicle.price,
       paymentMethod: payment_method,
-      discount,
-      notes
-    });
+      discount: discountValue,
+      finalAmount: finalAmount,
+      notes: notes || ''
+    };
+    
+    const sale = new Sale(saleData);
     
     await sale.save();
     
