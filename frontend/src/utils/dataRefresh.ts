@@ -12,7 +12,11 @@ export const DATA_REFRESH_EVENTS = {
 export type DataRefreshEvent = typeof DATA_REFRESH_EVENTS[keyof typeof DATA_REFRESH_EVENTS];
 
 // Debounce para evitar múltiplas atualizações muito rápidas
-const debounceTimeouts = new Map<DataRefreshEvent, NodeJS.Timeout>();
+const debounceTimeouts = new Map<DataRefreshEvent | string, NodeJS.Timeout>();
+
+// Controle de throttle para evitar refresh excessivo
+const lastRefreshTimestamp = new Map<DataRefreshEvent, number>();
+const THROTTLE_INTERVAL = 1000; // Mínimo 1 segundo entre refreshes do mesmo tipo
 
 /**
  * Trigger a data refresh event to notify other components
@@ -20,7 +24,15 @@ const debounceTimeouts = new Map<DataRefreshEvent, NodeJS.Timeout>();
  * @param details Optional details about the change
  * @param debounceMs Delay in milliseconds to debounce the event (default: 100ms)
  */
-export const triggerDataRefresh = (eventType: DataRefreshEvent, details?: any, debounceMs: number = 100) => {
+export const triggerDataRefresh = (eventType: DataRefreshEvent, details?: any, debounceMs: number = 500) => {
+  // Check throttle - prevent too frequent refreshes
+  const now = Date.now();
+  const lastRefresh = lastRefreshTimestamp.get(eventType);
+  if (lastRefresh && (now - lastRefresh) < THROTTLE_INTERVAL) {
+    console.log(`Throttled: ${eventType} refresh too recent (${now - lastRefresh}ms ago)`);
+    return;
+  }
+  
   // Clear previous timeout for this event type
   const existingTimeout = debounceTimeouts.get(eventType);
   if (existingTimeout) {
@@ -32,6 +44,9 @@ export const triggerDataRefresh = (eventType: DataRefreshEvent, details?: any, d
     const event = new CustomEvent(eventType, { detail: details });
     window.dispatchEvent(event);
     
+    // Update throttle timestamp
+    lastRefreshTimestamp.set(eventType, Date.now());
+    
     // Also use localStorage to notify other tabs/windows
     localStorage.setItem('data-refresh-timestamp', Date.now().toString());
     localStorage.setItem('data-refresh-type', eventType);
@@ -41,6 +56,40 @@ export const triggerDataRefresh = (eventType: DataRefreshEvent, details?: any, d
   }, debounceMs);
   
   debounceTimeouts.set(eventType, timeout);
+};
+
+/**
+ * Trigger multiple data refresh events efficiently
+ * @param eventTypes Array of event types to trigger
+ * @param details Optional details about the change
+ * @param debounceMs Delay in milliseconds to debounce the event (default: 500ms)
+ */
+export const triggerMultipleDataRefresh = (eventTypes: DataRefreshEvent[], details?: any, debounceMs: number = 500) => {
+  // Use a single timeout for all events to avoid too many simultaneous calls
+  const multiKey = eventTypes.sort().join('|');
+  
+  // Clear any existing timeout for this combination
+  const existingTimeout = debounceTimeouts.get(multiKey as DataRefreshEvent);
+  if (existingTimeout) {
+    clearTimeout(existingTimeout);
+  }
+  
+  const timeout = setTimeout(() => {
+    // Trigger each event
+    eventTypes.forEach(eventType => {
+      const event = new CustomEvent(eventType, { detail: details });
+      window.dispatchEvent(event);
+    });
+    
+    // Update localStorage only once with the most relevant event
+    localStorage.setItem('data-refresh-timestamp', Date.now().toString());
+    localStorage.setItem('data-refresh-type', eventTypes[0]); // Use first event as primary
+    
+    // Remove timeout from map
+    debounceTimeouts.delete(multiKey as DataRefreshEvent);
+  }, debounceMs);
+  
+  debounceTimeouts.set(multiKey as DataRefreshEvent, timeout);
 };
 
 /**
