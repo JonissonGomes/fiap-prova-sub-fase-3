@@ -1,4 +1,4 @@
-require('dotenv').config({ path: '../config.env' });
+require('dotenv').config({ path: './config.env' });
 const mongoose = require('mongoose');
 const { connectDatabase } = require('../src/config/database');
 const { createDefaultAdmin, createSampleData } = require('../src/utils/seed');
