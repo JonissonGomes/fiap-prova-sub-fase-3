@@ -144,7 +144,7 @@ const Home: React.FC = () => {
     if (user) {
       fetchStats();
     }
-  }, [user, fetchStats]);
+  }, [user]); // Removido fetchStats da dependência para evitar loops
 
   // Escutar mudanças de dados para atualizar automaticamente
   useEffect(() => {

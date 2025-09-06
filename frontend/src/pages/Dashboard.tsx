@@ -31,8 +31,34 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 import { isAdmin } from '../utils/permissions';
 import { vehiclesApi, salesService, customerService } from '../services/api';
-import { Vehicle, Sale, VehicleStatus, PaymentStatus } from '../types';
+import { Vehicle, Sale, VehicleStatus } from '../types';
 import { onDataRefresh, DATA_REFRESH_EVENTS } from '../utils/dataRefresh';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip as ChartTooltip,
+  Legend,
+  ArcElement,
+  PointElement,
+  LineElement,
+} from 'chart.js';
+import { Bar, Doughnut } from 'react-chartjs-2';
+
+// Registrar componentes do Chart.js
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  ChartTooltip,
+  Legend,
+  ArcElement,
+  PointElement,
+  LineElement
+);
 
 interface DashboardStats {
   totalVehicles: number;
@@ -404,6 +430,181 @@ const Dashboard: React.FC = () => {
             color="#9c27b0"
             subtitle="Cadastrados"
           />
+        </Grid>
+      </Grid>
+
+      {/* Gráficos */}
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        {/* Gráfico de Vendas por Status */}
+        <Grid item xs={12} md={6}>
+          <Card sx={{ height: 400 }}>
+            <CardContent sx={{ p: 3, height: '100%', display: 'flex', flexDirection: 'column' }}>
+              <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
+                Vendas por Status
+              </Typography>
+              <Box sx={{ flex: 1, position: 'relative' }}>
+                <Doughnut
+                  data={{
+                    labels: ['Pagas', 'Pendentes', 'Canceladas'],
+                    datasets: [
+                      {
+                        data: [stats.paidSales, stats.pendingSales, stats.cancelledSales],
+                        backgroundColor: [
+                          '#4caf50',
+                          '#ff9800', 
+                          '#f44336'
+                        ],
+                        borderWidth: 2,
+                        borderColor: '#fff'
+                      }
+                    ]
+                  }}
+                  options={{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                      legend: {
+                        position: 'bottom',
+                        labels: {
+                          padding: 20,
+                          font: {
+                            size: 12
+                          }
+                        }
+                      },
+                      tooltip: {
+                        callbacks: {
+                          label: function(context) {
+                            const label = context.label || '';
+                            const value = context.parsed;
+                            const total = context.dataset.data.reduce((a: number, b: number) => a + b, 0);
+                            const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : '0';
+                            return `${label}: ${value} (${percentage}%)`;
+                          }
+                        }
+                      }
+                    }
+                  }}
+                />
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* Gráfico de Veículos por Status */}
+        <Grid item xs={12} md={6}>
+          <Card sx={{ height: 400 }}>
+            <CardContent sx={{ p: 3, height: '100%', display: 'flex', flexDirection: 'column' }}>
+              <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
+                Veículos por Status
+              </Typography>
+              <Box sx={{ flex: 1, position: 'relative' }}>
+                <Bar
+                  data={{
+                    labels: ['Disponíveis', 'Reservados', 'Vendidos'],
+                    datasets: [
+                      {
+                        label: 'Quantidade',
+                        data: [stats.availableVehicles, stats.reservedVehicles, stats.soldVehicles],
+                        backgroundColor: [
+                          '#2196f3',
+                          '#ff9800',
+                          '#4caf50'
+                        ],
+                        borderRadius: 8,
+                      }
+                    ]
+                  }}
+                  options={{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                      legend: {
+                        display: false
+                      },
+                      tooltip: {
+                        callbacks: {
+                          label: function(context) {
+                            return `${context.label}: ${context.parsed.y} veículos`;
+                          }
+                        }
+                      }
+                    },
+                    scales: {
+                      y: {
+                        beginAtZero: true,
+                        ticks: {
+                          stepSize: 1
+                        }
+                      }
+                    }
+                  }}
+                />
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* Gráfico de Resumo Financeiro */}
+        <Grid item xs={12}>
+          <Card sx={{ height: 400 }}>
+            <CardContent sx={{ p: 3, height: '100%', display: 'flex', flexDirection: 'column' }}>
+              <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
+                Resumo Financeiro
+              </Typography>
+              <Box sx={{ flex: 1, position: 'relative' }}>
+                <Bar
+                  data={{
+                    labels: ['Receita Total (R$ mil)', 'Receita Média (R$ mil)', 'Taxa de Conversão (%)'],
+                    datasets: [
+                      {
+                        label: 'Valores',
+                        data: [
+                          Math.round(stats.totalRevenue / 1000),
+                          Math.round(stats.averageSalePrice / 1000),
+                          Math.round(stats.conversionRate * 10) / 10
+                        ],
+                        backgroundColor: [
+                          '#4caf50',
+                          '#2196f3',
+                          '#ff9800'
+                        ],
+                        borderRadius: 8,
+                      }
+                    ]
+                  }}
+                  options={{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                      legend: {
+                        display: false
+                      },
+                      tooltip: {
+                        callbacks: {
+                          label: function(context) {
+                            const value = context.parsed.y;
+                            if (context.dataIndex === 0) {
+                              return `Receita Total: R$ ${(value * 1000).toLocaleString('pt-BR')}`;
+                            } else if (context.dataIndex === 1) {
+                              return `Receita Média: R$ ${(value * 1000).toLocaleString('pt-BR')}`;
+                            } else {
+                              return `Taxa de Conversão: ${value}%`;
+                            }
+                          }
+                        }
+                      }
+                    },
+                    scales: {
+                      y: {
+                        beginAtZero: true
+                      }
+                    }
+                  }}
+                />
+              </Box>
+            </CardContent>
+          </Card>
         </Grid>
       </Grid>
 

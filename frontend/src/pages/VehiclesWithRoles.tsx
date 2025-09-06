@@ -47,7 +47,7 @@ import {
   isCustomer
 } from '../utils/permissions';
 import PurchaseDialog from '../components/PurchaseDialog';
-import { triggerDataRefresh, DATA_REFRESH_EVENTS } from '../utils/dataRefresh';
+import { triggerDataRefresh, triggerMultipleDataRefresh, DATA_REFRESH_EVENTS } from '../utils/dataRefresh';
 
 interface LocalFilters {
   brand?: string;
@@ -255,8 +255,7 @@ const VehiclesWithRoles: React.FC = () => {
     fetchVehicles();
     
     // Notificar outras páginas sobre mudanças
-    triggerDataRefresh(DATA_REFRESH_EVENTS.VEHICLES);
-    triggerDataRefresh(DATA_REFRESH_EVENTS.SALES);
+    triggerMultipleDataRefresh([DATA_REFRESH_EVENTS.VEHICLES, DATA_REFRESH_EVENTS.SALES]);
   };
 
   const handleSubmit = async (event: React.FormEvent) => {

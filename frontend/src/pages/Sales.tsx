@@ -41,7 +41,7 @@ import InputMask from 'react-input-mask';
 import { NumericFormat } from 'react-number-format';
 import { useAuth } from '../contexts/AuthContext';
 import { canViewSales, canCreateSales } from '../utils/permissions';
-import { triggerDataRefresh, DATA_REFRESH_EVENTS } from '../utils/dataRefresh';
+import { triggerDataRefresh, triggerMultipleDataRefresh, DATA_REFRESH_EVENTS } from '../utils/dataRefresh';
 
 interface SalesFilters {
   customer_cpf?: string;
@@ -308,8 +308,7 @@ const Sales: React.FC = () => {
       await fetchVehicles(); // Atualizar veículos também, pois o status pode ter mudado
       
       // Notificar outras páginas sobre mudanças
-      triggerDataRefresh(DATA_REFRESH_EVENTS.SALES);
-      triggerDataRefresh(DATA_REFRESH_EVENTS.VEHICLES);
+      triggerMultipleDataRefresh([DATA_REFRESH_EVENTS.SALES, DATA_REFRESH_EVENTS.VEHICLES]);
       
       handleCloseDialog();
     } catch (error) {
@@ -378,8 +377,7 @@ const Sales: React.FC = () => {
       fetchVehicles(); // Atualizar veículos também, pois o status pode ter mudado
       
       // Notificar outras páginas sobre mudanças
-      triggerDataRefresh(DATA_REFRESH_EVENTS.SALES);
-      triggerDataRefresh(DATA_REFRESH_EVENTS.VEHICLES);
+      triggerMultipleDataRefresh([DATA_REFRESH_EVENTS.SALES, DATA_REFRESH_EVENTS.VEHICLES]);
     } catch (error) {
       console.error('Erro ao atualizar status:', error);
       setSnackbar({

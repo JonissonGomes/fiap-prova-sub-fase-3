@@ -42,7 +42,7 @@ import { Payment, Sale, Vehicle, PaymentStatus } from '../types';
 import { salesService, vehiclesApi } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { canViewPayments, canApprovePayments, canCancelPayments } from '../utils/permissions';
-import { triggerDataRefresh, onDataRefresh, DATA_REFRESH_EVENTS } from '../utils/dataRefresh';
+import { triggerDataRefresh, triggerMultipleDataRefresh, onDataRefresh, DATA_REFRESH_EVENTS } from '../utils/dataRefresh';
 
 interface PaymentsFilters {
   customer_cpf?: string;
@@ -231,8 +231,7 @@ const Payments: React.FC = () => {
       });
       
       fetchSales();
-      triggerDataRefresh(DATA_REFRESH_EVENTS.SALES);
-      triggerDataRefresh(DATA_REFRESH_EVENTS.VEHICLES);
+      triggerMultipleDataRefresh([DATA_REFRESH_EVENTS.SALES, DATA_REFRESH_EVENTS.VEHICLES]);
     } catch (error) {
       console.error('Erro ao atualizar status:', error);
       setSnackbar({
