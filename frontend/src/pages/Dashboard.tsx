@@ -6,42 +6,33 @@ import {
   Grid,
   Card,
   CardContent,
-  Paper,
   LinearProgress,
   Alert,
   Chip,
   Avatar,
-  Divider,
   List,
   ListItem,
   ListItemText,
   ListItemIcon,
   IconButton,
   Tooltip,
-  Button
 } from '@mui/material';
 import {
   DirectionsCar as VehicleIcon,
   ShoppingCart as SaleIcon,
-  Payment as PaymentIcon,
   Person as CustomerIcon,
-  CheckCircle as CheckIcon,
-  Pending as PendingIcon,
-  Cancel as CancelIcon,
   TrendingUp as TrendingIcon,
   TrendingDown as TrendingDownIcon,
   AdminPanelSettings as AdminIcon,
   Refresh as RefreshIcon,
   Warning as WarningIcon,
-  Info as InfoIcon,
   AttachMoney as MoneyIcon,
-  Speed as SpeedIcon,
-  Inventory as InventoryIcon
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import { isAdmin } from '../utils/permissions';
 import { vehiclesApi, salesService, customerService } from '../services/api';
-import { Vehicle, Sale, Customer, VehicleStatus, PaymentStatus } from '../types';
+import { Vehicle, Sale, VehicleStatus, PaymentStatus } from '../types';
+import { onDataRefresh, DATA_REFRESH_EVENTS } from '../utils/dataRefresh';
 
 interface DashboardStats {
   totalVehicles: number;
@@ -58,12 +49,6 @@ interface DashboardStats {
   conversionRate: number;
   recentSales: Sale[];
   topVehicles: Vehicle[];
-  systemHealth: {
-    vehicles: boolean;
-    sales: boolean;
-    customers: boolean;
-    payments: boolean;
-  };
 }
 
 const Dashboard: React.FC = () => {
@@ -82,13 +67,7 @@ const Dashboard: React.FC = () => {
     averageSalePrice: 0,
     conversionRate: 0,
     recentSales: [],
-    topVehicles: [],
-    systemHealth: {
-      vehicles: true,
-      sales: true,
-      customers: true,
-      payments: true
-    }
+    topVehicles: []
   });
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
@@ -98,6 +77,29 @@ const Dashboard: React.FC = () => {
       fetchDashboardData();
     }
   }, [user]);
+
+  // Escutar mudanças de dados para atualizar automaticamente
+  useEffect(() => {
+    const cleanupFunctions: (() => void)[] = [];
+    
+    if (user && isAdmin(user)) {
+      // Atualizar quando há mudanças em veículos, vendas ou clientes
+      const eventTypes = [DATA_REFRESH_EVENTS.VEHICLES, DATA_REFRESH_EVENTS.SALES, DATA_REFRESH_EVENTS.CUSTOMERS];
+      
+      eventTypes.forEach(eventType => {
+        const cleanup = onDataRefresh(eventType, () => {
+          console.log(`Dashboard: Atualizando dados devido a mudança em ${eventType}`);
+          fetchDashboardData();
+        });
+        cleanupFunctions.push(cleanup);
+      });
+    }
+    
+    return () => {
+      cleanupFunctions.forEach(cleanup => cleanup());
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.role]); // Apenas o role do usuário, não o objeto inteiro
 
   const fetchDashboardData = async () => {
     try {
@@ -114,11 +116,11 @@ const Dashboard: React.FC = () => {
       const reservedVehicles = vehicles.filter((v: Vehicle) => v.status === VehicleStatus.RESERVED);
       const soldVehicles = vehicles.filter((v: Vehicle) => v.status === VehicleStatus.SOLD);
       
-      const paidSales = sales.filter((s: Sale) => s.payment_status === PaymentStatus.PAID);
-      const pendingSales = sales.filter((s: Sale) => s.payment_status === PaymentStatus.PENDING);
-      const cancelledSales = sales.filter((s: Sale) => s.payment_status === PaymentStatus.CANCELLED);
+      const paidSales = sales.filter((s: Sale) => s.status === 'PAGO');
+      const pendingSales = sales.filter((s: Sale) => s.status === 'PENDENTE');
+      const cancelledSales = sales.filter((s: Sale) => s.status === 'CANCELADO');
       
-      const totalRevenue = paidSales.reduce((sum: number, s: Sale) => sum + s.sale_price, 0);
+      const totalRevenue = paidSales.reduce((sum: number, s: Sale) => sum + s.final_amount, 0);
       const averageSalePrice = paidSales.length > 0 ? totalRevenue / paidSales.length : 0;
       const conversionRate = vehicles.length > 0 ? (soldVehicles.length / vehicles.length) * 100 : 0;
 
@@ -146,13 +148,7 @@ const Dashboard: React.FC = () => {
         averageSalePrice,
         conversionRate,
         recentSales,
-        topVehicles,
-        systemHealth: {
-          vehicles: vehicles.length > 0,
-          sales: sales.length > 0,
-          customers: customers.length > 0,
-          payments: sales.length > 0
-        }
+        topVehicles
       });
       
       setLastUpdate(new Date());
@@ -174,26 +170,26 @@ const Dashboard: React.FC = () => {
     return `${value.toFixed(1)}%`;
   };
 
-  const getStatusColor = (status: PaymentStatus) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
-      case PaymentStatus.PAID:
+      case 'PAGO':
         return 'success';
-      case PaymentStatus.PENDING:
+      case 'PENDENTE':
         return 'warning';
-      case PaymentStatus.CANCELLED:
+      case 'CANCELADO':
         return 'error';
       default:
         return 'default';
     }
   };
 
-  const getStatusText = (status: PaymentStatus) => {
+  const getStatusText = (status: string) => {
     switch (status) {
-      case PaymentStatus.PAID:
+      case 'PAGO':
         return 'Pago';
-      case PaymentStatus.PENDING:
+      case 'PENDENTE':
         return 'Pendente';
-      case PaymentStatus.CANCELLED:
+      case 'CANCELADO':
         return 'Cancelado';
       default:
         return status;
@@ -370,41 +366,6 @@ const Dashboard: React.FC = () => {
         </Box>
       </Box>
 
-      {/* Status do Sistema */}
-      <Card sx={{ mb: 4 }}>
-        <CardContent sx={{ p: 4 }}>
-          <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1, fontWeight: 600, mb: 3 }}>
-            <InfoIcon color="primary" />
-            Status do Sistema
-          </Typography>
-          <Grid container spacing={3}>
-            <Grid item xs={6} md={3}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, p: 2, borderRadius: 1, bgcolor: 'background.paper' }}>
-                <CheckIcon color={stats.systemHealth.vehicles ? 'success' : 'error'} />
-                <Typography variant="body2" sx={{ fontWeight: 500 }}>Veículos</Typography>
-              </Box>
-            </Grid>
-            <Grid item xs={6} md={3}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, p: 2, borderRadius: 1, bgcolor: 'background.paper' }}>
-                <CheckIcon color={stats.systemHealth.sales ? 'success' : 'error'} />
-                <Typography variant="body2" sx={{ fontWeight: 500 }}>Vendas</Typography>
-              </Box>
-            </Grid>
-            <Grid item xs={6} md={3}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, p: 2, borderRadius: 1, bgcolor: 'background.paper' }}>
-                <CheckIcon color={stats.systemHealth.customers ? 'success' : 'error'} />
-                <Typography variant="body2" sx={{ fontWeight: 500 }}>Clientes</Typography>
-              </Box>
-            </Grid>
-            <Grid item xs={6} md={3}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, p: 2, borderRadius: 1, bgcolor: 'background.paper' }}>
-                <CheckIcon color={stats.systemHealth.payments ? 'success' : 'error'} />
-                <Typography variant="body2" sx={{ fontWeight: 500 }}>Pagamentos</Typography>
-              </Box>
-            </Grid>
-          </Grid>
-        </CardContent>
-      </Card>
 
       {/* Estatísticas Principais */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
@@ -564,13 +525,13 @@ const Dashboard: React.FC = () => {
                       </ListItemIcon>
                       <ListItemText
                         primary={`Venda #${sale.id.slice(-6)}`}
-                        secondary={`${formatCurrency(sale.sale_price)} • ${sale.buyer_cpf}`}
+                        secondary={`${formatCurrency(sale.final_amount)} • ${sale.customer_id?.name || 'N/A'}`}
                         primaryTypographyProps={{ fontWeight: 500 }}
                         secondaryTypographyProps={{ fontSize: '0.875rem' }}
                       />
                       <Chip
-                        label={getStatusText(sale.payment_status)}
-                        color={getStatusColor(sale.payment_status) as any}
+                        label={getStatusText(sale.status)}
+                        color={getStatusColor(sale.status) as any}
                         size="small"
                         sx={{ fontWeight: 500 }}
                       />

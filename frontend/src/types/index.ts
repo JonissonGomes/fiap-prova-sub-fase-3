@@ -42,29 +42,39 @@ export interface VehicleUpdate {
 
 export interface Sale {
   id: string;
-  vehicle_id: string;
-  buyer_cpf: string;
-  sale_price: number;
-  payment_code: string;
-  payment_status: PaymentStatus;
+  customer_id: any; // Populated customer object
+  vehicle_id: any; // Populated vehicle object
+  seller_id: any; // Populated seller object
+  sale_date: string;
+  total_amount: number;
+  status: string;
+  payment_method: string;
+  notes: string;
+  payment_date: string | null;
+  discount: number;
+  final_amount: number;
   created_at: string;
   updated_at: string;
-}
-
-export interface SaleCreate {
-  vehicle_id: string;
-  buyer_cpf: string;
-  sale_price: number;
-  payment_code: string;
-  payment_status: PaymentStatus;
-}
-
-export interface SaleUpdate {
-  vehicle_id?: string;
+  // Legacy fields for backward compatibility (will be removed)
   buyer_cpf?: string;
   sale_price?: number;
   payment_code?: string;
   payment_status?: PaymentStatus;
+}
+
+export interface SaleCreate {
+  customer_id: string;
+  vehicle_id: string;
+  payment_method: string;
+  discount?: number;
+  notes?: string;
+}
+
+export interface SaleUpdate {
+  status?: string;
+  payment_method?: string;
+  discount?: number;
+  notes?: string;
 }
 
 export interface Payment {

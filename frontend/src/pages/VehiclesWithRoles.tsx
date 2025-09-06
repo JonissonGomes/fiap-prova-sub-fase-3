@@ -47,6 +47,7 @@ import {
   isCustomer
 } from '../utils/permissions';
 import PurchaseDialog from '../components/PurchaseDialog';
+import { triggerDataRefresh, DATA_REFRESH_EVENTS } from '../utils/dataRefresh';
 
 interface LocalFilters {
   brand?: string;
@@ -199,6 +200,9 @@ const VehiclesWithRoles: React.FC = () => {
           severity: 'success'
         });
         fetchVehicles();
+        
+        // Notificar outras páginas sobre mudanças
+        triggerDataRefresh(DATA_REFRESH_EVENTS.VEHICLES);
       } catch (error) {
         console.error('Error deleting vehicle:', error);
         setSnackbar({
@@ -215,10 +219,44 @@ const VehiclesWithRoles: React.FC = () => {
     setPurchaseDialogOpen(true);
   };
 
+  const handleStatusChange = async (id: string, status: VehicleStatus) => {
+    try {
+      console.log(`Mudando status do veículo ${id} para ${status}`);
+      
+      // Atualizar status no backend
+      await vehiclesApi.updateStatus(id, status);
+      
+      // Recarregar lista de veículos
+      await fetchVehicles();
+      
+      // Notificar outras páginas sobre mudanças
+      triggerDataRefresh(DATA_REFRESH_EVENTS.VEHICLES);
+      
+      console.log(`Status do veículo ${id} atualizado com sucesso para ${status}`);
+      
+      setSnackbar({
+        open: true,
+        message: 'Status atualizado com sucesso!',
+        severity: 'success'
+      });
+    } catch (error) {
+      console.error('Erro ao atualizar status:', error);
+      setSnackbar({
+        open: true,
+        message: 'Erro ao atualizar status do veículo',
+        severity: 'error'
+      });
+    }
+  };
+
   const handlePurchaseSuccess = () => {
     setPurchaseDialogOpen(false);
     setVehicleToPurchase(null);
     fetchVehicles();
+    
+    // Notificar outras páginas sobre mudanças
+    triggerDataRefresh(DATA_REFRESH_EVENTS.VEHICLES);
+    triggerDataRefresh(DATA_REFRESH_EVENTS.SALES);
   };
 
   const handleSubmit = async (event: React.FormEvent) => {
@@ -242,6 +280,10 @@ const VehiclesWithRoles: React.FC = () => {
       }
       
       fetchVehicles();
+      
+      // Notificar outras páginas sobre mudanças
+      triggerDataRefresh(DATA_REFRESH_EVENTS.VEHICLES);
+      
       handleClose();
     } catch (error) {
       console.error('Error saving vehicle:', error);
@@ -313,26 +355,49 @@ const VehiclesWithRoles: React.FC = () => {
     ...(isCustomer(user) ? [] : [{
       field: 'status',
       headerName: 'Status',
-      flex: 1,
-      minWidth: 100,
+      flex: 1.2,
+      minWidth: 140,
       align: 'center' as const,
       headerAlign: 'center' as const,
-      renderCell: (params: any) => (
-        <Chip
-          label={params.value}
-          color={getStatusColor(params.value) as any}
-          size="small"
-          sx={{ 
-            minWidth: 80,
-            height: 24,
-            fontSize: '0.75rem',
-            fontWeight: 500,
-            '& .MuiChip-label': {
-              px: 1
-            }
-          }}
-        />
-      )
+      renderCell: (params: any) => {
+        if (canEditVehicles(user)) {
+          return (
+            <Select
+              value={params.value}
+              onChange={(e) => handleStatusChange(params.row.id, e.target.value as VehicleStatus)}
+              size="small"
+              sx={{ minWidth: 120 }}
+            >
+              <MenuItem value={VehicleStatus.AVAILABLE}>
+                <Chip label="Disponível" color="success" size="small" />
+              </MenuItem>
+              <MenuItem value={VehicleStatus.RESERVED}>
+                <Chip label="Reservado" color="warning" size="small" />
+              </MenuItem>
+              <MenuItem value={VehicleStatus.SOLD}>
+                <Chip label="Vendido" color="error" size="small" />
+              </MenuItem>
+            </Select>
+          );
+        } else {
+          return (
+            <Chip
+              label={params.value}
+              color={getStatusColor(params.value) as any}
+              size="small"
+              sx={{ 
+                minWidth: 80,
+                height: 24,
+                fontSize: '0.75rem',
+                fontWeight: 500,
+                '& .MuiChip-label': {
+                  px: 1
+                }
+              }}
+            />
+          );
+        }
+      }
     }]),
     {
       field: 'actions',

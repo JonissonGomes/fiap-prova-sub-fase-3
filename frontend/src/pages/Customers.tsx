@@ -32,6 +32,7 @@ import InputMask from 'react-input-mask';
 import { Customer, CustomerCreate, CustomerUpdate } from '../types';
 import { customerService } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
+import { triggerDataRefresh, onDataRefresh, DATA_REFRESH_EVENTS } from '../utils/dataRefresh';
 
 const Customers: React.FC = () => {
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -61,6 +62,15 @@ const Customers: React.FC = () => {
 
   useEffect(() => {
     fetchCustomers();
+  }, []);
+
+  // Escutar mudanças de dados
+  useEffect(() => {
+    const cleanup = onDataRefresh(DATA_REFRESH_EVENTS.CUSTOMERS, () => {
+      fetchCustomers();
+    });
+
+    return cleanup;
   }, []);
 
   const fetchCustomers = async () => {
@@ -147,7 +157,9 @@ const Customers: React.FC = () => {
     }
     
     if (!formData.state.trim()) {
-      newErrors.state = 'Estado é obrigatório';
+      newErrors.state = 'UF é obrigatório';
+    } else if (formData.state.length !== 2) {
+      newErrors.state = 'UF deve ter exatamente 2 caracteres';
     }
     
     if (!formData.zip_code.trim()) {
@@ -166,6 +178,8 @@ const Customers: React.FC = () => {
     }
     
     try {
+      console.log('Dados sendo enviados:', formData);
+      
       if (selectedCustomer) {
         await customerService.update(selectedCustomer.id, formData);
         setSnackbar({
@@ -183,12 +197,27 @@ const Customers: React.FC = () => {
       }
       
       fetchCustomers();
+      
+      // Notificar outras páginas sobre mudanças
+      triggerDataRefresh(DATA_REFRESH_EVENTS.CUSTOMERS);
+      
       handleCloseDialog();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao salvar cliente:', error);
+      
+      let errorMessage = 'Erro ao salvar cliente';
+      if (error.response?.data?.error) {
+        errorMessage = error.response.data.error;
+      } else if (error.response?.data?.details) {
+        const details = error.response.data.details;
+        errorMessage = details.map((d: any) => d.msg).join(', ');
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       setSnackbar({
         open: true,
-        message: 'Erro ao salvar cliente',
+        message: errorMessage,
         severity: 'error'
       });
     }
@@ -204,11 +233,22 @@ const Customers: React.FC = () => {
           severity: 'success'
         });
         fetchCustomers();
-      } catch (error) {
+        
+        // Notificar outras páginas sobre mudanças
+        triggerDataRefresh(DATA_REFRESH_EVENTS.CUSTOMERS);
+      } catch (error: any) {
         console.error('Erro ao excluir cliente:', error);
+        
+        let errorMessage = 'Erro ao excluir cliente';
+        if (error.response?.data?.error) {
+          errorMessage = error.response.data.error;
+        } else if (error.message) {
+          errorMessage = error.message;
+        }
+        
         setSnackbar({
           open: true,
-          message: 'Erro ao excluir cliente',
+          message: errorMessage,
           severity: 'error'
         });
       }
@@ -282,7 +322,7 @@ const Customers: React.FC = () => {
     },
     { 
       field: 'state', 
-      headerName: 'Estado', 
+      headerName: 'UF', 
       flex: 0.8, 
       minWidth: 80,
       align: 'center' as const,
@@ -596,13 +636,18 @@ const Customers: React.FC = () => {
               <Grid item xs={12} md={3}>
                 <TextField
                   fullWidth
-                  label="Estado"
+                  label="UF"
                   value={formData.state}
-                  onChange={(e) => setFormData({ ...formData, state: e.target.value })}
+                  onChange={(e) => setFormData({ ...formData, state: e.target.value.toUpperCase().slice(0, 2) })}
                   error={!!errors.state}
                   helperText={errors.state}
                   margin="normal"
                   required
+                  inputProps={{
+                    maxLength: 2,
+                    style: { textTransform: 'uppercase' }
+                  }}
+                  placeholder="SP"
                 />
               </Grid>
               <Grid item xs={12} md={3}>

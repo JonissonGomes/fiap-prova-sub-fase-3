@@ -27,6 +27,7 @@ import { NumericFormat } from 'react-number-format';
 import { Vehicle, VehicleCreate, VehicleStatus, VehicleFilters } from '../types';
 import { vehiclesApi } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
+import { triggerDataRefresh, DATA_REFRESH_EVENTS } from '../utils/dataRefresh';
 
 const Vehicles: React.FC = () => {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
@@ -100,6 +101,9 @@ const Vehicles: React.FC = () => {
       try {
         await vehiclesApi.delete(id);
         fetchVehicles();
+        
+        // Notificar outras páginas sobre mudanças
+        triggerDataRefresh(DATA_REFRESH_EVENTS.VEHICLES);
       } catch (error) {
         console.error('Erro ao excluir veículo:', error);
       }
@@ -108,10 +112,21 @@ const Vehicles: React.FC = () => {
 
   const handleStatusChange = async (id: string, status: VehicleStatus) => {
     try {
+      console.log(`Mudando status do veículo ${id} para ${status}`);
+      
+      // Atualizar status no backend
       await vehiclesApi.updateStatus(id, status);
-      fetchVehicles();
+      
+      // Recarregar lista de veículos
+      await fetchVehicles();
+      
+      // Notificar outras páginas sobre mudanças
+      triggerDataRefresh(DATA_REFRESH_EVENTS.VEHICLES);
+      
+      console.log(`Status do veículo ${id} atualizado com sucesso para ${status}`);
     } catch (error) {
       console.error('Erro ao atualizar status:', error);
+      alert('Erro ao atualizar status do veículo. Tente novamente.');
     }
   };
 
@@ -125,6 +140,9 @@ const Vehicles: React.FC = () => {
       }
       handleClose();
       fetchVehicles();
+      
+      // Notificar outras páginas sobre mudanças
+      triggerDataRefresh(DATA_REFRESH_EVENTS.VEHICLES);
     } catch (error) {
       console.error('Erro ao salvar veículo:', error);
     }
@@ -196,14 +214,37 @@ const Vehicles: React.FC = () => {
     {
       field: 'status',
       headerName: 'Status',
-      width: 150,
-      renderCell: (params) => (
-        <Chip
-          label={params.value}
-          color={getStatusColor(params.value) as any}
-          size="small"
-        />
-      )
+      width: 180,
+      renderCell: (params) => {
+        if (user?.role === 'ADMIN' || user?.role === 'SALES') {
+          return (
+            <Select
+              value={params.value}
+              onChange={(e) => handleStatusChange(params.row.id, e.target.value as VehicleStatus)}
+              size="small"
+              sx={{ minWidth: 140 }}
+            >
+              <MenuItem value={VehicleStatus.AVAILABLE}>
+                <Chip label="Disponível" color="success" size="small" />
+              </MenuItem>
+              <MenuItem value={VehicleStatus.RESERVED}>
+                <Chip label="Reservado" color="warning" size="small" />
+              </MenuItem>
+              <MenuItem value={VehicleStatus.SOLD}>
+                <Chip label="Vendido" color="error" size="small" />
+              </MenuItem>
+            </Select>
+          );
+        } else {
+          return (
+            <Chip
+              label={params.value}
+              color={getStatusColor(params.value) as any}
+              size="small"
+            />
+          );
+        }
+      }
     },
     {
       field: 'actions',

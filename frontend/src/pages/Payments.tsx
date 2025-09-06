@@ -42,11 +42,12 @@ import { Payment, Sale, Vehicle, PaymentStatus } from '../types';
 import { salesService, vehiclesApi } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { canViewPayments, canApprovePayments, canCancelPayments } from '../utils/permissions';
+import { triggerDataRefresh, onDataRefresh, DATA_REFRESH_EVENTS } from '../utils/dataRefresh';
 
 interface PaymentsFilters {
-  buyer_cpf?: string;
-  payment_status?: PaymentStatus;
-  payment_code?: string;
+  customer_cpf?: string;
+  status?: string;
+  payment_method?: string;
   vehicle_brand?: string;
   min_amount?: number;
   max_amount?: number;
@@ -77,11 +78,20 @@ const Payments: React.FC = () => {
     applyFilters();
   }, [sales, filters]);
 
+  // Escutar mudanças de dados
+  useEffect(() => {
+    const cleanup = onDataRefresh(DATA_REFRESH_EVENTS.SALES, () => {
+      fetchSales();
+    });
+
+    return cleanup;
+  }, []);
+
   const fetchSales = async () => {
     try {
       const data = await salesService.list();
       // Filtrar apenas vendas que não estão canceladas
-      const activeSales = data.filter(sale => sale.payment_status !== PaymentStatus.CANCELLED);
+      const activeSales = data.filter(sale => sale.status !== 'CANCELADO');
       setSales(activeSales);
     } catch (error) {
       console.error('Error fetching sales:', error);
@@ -100,24 +110,23 @@ const Payments: React.FC = () => {
   const applyFilters = () => {
     let filtered = [...sales];
 
-    // Filtro por CPF
-    if (filters.buyer_cpf) {
-      filtered = filtered.filter(sale => 
-        sale.buyer_cpf.includes(filters.buyer_cpf!)
-      );
+    // Filtro por CPF do cliente
+    if (filters.customer_cpf) {
+      filtered = filtered.filter(sale => {
+        const customer = sale.customer_id;
+        return customer?.cpf?.includes(filters.customer_cpf!);
+      });
     }
 
-    // Filtro por status de pagamento
-    if (filters.payment_status) {
-      filtered = filtered.filter(sale => 
-        sale.payment_status === filters.payment_status
-      );
+    // Filtro por status
+    if (filters.status) {
+      filtered = filtered.filter(sale => sale.status === filters.status);
     }
 
-    // Filtro por código de pagamento
-    if (filters.payment_code) {
+    // Filtro por método de pagamento
+    if (filters.payment_method) {
       filtered = filtered.filter(sale => 
-        sale.payment_code.toLowerCase().includes(filters.payment_code!.toLowerCase())
+        sale.payment_method.toLowerCase().includes(filters.payment_method!.toLowerCase())
       );
     }
 
@@ -131,12 +140,12 @@ const Payments: React.FC = () => {
 
     // Filtro por valor mínimo
     if (filters.min_amount) {
-      filtered = filtered.filter(sale => sale.sale_price >= filters.min_amount!);
+      filtered = filtered.filter(sale => sale.final_amount >= filters.min_amount!);
     }
 
     // Filtro por valor máximo
     if (filters.max_amount) {
-      filtered = filtered.filter(sale => sale.sale_price <= filters.max_amount!);
+      filtered = filtered.filter(sale => sale.final_amount <= filters.max_amount!);
     }
 
     setFilteredSales(filtered);
@@ -153,32 +162,35 @@ const Payments: React.FC = () => {
     setFilters({});
   };
 
-  const getStatusText = (status: PaymentStatus) => {
-    if (status === PaymentStatus.PAID) {
-      return 'Aprovado';
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'PAGO':
+        return 'Aprovado';
+      case 'PENDENTE':
+        return 'Pendente';
+      case 'CANCELADO':
+        return 'Cancelado';
+      default:
+        return status;
     }
-    if (status === PaymentStatus.CANCELLED) {
-      return 'Cancelado';
-    }
-    return 'Pendente';
   };
 
-  const getStatusColor = (status: PaymentStatus) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
-      case PaymentStatus.PAID:
+      case 'PAGO':
         return 'success';
-      case PaymentStatus.PENDING:
+      case 'PENDENTE':
         return 'warning';
-      case PaymentStatus.CANCELLED:
+      case 'CANCELADO':
         return 'error';
       default:
         return 'default';
     }
   };
 
-  const handleStatusChange = async (saleId: string, status: PaymentStatus) => {
+  const handleStatusChange = async (saleId: string, status: string) => {
     // Verificar permissões
-    if (status === PaymentStatus.PAID && !canApprovePayments(user)) {
+    if (status === 'PAGO' && !canApprovePayments(user)) {
       setSnackbar({
         open: true,
         message: 'Você não tem permissão para aprovar pagamentos',
@@ -187,7 +199,7 @@ const Payments: React.FC = () => {
       return;
     }
 
-    if (status === PaymentStatus.CANCELLED && !canCancelPayments(user)) {
+    if (status === 'CANCELADO' && !canCancelPayments(user)) {
       setSnackbar({
         open: true,
         message: 'Você não tem permissão para cancelar pagamentos',
@@ -201,14 +213,14 @@ const Payments: React.FC = () => {
       if (!sale) return;
 
       switch (status) {
-        case PaymentStatus.PAID:
+        case 'PAGO':
           // Notificar webhook de pagamento
           await salesService.confirmPayment(saleId);
-          await vehiclesApi.updateStatus(sale.vehicle_id, 'VENDIDO');
+          await vehiclesApi.updateStatus(sale.vehicle_id?.id || sale.vehicle_id, 'VENDIDO');
           break;
-        case PaymentStatus.CANCELLED:
+        case 'CANCELADO':
           await salesService.cancelPayment(saleId);
-          await vehiclesApi.updateStatus(sale.vehicle_id, 'DISPONÍVEL');
+          await vehiclesApi.updateStatus(sale.vehicle_id?.id || sale.vehicle_id, 'DISPONÍVEL');
           break;
       }
       
@@ -219,6 +231,8 @@ const Payments: React.FC = () => {
       });
       
       fetchSales();
+      triggerDataRefresh(DATA_REFRESH_EVENTS.SALES);
+      triggerDataRefresh(DATA_REFRESH_EVENTS.VEHICLES);
     } catch (error) {
       console.error('Erro ao atualizar status:', error);
       setSnackbar({
@@ -245,23 +259,33 @@ const Payments: React.FC = () => {
       align: 'center' as const,
       headerAlign: 'center' as const,
       renderCell: (params) => {
-        const vehicle = vehicles.find(v => v.id === params.value);
-        return vehicle ? `${vehicle.brand} ${vehicle.model} (${vehicle.year})` : params.value;
+        const vehicle = params.value;
+        return vehicle && typeof vehicle === 'object' 
+          ? `${vehicle.brand} ${vehicle.model} (${vehicle.year})` 
+          : 'N/A';
       }
     },
-    { field: 'buyer_cpf', headerName: 'CPF do Comprador', flex: 1.3, minWidth: 130, align: 'center' as const, headerAlign: 'center' as const },
     { 
-      field: 'sale_price', 
-      headerName: 'Valor', 
+      field: 'customer_id', 
+      headerName: 'Cliente', 
+      flex: 1.3, 
+      minWidth: 130, 
+      align: 'center' as const, 
+      headerAlign: 'center' as const,
+      renderCell: (params) => params.value?.name || 'N/A'
+    },
+    { 
+      field: 'final_amount', 
+      headerName: 'Valor Final', 
       flex: 1.1,
       minWidth: 110,
       align: 'center' as const,
       headerAlign: 'center' as const,
       renderCell: (params) => formatCurrency(params.value)
     },
-    { field: 'payment_code', headerName: 'Código de Pagamento', flex: 1.4, minWidth: 130, align: 'center' as const, headerAlign: 'center' as const },
+    { field: 'payment_method', headerName: 'Método de Pagamento', flex: 1.4, minWidth: 130, align: 'center' as const, headerAlign: 'center' as const },
     { 
-      field: 'payment_status', 
+      field: 'status', 
       headerName: 'Status', 
       flex: 1,
       minWidth: 100,
@@ -306,9 +330,9 @@ const Payments: React.FC = () => {
 
         return (
           <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'center' }}>
-            {params.row.payment_status === PaymentStatus.PENDING && canApprovePayments(user) && (
+            {params.row.status === 'PENDENTE' && canApprovePayments(user) && (
               <Button
-                onClick={() => handleStatusChange(params.row.id, PaymentStatus.PAID)}
+                onClick={() => handleStatusChange(params.row.id, 'PAGO')}
                 color="success"
                 variant="outlined"
                 size="small"
@@ -316,19 +340,9 @@ const Payments: React.FC = () => {
                 Aprovar
               </Button>
             )}
-            {params.row.payment_status === PaymentStatus.PENDING && canCancelPayments(user) && (
+            {params.row.status === 'PENDENTE' && canCancelPayments(user) && (
               <Button
-                onClick={() => handleStatusChange(params.row.id, PaymentStatus.CANCELLED)}
-                color="error"
-                variant="outlined"
-                size="small"
-              >
-                Cancelar
-              </Button>
-            )}
-            {params.row.payment_status === PaymentStatus.PAID && canCancelPayments(user) && (
-              <Button
-                onClick={() => handleStatusChange(params.row.id, PaymentStatus.CANCELLED)}
+                onClick={() => handleStatusChange(params.row.id, 'CANCELADO')}
                 color="error"
                 variant="outlined"
                 size="small"
@@ -353,11 +367,11 @@ const Payments: React.FC = () => {
     );
   }
 
-  const pendingCount = filteredSales.filter(s => s.payment_status === PaymentStatus.PENDING).length;
-  const approvedCount = filteredSales.filter(s => s.payment_status === PaymentStatus.PAID).length;
-  const totalAmount = filteredSales.reduce((sum, sale) => sum + sale.sale_price, 0);
-  const pendingTotal = filteredSales.filter(s => s.payment_status === PaymentStatus.PENDING).reduce((sum, sale) => sum + sale.sale_price, 0);
-  const approvedTotal = filteredSales.filter(s => s.payment_status === PaymentStatus.PAID).reduce((sum, sale) => sum + sale.sale_price, 0);
+  const pendingCount = filteredSales.filter(s => s.status === 'PENDENTE').length;
+  const approvedCount = filteredSales.filter(s => s.status === 'PAGO').length;
+  const totalAmount = filteredSales.reduce((sum, sale) => sum + sale.final_amount, 0);
+  const pendingTotal = filteredSales.filter(s => s.status === 'PENDENTE').reduce((sum, sale) => sum + sale.final_amount, 0);
+  const approvedTotal = filteredSales.filter(s => s.status === 'PAGO').reduce((sum, sale) => sum + sale.final_amount, 0);
 
   return (
     <Container maxWidth="lg" sx={{ py: 6 }}>
@@ -464,24 +478,24 @@ const Payments: React.FC = () => {
                 <TextField
                   fullWidth
                   size="small"
-                  label="CPF do Comprador"
-                  value={filters.buyer_cpf || ''}
-                  onChange={(e) => handleFilterChange('buyer_cpf', e.target.value || undefined)}
+                  label="CPF do Cliente"
+                  value={filters.customer_cpf || ''}
+                  onChange={(e) => handleFilterChange('customer_cpf', e.target.value || undefined)}
                 />
               </Grid>
               
               <Grid item xs={12} sm={6} md={3}>
                 <FormControl fullWidth size="small">
-                  <InputLabel>Status do Pagamento</InputLabel>
+                  <InputLabel>Status</InputLabel>
                   <Select
-                    value={filters.payment_status || ''}
-                    label="Status do Pagamento"
-                    onChange={(e: SelectChangeEvent) => handleFilterChange('payment_status', e.target.value as PaymentStatus || undefined)}
+                    value={filters.status || ''}
+                    label="Status"
+                    onChange={(e: SelectChangeEvent) => handleFilterChange('status', e.target.value || undefined)}
                   >
                     <MenuItem value="">Todos</MenuItem>
-                    <MenuItem value={PaymentStatus.PENDING}>Pendente</MenuItem>
-                    <MenuItem value={PaymentStatus.PAID}>Pago</MenuItem>
-                    <MenuItem value={PaymentStatus.CANCELLED}>Cancelado</MenuItem>
+                    <MenuItem value="PENDENTE">Pendente</MenuItem>
+                    <MenuItem value="PAGO">Pago</MenuItem>
+                    <MenuItem value="CANCELADO">Cancelado</MenuItem>
                   </Select>
                 </FormControl>
               </Grid>
@@ -490,9 +504,9 @@ const Payments: React.FC = () => {
                 <TextField
                   fullWidth
                   size="small"
-                  label="Código de Pagamento"
-                  value={filters.payment_code || ''}
-                  onChange={(e) => handleFilterChange('payment_code', e.target.value || undefined)}
+                  label="Método de Pagamento"
+                  value={filters.payment_method || ''}
+                  onChange={(e) => handleFilterChange('payment_method', e.target.value || undefined)}
                 />
               </Grid>
               

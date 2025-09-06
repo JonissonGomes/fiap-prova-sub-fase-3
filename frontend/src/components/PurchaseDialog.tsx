@@ -83,11 +83,10 @@ const PurchaseDialog: React.FC<PurchaseDialogProps> = ({
     try {
       // Criar a venda
       const saleData: SaleCreate = {
+        customer_id: customer.id,
         vehicle_id: vehicle.id,
-        buyer_cpf: customer.cpf,
-        sale_price: vehicle.price,
-        payment_code: paymentCode,
-        payment_status: PaymentStatus.PENDING
+        payment_method: 'PIX',
+        notes: `Código de pagamento: ${paymentCode}`
       };
 
       const newSale = await salesService.create(saleData);

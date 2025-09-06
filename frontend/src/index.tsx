@@ -129,6 +129,36 @@ const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
 );
 
+// Adicionar estilos globais para garantir scroll
+const globalStyles = `
+  html, body {
+    height: 100%;
+    overflow: auto !important;
+  }
+  
+  #root {
+    height: 100%;
+    overflow: auto;
+  }
+  
+  /* Garantir que modais/dialogs tenham scroll quando necessário */
+  .MuiDialog-paper {
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  
+  /* Garantir que formulários longos tenham scroll */
+  .MuiPaper-root {
+    max-height: none;
+  }
+`;
+
+// Injetar estilos no head
+const styleSheet = document.createElement('style');
+styleSheet.type = 'text/css';
+styleSheet.innerText = globalStyles;
+document.head.appendChild(styleSheet);
+
 root.render(
   <React.StrictMode>
     <ThemeProvider theme={theme}>

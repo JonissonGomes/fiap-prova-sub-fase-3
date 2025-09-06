@@ -35,20 +35,21 @@ import {
   ExpandLess as ExpandLessIcon,
   Search as SearchIcon
 } from '@mui/icons-material';
-import { Sale, SaleCreate, Vehicle, VehicleStatus, PaymentStatus } from '../types';
-import { salesService, vehiclesApi } from '../services/api';
+import { Sale, SaleCreate, SaleUpdate, Vehicle, VehicleStatus, PaymentStatus } from '../types';
+import { salesService, vehiclesApi, customerService } from '../services/api';
 import InputMask from 'react-input-mask';
 import { NumericFormat } from 'react-number-format';
 import { useAuth } from '../contexts/AuthContext';
 import { canViewSales, canCreateSales } from '../utils/permissions';
+import { triggerDataRefresh, DATA_REFRESH_EVENTS } from '../utils/dataRefresh';
 
 interface SalesFilters {
-  buyer_cpf?: string;
-  payment_status?: PaymentStatus;
+  customer_cpf?: string;
+  status?: string;
   vehicle_brand?: string;
   min_price?: number;
   max_price?: number;
-  payment_code?: string;
+  payment_method?: string;
 }
 
 const Sales: React.FC = () => {
@@ -62,11 +63,11 @@ const Sales: React.FC = () => {
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState<SalesFilters>({});
-  const [formData, setFormData] = useState<Partial<Sale>>({
+  const [formData, setFormData] = useState({
     vehicle_id: '',
-    buyer_cpf: '',
-    sale_price: 0,
-    payment_code: ''
+    customer_cpf: '',
+    payment_method: 'PIX',
+    notes: ''
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
@@ -118,42 +119,41 @@ const Sales: React.FC = () => {
   const applyFilters = () => {
     let filtered = [...sales];
 
-    // Filtro por CPF
-    if (filters.buyer_cpf) {
-      filtered = filtered.filter(sale => 
-        sale.buyer_cpf.includes(filters.buyer_cpf!)
-      );
+    // Filtro por CPF do cliente
+    if (filters.customer_cpf) {
+      filtered = filtered.filter(sale => {
+        const customer = sale.customer_id;
+        return customer?.cpf?.includes(filters.customer_cpf!);
+      });
     }
 
-    // Filtro por status de pagamento
-    if (filters.payment_status) {
-      filtered = filtered.filter(sale => 
-        sale.payment_status === filters.payment_status
-      );
+    // Filtro por status
+    if (filters.status) {
+      filtered = filtered.filter(sale => sale.status === filters.status);
     }
 
     // Filtro por marca do veículo
     if (filters.vehicle_brand) {
       filtered = filtered.filter(sale => {
-        const vehicle = vehicles.find(v => v.id === sale.vehicle_id);
-        return vehicle && vehicle.brand.toLowerCase().includes(filters.vehicle_brand!.toLowerCase());
+        const vehicle = sale.vehicle_id;
+        return vehicle?.brand?.toLowerCase().includes(filters.vehicle_brand!.toLowerCase());
       });
     }
 
     // Filtro por preço mínimo
     if (filters.min_price) {
-      filtered = filtered.filter(sale => sale.sale_price >= filters.min_price!);
+      filtered = filtered.filter(sale => sale.final_amount >= filters.min_price!);
     }
 
     // Filtro por preço máximo
     if (filters.max_price) {
-      filtered = filtered.filter(sale => sale.sale_price <= filters.max_price!);
+      filtered = filtered.filter(sale => sale.final_amount <= filters.max_price!);
     }
 
-    // Filtro por código de pagamento
-    if (filters.payment_code) {
+    // Filtro por método de pagamento
+    if (filters.payment_method) {
       filtered = filtered.filter(sale => 
-        sale.payment_code.toLowerCase().includes(filters.payment_code!.toLowerCase())
+        sale.payment_method.toLowerCase().includes(filters.payment_method!.toLowerCase())
       );
     }
 
@@ -174,19 +174,24 @@ const Sales: React.FC = () => {
   const handleOpenDialog = (sale?: Sale) => {
     if (sale) {
       setSelectedSale(sale);
-      setFormData(sale);
+      setFormData({
+        vehicle_id: sale.vehicle_id?.id || '',
+        customer_cpf: sale.customer_id?.cpf || '',
+        payment_method: sale.payment_method || 'PIX',
+        notes: sale.notes || ''
+      });
       
       // Encontrar o veículo selecionado para o autocomplete
-      const vehicle = vehicles.find(v => v.id === sale.vehicle_id);
+      const vehicle = vehicles.find(v => v.id === sale.vehicle_id?.id);
       setSelectedVehicle(vehicle || null);
     } else {
       setSelectedSale(null);
       setSelectedVehicle(null);
       setFormData({
         vehicle_id: '',
-        buyer_cpf: '',
-        sale_price: 0,
-        payment_code: ''
+        customer_cpf: '',
+        payment_method: 'PIX',
+        notes: ''
       });
     }
     setOpenDialog(true);
@@ -198,9 +203,9 @@ const Sales: React.FC = () => {
     setSelectedVehicle(null);
     setFormData({
       vehicle_id: '',
-      buyer_cpf: '',
-      sale_price: 0,
-      payment_code: ''
+      customer_cpf: '',
+      payment_method: 'PIX',
+      notes: ''
     });
   };
 
@@ -208,8 +213,7 @@ const Sales: React.FC = () => {
     setSelectedVehicle(newValue);
     setFormData(prev => ({
       ...prev,
-      vehicle_id: newValue?.id || '',
-      sale_price: newValue ? newValue.price : 0
+      vehicle_id: newValue?.id || ''
     }));
   };
 
@@ -232,23 +236,14 @@ const Sales: React.FC = () => {
       newErrors.vehicle_id = 'Veículo é obrigatório';
     }
     
-    if (!formData.buyer_cpf) {
-      newErrors.buyer_cpf = 'CPF é obrigatório';
-    } else if (!/^\d{11}$/.test(formData.buyer_cpf)) {
-      newErrors.buyer_cpf = 'CPF inválido';
+    if (!formData.customer_cpf) {
+      newErrors.customer_cpf = 'CPF é obrigatório';
+    } else if (!/^\d{11}$/.test(formData.customer_cpf)) {
+      newErrors.customer_cpf = 'CPF inválido';
     }
     
-    if (!formData.sale_price || formData.sale_price <= 0) {
-      newErrors.sale_price = 'Preço deve ser maior que zero';
-    } else {
-      const selectedVehicleData = vehicles.find(v => v.id === formData.vehicle_id);
-      if (selectedVehicleData && formData.sale_price < selectedVehicleData.price) {
-        newErrors.sale_price = 'Preço não pode ser menor que o preço do veículo';
-      }
-    }
-    
-    if (!formData.payment_code) {
-      newErrors.payment_code = 'Código de pagamento é obrigatório';
+    if (!formData.payment_method) {
+      newErrors.payment_method = 'Método de pagamento é obrigatório';
     }
     
     setErrors(newErrors);
@@ -265,12 +260,9 @@ const Sales: React.FC = () => {
     try {
       if (selectedSale) {
         // Envia apenas os campos necessários para atualização
-        const saleData = {
-          vehicle_id: formData.vehicle_id,
-          buyer_cpf: formData.buyer_cpf,
-          sale_price: formData.sale_price,
-          payment_code: formData.payment_code,
-          payment_status: formData.payment_status
+        const saleData: SaleUpdate = {
+          payment_method: formData.payment_method,
+          notes: formData.notes
         };
         await salesService.update(selectedSale.id, saleData);
         setSnackbar({
@@ -279,13 +271,24 @@ const Sales: React.FC = () => {
           severity: 'success'
         });
       } else {
-        // Cria uma nova venda
+        // Cria uma nova venda - primeiro buscar customer pelo CPF
+        const customers = await customerService.list();
+        const customer = customers.find(c => c.cpf === formData.customer_cpf);
+        
+        if (!customer) {
+          setSnackbar({
+            open: true,
+            message: 'Cliente não encontrado com este CPF',
+            severity: 'error'
+          });
+          return;
+        }
+        
         const saleData: SaleCreate = {
+          customer_id: customer.id,
           vehicle_id: formData.vehicle_id!,
-          buyer_cpf: formData.buyer_cpf!,
-          sale_price: formData.sale_price!,
-          payment_code: formData.payment_code!,
-          payment_status: PaymentStatus.PENDING
+          payment_method: formData.payment_method,
+          notes: formData.notes
         };
         
         const newSale = await salesService.create(saleData);
@@ -302,6 +305,12 @@ const Sales: React.FC = () => {
         });
       }
       await fetchSales();
+      await fetchVehicles(); // Atualizar veículos também, pois o status pode ter mudado
+      
+      // Notificar outras páginas sobre mudanças
+      triggerDataRefresh(DATA_REFRESH_EVENTS.SALES);
+      triggerDataRefresh(DATA_REFRESH_EVENTS.VEHICLES);
+      
       handleCloseDialog();
     } catch (error) {
       console.error('Erro ao salvar venda:', error);
@@ -317,15 +326,18 @@ const Sales: React.FC = () => {
     if (window.confirm('Tem certeza que deseja excluir esta venda?')) {
       try {
         await salesService.delete(id);
-        setSales(prevSales => prevSales.filter(sale => sale.id !== id));
         setSnackbar({
           open: true,
           message: 'Venda excluída com sucesso',
           severity: 'success'
         });
-        setTimeout(() => {
-          fetchSales();
-        }, 500);
+        // Atualizar listas imediatamente
+        fetchSales();
+        fetchVehicles(); // Atualizar veículos também, pois o status pode ter mudado
+        
+        // Notificar outras páginas sobre mudanças
+        triggerDataRefresh(DATA_REFRESH_EVENTS.SALES);
+        triggerDataRefresh(DATA_REFRESH_EVENTS.VEHICLES);
       } catch (error) {
         console.error('Error deleting sale:', error);
         setSnackbar({
@@ -345,15 +357,15 @@ const Sales: React.FC = () => {
       switch (status) {
         case PaymentStatus.PENDING:
           await salesService.updateStatus(id, 'PENDING');
-          await vehiclesApi.updateStatus(sale.vehicle_id, 'DISPONÍVEL');
+          await vehiclesApi.updateStatus(sale.vehicle_id?.id || sale.vehicle_id, 'DISPONÍVEL');
           break;
         case PaymentStatus.PAID:
           await salesService.confirmPayment(id);
-          await vehiclesApi.updateStatus(sale.vehicle_id, 'VENDIDO');
+          await vehiclesApi.updateStatus(sale.vehicle_id?.id || sale.vehicle_id, 'VENDIDO');
           break;
         case PaymentStatus.CANCELLED:
           await salesService.cancelPayment(id);
-          await vehiclesApi.updateStatus(sale.vehicle_id, 'DISPONÍVEL');
+          await vehiclesApi.updateStatus(sale.vehicle_id?.id || sale.vehicle_id, 'DISPONÍVEL');
           break;
       }
       setSnackbar({
@@ -363,6 +375,11 @@ const Sales: React.FC = () => {
       });
       
       fetchSales();
+      fetchVehicles(); // Atualizar veículos também, pois o status pode ter mudado
+      
+      // Notificar outras páginas sobre mudanças
+      triggerDataRefresh(DATA_REFRESH_EVENTS.SALES);
+      triggerDataRefresh(DATA_REFRESH_EVENTS.VEHICLES);
     } catch (error) {
       console.error('Erro ao atualizar status:', error);
       setSnackbar({
@@ -373,26 +390,26 @@ const Sales: React.FC = () => {
     }
   };
 
-  const getStatusText = (status: PaymentStatus) => {
+  const getStatusText = (status: string) => {
     switch (status) {
-      case PaymentStatus.PENDING:
+      case 'PENDENTE':
         return 'Pendente';
-      case PaymentStatus.PAID:
+      case 'PAGO':
         return 'Pago';
-      case PaymentStatus.CANCELLED:
+      case 'CANCELADO':
         return 'Cancelado';
       default:
         return status;
     }
   };
 
-  const getStatusColor = (status: PaymentStatus) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
-      case PaymentStatus.PENDING:
+      case 'PENDENTE':
         return 'warning';
-      case PaymentStatus.PAID:
+      case 'PAGO':
         return 'success';
-      case PaymentStatus.CANCELLED:
+      case 'CANCELADO':
         return 'error';
       default:
         return 'default';
@@ -408,23 +425,33 @@ const Sales: React.FC = () => {
       align: 'center' as const,
       headerAlign: 'center' as const,
       renderCell: (params) => {
-        const vehicle = vehicles.find(v => v.id === params.value);
-        return vehicle ? `${vehicle.brand} ${vehicle.model} (${vehicle.year})` : params.value;
+        const vehicle = params.value;
+        return vehicle && typeof vehicle === 'object' 
+          ? `${vehicle.brand} ${vehicle.model} (${vehicle.year})` 
+          : 'N/A';
       }
     },
-    { field: 'buyer_cpf', headerName: 'CPF do Comprador', flex: 1.3, minWidth: 130, align: 'center' as const, headerAlign: 'center' as const },
     { 
-      field: 'sale_price', 
-      headerName: 'Preço', 
+      field: 'customer_id', 
+      headerName: 'Cliente', 
+      flex: 1.3, 
+      minWidth: 130, 
+      align: 'center' as const, 
+      headerAlign: 'center' as const,
+      renderCell: (params) => params.value?.name || 'N/A'
+    },
+    { 
+      field: 'final_amount', 
+      headerName: 'Valor Final', 
       flex: 1.1,
       minWidth: 110,
       align: 'center' as const,
       headerAlign: 'center' as const,
       renderCell: (params) => formatCurrency(params.value)
     },
-    { field: 'payment_code', headerName: 'Código de Pagamento', flex: 1.4, minWidth: 130, align: 'center' as const, headerAlign: 'center' as const },
+    { field: 'payment_method', headerName: 'Método de Pagamento', flex: 1.4, minWidth: 130, align: 'center' as const, headerAlign: 'center' as const },
     { 
-      field: 'payment_status', 
+      field: 'status', 
       headerName: 'Status', 
       flex: 1,
       minWidth: 100,
@@ -455,16 +482,29 @@ const Sales: React.FC = () => {
       align: 'center' as const,
       headerAlign: 'center' as const,
       sortable: false,
-      renderCell: (params) => (
-        <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'center' }}>
-          <IconButton onClick={() => handleOpenDialog(params.row)} size="small">
-            <EditIcon fontSize="small" />
-          </IconButton>
-          <IconButton onClick={() => handleDelete(params.row.id)} size="small" color="error">
-            <DeleteIcon fontSize="small" />
-          </IconButton>
-        </Box>
-      )
+      renderCell: (params) => {
+        // Não mostrar ações para vendas pagas
+        if (params.row.status === 'PAGO') {
+          return (
+            <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+              <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                Finalizada
+              </Typography>
+            </Box>
+          );
+        }
+
+        return (
+          <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'center' }}>
+            <IconButton onClick={() => handleOpenDialog(params.row)} size="small">
+              <EditIcon fontSize="small" />
+            </IconButton>
+            <IconButton onClick={() => handleDelete(params.row.id)} size="small" color="error">
+              <DeleteIcon fontSize="small" />
+            </IconButton>
+          </Box>
+        );
+      }
     }
   ];
 
@@ -525,24 +565,24 @@ const Sales: React.FC = () => {
                 <TextField
                   fullWidth
                   size="small"
-                  label="CPF do Comprador"
-                  value={filters.buyer_cpf || ''}
-                  onChange={(e) => handleFilterChange('buyer_cpf', e.target.value || undefined)}
+                  label="CPF do Cliente"
+                  value={filters.customer_cpf || ''}
+                  onChange={(e) => handleFilterChange('customer_cpf', e.target.value || undefined)}
                 />
               </Grid>
               
               <Grid item xs={12} sm={6} md={3}>
                 <FormControl fullWidth size="small">
-                  <InputLabel>Status do Pagamento</InputLabel>
+                  <InputLabel>Status</InputLabel>
                   <Select
-                    value={filters.payment_status || ''}
-                    label="Status do Pagamento"
-                    onChange={(e: SelectChangeEvent) => handleFilterChange('payment_status', e.target.value as PaymentStatus || undefined)}
+                    value={filters.status || ''}
+                    label="Status"
+                    onChange={(e: SelectChangeEvent) => handleFilterChange('status', e.target.value || undefined)}
                   >
                     <MenuItem value="">Todos</MenuItem>
-                    <MenuItem value={PaymentStatus.PENDING}>Pendente</MenuItem>
-                    <MenuItem value={PaymentStatus.PAID}>Pago</MenuItem>
-                    <MenuItem value={PaymentStatus.CANCELLED}>Cancelado</MenuItem>
+                    <MenuItem value="PENDENTE">Pendente</MenuItem>
+                    <MenuItem value="PAGO">Pago</MenuItem>
+                    <MenuItem value="CANCELADO">Cancelado</MenuItem>
                   </Select>
                 </FormControl>
               </Grid>
@@ -561,9 +601,9 @@ const Sales: React.FC = () => {
                 <TextField
                   fullWidth
                   size="small"
-                  label="Código de Pagamento"
-                  value={filters.payment_code || ''}
-                  onChange={(e) => handleFilterChange('payment_code', e.target.value || undefined)}
+                  label="Método de Pagamento"
+                  value={filters.payment_method || ''}
+                  onChange={(e) => handleFilterChange('payment_method', e.target.value || undefined)}
                 />
               </Grid>
               
@@ -731,9 +771,9 @@ const Sales: React.FC = () => {
             <Grid item xs={12}>
               <InputMask
                 mask="999.999.999-99"
-                value={formData.buyer_cpf}
+                value={formData.customer_cpf}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
-                  setFormData({ ...formData, buyer_cpf: e.target.value.replace(/\D/g, '') })
+                  setFormData({ ...formData, customer_cpf: e.target.value.replace(/\D/g, '') })
                 }
               >
                 {(inputProps: any) => (
@@ -741,42 +781,44 @@ const Sales: React.FC = () => {
                     {...inputProps}
                     fullWidth
                     label="CPF do Cliente"
-                    error={!!errors.buyer_cpf}
-                    helperText={errors.buyer_cpf}
+                    error={!!errors.customer_cpf}
+                    helperText={errors.customer_cpf}
                     required
                   />
                 )}
               </InputMask>
             </Grid>
             <Grid item xs={12}>
-              <NumericFormat
-                customInput={TextField}
-                fullWidth
-                label="Preço da Venda"
-                name="sale_price"
-                value={formData.sale_price || 0}
-                onValueChange={(values) => {
-                  setFormData({ ...formData, sale_price: values.floatValue || 0 });
-                }}
-                thousandSeparator="."
-                decimalSeparator=","
-                prefix="R$ "
-                decimalScale={2}
-                fixedDecimalScale
-                error={!!errors.sale_price}
-                helperText={errors.sale_price}
-                required
-              />
+              <FormControl fullWidth error={!!errors.payment_method}>
+                <InputLabel>Método de Pagamento</InputLabel>
+                <Select
+                  value={formData.payment_method}
+                  onChange={(e) => setFormData({ ...formData, payment_method: e.target.value })}
+                  label="Método de Pagamento"
+                  required
+                >
+                  <MenuItem value="PIX">PIX</MenuItem>
+                  <MenuItem value="DINHEIRO">Dinheiro</MenuItem>
+                  <MenuItem value="CARTAO_CREDITO">Cartão de Crédito</MenuItem>
+                  <MenuItem value="CARTAO_DEBITO">Cartão de Débito</MenuItem>
+                  <MenuItem value="FINANCIAMENTO">Financiamento</MenuItem>
+                </Select>
+                {errors.payment_method && (
+                  <Typography variant="caption" color="error" sx={{ ml: 2, mt: 0.5 }}>
+                    {errors.payment_method}
+                  </Typography>
+                )}
+              </FormControl>
             </Grid>
             <Grid item xs={12}>
               <TextField
                 fullWidth
-                label="Código de Pagamento"
-                value={formData.payment_code}
-                onChange={(e) => setFormData({ ...formData, payment_code: e.target.value })}
-                error={!!errors.payment_code}
-                helperText={errors.payment_code}
-                required
+                label="Observações"
+                multiline
+                rows={3}
+                value={formData.notes}
+                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                placeholder="Observações sobre a venda..."
               />
             </Grid>
           </Grid>

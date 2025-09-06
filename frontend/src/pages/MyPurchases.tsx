@@ -38,6 +38,7 @@ import { Sale, Vehicle, PaymentStatus } from '../types';
 import { salesService, vehiclesApi, customerService } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { isCustomer } from '../utils/permissions';
+import { onDataRefresh, DATA_REFRESH_EVENTS } from '../utils/dataRefresh';
 
 interface PurchaseFilters {
   payment_status?: PaymentStatus;
@@ -70,6 +71,19 @@ const MyPurchases: React.FC = () => {
     applyFilters();
   }, [sales, filters]);
 
+  // Escutar mudanças de vendas para atualizar automaticamente
+  useEffect(() => {
+    if (user && isCustomer(user)) {
+      const cleanup = onDataRefresh(DATA_REFRESH_EVENTS.SALES, () => {
+        console.log('MyPurchases: Atualizando compras devido a mudança em vendas');
+        fetchCustomerData();
+      });
+      
+      return cleanup;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.email]); // Apenas o email do usuário, evita dependência circular
+
   const fetchCustomerData = async () => {
     if (!user) return;
     
@@ -89,7 +103,7 @@ const MyPurchases: React.FC = () => {
       
       // Buscar vendas do cliente
       const allSales = await salesService.list();
-      const customerSales = allSales.filter(sale => sale.buyer_cpf === customer.cpf);
+      const customerSales = allSales.filter(sale => sale.customer_id?.cpf === customer.cpf);
       setSales(customerSales);
       
       // Buscar veículos relacionados
@@ -132,12 +146,12 @@ const MyPurchases: React.FC = () => {
 
     // Filtro por preço mínimo
     if (filters.min_price) {
-      filtered = filtered.filter(sale => sale.sale_price >= filters.min_price!);
+      filtered = filtered.filter(sale => sale.final_amount >= filters.min_price!);
     }
 
     // Filtro por preço máximo
     if (filters.max_price) {
-      filtered = filtered.filter(sale => sale.sale_price <= filters.max_price!);
+      filtered = filtered.filter(sale => sale.final_amount <= filters.max_price!);
     }
 
     // Filtro por data
@@ -188,26 +202,26 @@ const MyPurchases: React.FC = () => {
     return new Date(dateString).toLocaleDateString('pt-BR');
   };
 
-  const getStatusColor = (status: PaymentStatus) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
-      case PaymentStatus.PAID:
+      case 'PAGO':
         return 'success';
-      case PaymentStatus.PENDING:
+      case 'PENDENTE':
         return 'warning';
-      case PaymentStatus.CANCELLED:
+      case 'CANCELADO':
         return 'error';
       default:
         return 'default';
     }
   };
 
-  const getStatusText = (status: PaymentStatus) => {
+  const getStatusText = (status: string) => {
     switch (status) {
-      case PaymentStatus.PAID:
+      case 'PAGO':
         return 'Pago';
-      case PaymentStatus.PENDING:
+      case 'PENDENTE':
         return 'Pendente';
-      case PaymentStatus.CANCELLED:
+      case 'CANCELADO':
         return 'Cancelado';
       default:
         return status;
@@ -216,12 +230,12 @@ const MyPurchases: React.FC = () => {
 
   // Estatísticas das compras
   const totalCompras = filteredSales.length;
-  const comprasPendentes = filteredSales.filter(s => s.payment_status === PaymentStatus.PENDING).length;
-  const comprasPagas = filteredSales.filter(s => s.payment_status === PaymentStatus.PAID).length;
-  const comprasCanceladas = filteredSales.filter(s => s.payment_status === PaymentStatus.CANCELLED).length;
+  const comprasPendentes = filteredSales.filter(s => s.status === 'PENDENTE').length;
+  const comprasPagas = filteredSales.filter(s => s.status === 'PAGO').length;
+  const comprasCanceladas = filteredSales.filter(s => s.status === 'CANCELADO').length;
   const valorTotal = filteredSales
-    .filter(s => s.payment_status === PaymentStatus.PENDING || s.payment_status === PaymentStatus.PAID)
-    .reduce((sum, sale) => sum + sale.sale_price, 0);
+    .filter(s => s.status === 'PENDENTE' || s.status === 'PAGO')
+    .reduce((sum, sale) => sum + sale.final_amount, 0);
 
   const columns: GridColDef[] = [
     { field: 'id', headerName: 'ID', flex: 0.4, minWidth: 70, align: 'center' as const, headerAlign: 'center' as const },
@@ -233,22 +247,24 @@ const MyPurchases: React.FC = () => {
       align: 'center' as const,
       headerAlign: 'center' as const,
       renderCell: (params) => {
-        const vehicle = vehicles.find(v => v.id === params.value);
-        return vehicle ? `${vehicle.brand} ${vehicle.model} (${vehicle.year})` : params.value;
+        const vehicle = params.value;
+        return vehicle && typeof vehicle === 'object' 
+          ? `${vehicle.brand} ${vehicle.model} (${vehicle.year})` 
+          : 'N/A';
       }
     },
     { 
-      field: 'sale_price', 
-      headerName: 'Preço', 
+      field: 'final_amount', 
+      headerName: 'Valor Final', 
       flex: 1.1,
       minWidth: 110,
       align: 'center' as const,
       headerAlign: 'center' as const,
       renderCell: (params) => formatCurrency(params.value)
     },
-    { field: 'payment_code', headerName: 'Código de Pagamento', flex: 1.4, minWidth: 130, align: 'center' as const, headerAlign: 'center' as const },
+    { field: 'payment_method', headerName: 'Método de Pagamento', flex: 1.4, minWidth: 130, align: 'center' as const, headerAlign: 'center' as const },
     { 
-      field: 'payment_status', 
+      field: 'status', 
       headerName: 'Status', 
       flex: 1,
       minWidth: 100,
