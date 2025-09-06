@@ -1,0 +1,32 @@
+<svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+  <rect width="32" height="32" fill="#ffffff"/>
+  
+  <!-- Corpo principal do carro -->
+  <path d="M6 18 L8 13 L24 13 L26 18 L26 25 L24 25 L24 23 L8 23 L8 25 L6 25 Z" fill="#1e3a5f"/>
+  
+  <!-- Teto do carro -->
+  <path d="M8 13 L10 8 L22 8 L24 13 Z" fill="#1e3a5f"/>
+  
+  <!-- Para-brisa -->
+  <path d="M10 8 L22 8 L22 12 L10 12 Z" fill="#87ceeb" stroke="#1e3a5f" stroke-width="0.5"/>
+  
+  <!-- Janela lateral -->
+  <rect x="10" y="13" width="12" height="3" fill="#87ceeb" stroke="#1e3a5f" stroke-width="0.5"/>
+  
+  <!-- Roda esquerda -->
+  <circle cx="10" cy="25" r="3" fill="#333333"/>
+  <circle cx="10" cy="25" r="2" fill="#666666"/>
+  <circle cx="10" cy="25" r="1" fill="#999999"/>
+  
+  <!-- Roda direita -->
+  <circle cx="22" cy="25" r="3" fill="#333333"/>
+  <circle cx="22" cy="25" r="2" fill="#666666"/>
+  <circle cx="22" cy="25" r="1" fill="#999999"/>
+  
+  <!-- Faróis -->
+  <circle cx="4" cy="19" r="1.5" fill="#ffff99" stroke="#1e3a5f" stroke-width="0.5"/>
+  <circle cx="28" cy="19" r="1.5" fill="#ff6666" stroke="#1e3a5f" stroke-width="0.5"/>
+  
+  <!-- Grade frontal -->
+  <rect x="5" y="17" width="2" height="4" fill="#1e3a5f"/>
+</svg>
