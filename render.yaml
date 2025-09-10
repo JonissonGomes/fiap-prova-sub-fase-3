@@ -1,0 +1,52 @@
+# Configuração do Render para deploy automático
+services:
+  # Backend API
+  - type: web
+    name: fiap-backend
+    env: node
+    plan: free
+    buildCommand: |
+      cd backend && 
+      npm ci --only=production
+    startCommand: |
+      cd backend && 
+      npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: MONGODB_URL
+        fromDatabase:
+          name: fiap-mongodb
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: ALLOWED_ORIGINS
+        value: https://fiap-frontend.onrender.com,http://localhost:3000
+
+  # Frontend
+  - type: web
+    name: fiap-frontend
+    env: static
+    plan: free
+    buildCommand: |
+      cd frontend &&
+      npm ci &&
+      REACT_APP_BACKEND_URL=https://fiap-backend.onrender.com npm run build
+    staticPublishPath: ./frontend/build
+    envVars:
+      - key: REACT_APP_BACKEND_URL
+        value: https://fiap-backend.onrender.com
+      - key: REACT_APP_API_URL
+        value: https://fiap-backend.onrender.com
+
+  # MongoDB Database
+  - type: pserv
+    name: fiap-mongodb
+    plan: free
+    env: docker
+    dockerfilePath: ./mongodb.Dockerfile
+    envVars:
+      - key: MONGO_INITDB_DATABASE
+        value: unified_vehicle_db
