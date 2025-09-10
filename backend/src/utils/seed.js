@@ -9,7 +9,7 @@ const createDefaultAdmin = async () => {
     // Verificar se o admin já existe
     const existingAdmin = await User.findOne({ email: adminEmail });
     if (existingAdmin) {
-      logger.info(`Usuário admin ${adminEmail} já existe`);
+      logger.info(`Usuário admin já existe`);
       return existingAdmin;
     }
     
