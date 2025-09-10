@@ -5,6 +5,22 @@ on:
     branches: [ main, master, develop ]
   pull_request:
     branches: [ main, master, develop ]
+  workflow_dispatch:
+    inputs:
+      deploy_target:
+        description: 'Target to deploy'
+        required: true
+        default: 'both'
+        type: choice
+        options:
+        - both
+        - backend
+        - frontend
+      force_deploy:
+        description: 'Force deploy even if tests fail'
+        required: false
+        default: false
+        type: boolean
 
 env:
   NODE_VERSION: '18'
@@ -343,3 +359,66 @@ jobs:
         else
           echo "### Status: ❌ Deployment failed!" >> $GITHUB_STEP_SUMMARY
         fi 
+
+  manual-deploy:
+    name: Manual Deploy via Render Webhook
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+    timeout-minutes: 30
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Deploy Backend via Webhook
+      if: github.event.inputs.deploy_target == 'both' || github.event.inputs.deploy_target == 'backend'
+      run: |
+        echo "🚀 Deploying Backend via Render Webhook..."
+        
+        # Deploy backend using Render webhook
+        curl -X POST "https://api.render.com/deploy/srv-d30dm795pdvs73ftb5kg?key=ja_Cdk7jxKQ" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "clearCache": "do_not_clear"
+          }'
+        
+        echo "✅ Backend deploy triggered successfully!"
+        
+    - name: Deploy Frontend via Webhook
+      if: github.event.inputs.deploy_target == 'both' || github.event.inputs.deploy_target == 'frontend'
+      run: |
+        echo "🚀 Deploying Frontend via Render Webhook..."
+        
+        # Deploy frontend using Render webhook (if you have one)
+        # curl -X POST "https://api.render.com/deploy/srv-FRONTEND_SERVICE_ID?key=FRONTEND_WEBHOOK_KEY" \
+        #   -H "Content-Type: application/json" \
+        #   -d '{
+        #     "clearCache": "do_not_clear"
+        #   }'
+        
+        echo "ℹ️ Frontend webhook not configured - using manual deploy"
+        
+    - name: Wait for deployment
+      run: |
+        echo "⏳ Waiting for deployment to complete..."
+        sleep 15
+        echo "✅ Deployment should be processing..."
+        
+    - name: Manual Deploy Summary
+      if: always()
+      run: |
+        echo "## Manual Deploy Summary" >> $GITHUB_STEP_SUMMARY
+        echo "### Deploy Target" >> $GITHUB_STEP_SUMMARY
+        echo "- Target: ${{ github.event.inputs.deploy_target }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Force Deploy: ${{ github.event.inputs.force_deploy }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Webhook Used" >> $GITHUB_STEP_SUMMARY
+        echo "- Backend: https://api.render.com/deploy/srv-d30dm795pdvs73ftb5kg?key=ja_Cdk7jxKQ" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        if [ "${{ job.status }}" == "success" ]; then
+          echo "### Status: ✅ Manual deployment successful!" >> $GITHUB_STEP_SUMMARY
+          echo "- Check Render dashboard for deployment status" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "### Status: ❌ Manual deployment failed!" >> $GITHUB_STEP_SUMMARY
+        fi
