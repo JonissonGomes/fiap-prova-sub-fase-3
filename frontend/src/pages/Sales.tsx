@@ -7,7 +7,7 @@ import {
   DialogContent,
   DialogTitle,
   Grid,
-  Paper,
+  // Paper,
   TextField,
   Typography,
   IconButton,
@@ -224,10 +224,6 @@ const Sales: React.FC = () => {
     }).format(value);
   };
 
-  const parseCurrency = (value: string) => {
-    const numericValue = value.replace(/[^\d,]/g, '').replace(',', '.');
-    return parseFloat(numericValue) || 0;
-  };
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -348,45 +344,6 @@ const Sales: React.FC = () => {
     }
   };
 
-  const handleStatusChange = async (id: string, status: PaymentStatus) => {
-    try {
-      const sale = sales.find(s => s.id === id);
-      if (!sale) return;
-
-      switch (status) {
-        case PaymentStatus.PENDING:
-          await salesService.updateStatus(id, 'PENDING');
-          await vehiclesApi.updateStatus(sale.vehicle_id?.id || sale.vehicle_id, 'DISPONÍVEL');
-          break;
-        case PaymentStatus.PAID:
-          await salesService.confirmPayment(id);
-          await vehiclesApi.updateStatus(sale.vehicle_id?.id || sale.vehicle_id, 'VENDIDO');
-          break;
-        case PaymentStatus.CANCELLED:
-          await salesService.cancelPayment(id);
-          await vehiclesApi.updateStatus(sale.vehicle_id?.id || sale.vehicle_id, 'DISPONÍVEL');
-          break;
-      }
-      setSnackbar({
-        open: true,
-        message: 'Status atualizado com sucesso',
-        severity: 'success'
-      });
-      
-      fetchSales();
-      fetchVehicles(); // Atualizar veículos também, pois o status pode ter mudado
-      
-      // Notificar outras páginas sobre mudanças
-      triggerMultipleDataRefresh([DATA_REFRESH_EVENTS.SALES, DATA_REFRESH_EVENTS.VEHICLES]);
-    } catch (error) {
-      console.error('Erro ao atualizar status:', error);
-      setSnackbar({
-        open: true,
-        message: 'Erro ao atualizar status',
-        severity: 'error'
-      });
-    }
-  };
 
   const getStatusText = (status: string) => {
     switch (status) {

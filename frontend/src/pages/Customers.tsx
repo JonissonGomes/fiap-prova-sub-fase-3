@@ -25,11 +25,10 @@ import {
   Search as SearchIcon,
   ExpandMore as ExpandMoreIcon,
   ExpandLess as ExpandLessIcon,
-  FilterList as FilterIcon,
   Person as PersonIcon
 } from '@mui/icons-material';
 import InputMask from 'react-input-mask';
-import { Customer, CustomerCreate, CustomerUpdate } from '../types';
+import { Customer, CustomerCreate } from '../types';
 import { customerService } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { triggerDataRefresh, onDataRefresh, DATA_REFRESH_EVENTS } from '../utils/dataRefresh';

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -15,7 +15,7 @@ import {
   Paper,
   Chip
 } from '@mui/material';
-import { Vehicle, Customer, SaleCreate, PaymentStatus, VehicleStatus } from '../types';
+import { Vehicle, Customer, SaleCreate, VehicleStatus } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import { salesService, customerService, vehiclesApi } from '../services/api';
 
@@ -40,23 +40,7 @@ const PurchaseDialog: React.FC<PurchaseDialogProps> = ({
   const [paymentCode, setPaymentCode] = useState<string>('');
   const [confirming, setConfirming] = useState(false);
 
-  useEffect(() => {
-    if (open && user) {
-      fetchCustomerData();
-    }
-  }, [open, user]);
-
-  useEffect(() => {
-    if (open) {
-      // Gerar código de pagamento aleatório
-      const generatePaymentCode = () => {
-        return 'PAY-' + Math.random().toString(36).substr(2, 9).toUpperCase();
-      };
-      setPaymentCode(generatePaymentCode());
-    }
-  }, [open]);
-
-  const fetchCustomerData = async () => {
+  const fetchCustomerData = useCallback(async () => {
     if (!user) return;
     
     try {
@@ -71,7 +55,23 @@ const PurchaseDialog: React.FC<PurchaseDialogProps> = ({
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (open && user) {
+      fetchCustomerData();
+    }
+  }, [open, user, fetchCustomerData]);
+
+  useEffect(() => {
+    if (open) {
+      // Gerar código de pagamento aleatório
+      const generatePaymentCode = () => {
+        return 'PAY-' + Math.random().toString(36).substr(2, 9).toUpperCase();
+      };
+      setPaymentCode(generatePaymentCode());
+    }
+  }, [open]);
 
   const handleConfirmPurchase = async () => {
     if (!user || !vehicle || !customer) return;
@@ -89,7 +89,7 @@ const PurchaseDialog: React.FC<PurchaseDialogProps> = ({
         notes: `Código de pagamento: ${paymentCode}`
       };
 
-      const newSale = await salesService.create(saleData);
+      await salesService.create(saleData);
 
       // Atualizar status do veículo para reservado
       await vehiclesApi.updateStatus(vehicle.id, VehicleStatus.RESERVED);

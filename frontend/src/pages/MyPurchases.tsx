@@ -1,15 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   Box,
   Typography,
-  Paper,
   Alert,
   CircularProgress,
   Grid,
   Card,
   CardContent,
   Chip,
-  Divider,
   Container,
   TextField,
   FormControl,
@@ -22,13 +20,8 @@ import {
 } from '@mui/material';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { 
-  FilterList as FilterIcon,
   ExpandMore as ExpandMoreIcon,
   ExpandLess as ExpandLessIcon,
-  Search as SearchIcon,
-  ShoppingBag as ShoppingBagIcon,
-  Receipt as ReceiptIcon,
-  TrendingUp as TrendingIcon,
   ShoppingCart as ShoppingCartIcon,
   CheckCircle as CheckCircleIcon,
   Pending as PendingIcon,
@@ -55,36 +48,13 @@ const MyPurchases: React.FC = () => {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
-  const [customerCpf, setCustomerCpf] = useState<string>('');
+  // const [customerCpf, setCustomerCpf] = useState<string>('');
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState<PurchaseFilters>({});
 
   const { user } = useAuth();
 
-  useEffect(() => {
-    if (user && isCustomer(user)) {
-      fetchCustomerData();
-    }
-  }, [user]);
-
-  useEffect(() => {
-    applyFilters();
-  }, [sales, filters]);
-
-  // Escutar mudanças de vendas para atualizar automaticamente
-  useEffect(() => {
-    if (user && isCustomer(user)) {
-      const cleanup = onDataRefresh(DATA_REFRESH_EVENTS.SALES, () => {
-        console.log('MyPurchases: Atualizando compras devido a mudança em vendas');
-        fetchCustomerData();
-      });
-      
-      return cleanup;
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.email]); // Apenas o email do usuário, evita dependência circular
-
-  const fetchCustomerData = async () => {
+  const fetchCustomerData = useCallback(async () => {
     if (!user) return;
     
     try {
@@ -99,7 +69,7 @@ const MyPurchases: React.FC = () => {
         return;
       }
       
-      setCustomerCpf(customer.cpf);
+      // setCustomerCpf(customer.cpf);
       
       // Buscar vendas do cliente
       const allSales = await salesService.list();
@@ -116,9 +86,9 @@ const MyPurchases: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
-  const applyFilters = () => {
+  const applyFilters = useCallback(() => {
     let filtered = [...sales];
 
     // Filtro por status de pagamento
@@ -178,7 +148,30 @@ const MyPurchases: React.FC = () => {
     }
 
     setFilteredSales(filtered);
-  };
+  }, [sales, filters, vehicles]);
+
+  useEffect(() => {
+    if (user && isCustomer(user)) {
+      fetchCustomerData();
+    }
+  }, [user, fetchCustomerData]);
+
+  useEffect(() => {
+    applyFilters();
+  }, [sales, filters, applyFilters]);
+
+  // Escutar mudanças de vendas para atualizar automaticamente
+  useEffect(() => {
+    if (user && isCustomer(user)) {
+      const cleanup = onDataRefresh(DATA_REFRESH_EVENTS.SALES, () => {
+        console.log('MyPurchases: Atualizando compras devido a mudança em vendas');
+        fetchCustomerData();
+      });
+      
+      return cleanup;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.email]); // Apenas o email do usuário, evita dependência circular
 
   const handleFilterChange = (field: keyof PurchaseFilters, value: any) => {
     setFilters(prev => ({
@@ -198,9 +191,9 @@ const MyPurchases: React.FC = () => {
     }).format(value);
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('pt-BR');
-  };
+  // const formatDate = (dateString: string) => {
+  //   return new Date(dateString).toLocaleDateString('pt-BR');
+  // };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -229,10 +222,10 @@ const MyPurchases: React.FC = () => {
   };
 
   // Estatísticas das compras
-  const totalCompras = filteredSales.length;
+  // const totalCompras = filteredSales.length;
   const comprasPendentes = filteredSales.filter(s => s.status === 'PENDENTE').length;
-  const comprasPagas = filteredSales.filter(s => s.status === 'PAGO').length;
-  const comprasCanceladas = filteredSales.filter(s => s.status === 'CANCELADO').length;
+  // const comprasPagas = filteredSales.filter(s => s.status === 'PAGO').length;
+  // const comprasCanceladas = filteredSales.filter(s => s.status === 'CANCELADO').length;
   const valorTotal = filteredSales
     .filter(s => s.status === 'PENDENTE' || s.status === 'PAGO')
     .reduce((sum, sale) => sum + sale.final_amount, 0);

@@ -17,10 +17,10 @@ import {
   Avatar,
   CssBaseline,
   Divider,
-  Card,
-  CardContent,
-  Stepper,
-  Step,
+  // Card,
+  // CardContent,
+  // Stepper,
+  // Step,
   StepLabel
 } from '@mui/material';
 import { 
@@ -184,31 +184,6 @@ const Register: React.FC = () => {
 
   const isCustomer = formData.role === 'CUSTOMER';
 
-  const getRoleIcon = (role: string) => {
-    switch (role) {
-      case 'CUSTOMER':
-        return <PersonIcon />;
-      case 'SALES':
-        return <BusinessIcon />;
-      case 'ADMIN':
-        return <BusinessIcon />;
-      default:
-        return <PersonIcon />;
-    }
-  };
-
-  const getRoleDescription = (role: string) => {
-    switch (role) {
-      case 'CUSTOMER':
-        return 'Cliente - Comprar veículos';
-      case 'SALES':
-        return 'Vendedor - Gerenciar vendas';
-      case 'ADMIN':
-        return 'Administrador - Acesso total';
-      default:
-        return '';
-    }
-  };
 
   return (
     <Box

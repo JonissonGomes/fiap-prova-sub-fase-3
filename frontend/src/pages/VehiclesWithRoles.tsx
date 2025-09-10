@@ -7,7 +7,7 @@ import {
   DialogContent,
   DialogTitle,
   Grid,
-  Paper,
+  // Paper,
   TextField,
   Typography,
   IconButton,
@@ -169,7 +169,6 @@ const VehiclesWithRoles: React.FC = () => {
     setSortModel(model);
   };
 
-  const handleOpen = () => setOpen(true);
 
   const handleClose = () => {
     setOpen(false);

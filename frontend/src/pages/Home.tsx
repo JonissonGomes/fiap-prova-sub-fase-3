@@ -39,7 +39,7 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 import { isAdmin, isSales, isCustomer, canViewPayments } from '../utils/permissions';
 import { vehiclesApi, salesService, customerService } from '../services/api';
-import { Vehicle, Sale, VehicleStatus, PaymentStatus } from '../types';
+import { Vehicle, Sale, VehicleStatus } from '../types';
 import { onDataRefresh, DATA_REFRESH_EVENTS } from '../utils/dataRefresh';
 
 interface DashboardStats {
@@ -144,7 +144,7 @@ const Home: React.FC = () => {
     if (user) {
       fetchStats();
     }
-  }, [user]); // Removido fetchStats da dependência para evitar loops
+  }, [user, fetchStats]);
 
   // Escutar mudanças de dados para atualizar automaticamente
   useEffect(() => {
