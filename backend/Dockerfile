@@ -4,6 +4,11 @@ FROM node:18-alpine
 # Instalar dumb-init para melhor gerenciamento de processos
 RUN apk add --no-cache dumb-init
 
+# Atualizar npm para versão mais recente e configurar
+RUN npm install -g npm@10.2.4 && \
+    npm config set fund false && \
+    npm config set audit false
+
 # Criar usuário não-root
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S nodejs -u 1001
@@ -12,10 +17,11 @@ RUN addgroup -g 1001 -S nodejs && \
 WORKDIR /app
 
 # Copiar arquivos de dependências
-COPY package*.json ./
+COPY package*.json .npmrc ./
 
-# Instalar dependências de produção
-RUN npm ci --only=production && npm cache clean --force
+# Instalar dependências de produção com configurações otimizadas
+RUN npm ci --omit=dev --no-audit --no-fund && \
+    npm cache clean --force
 
 # Copiar código da aplicação
 COPY src ./src
