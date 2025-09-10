@@ -8,8 +8,7 @@
     "dev": "nodemon src/server.js",
     "test": "jest",
     "build": "echo 'Build completed'",
-    "populate": "node scripts/populate-data.js",
-    "prebuild": "npm install"
+    "populate": "node scripts/populate-data.js"
   },
   "dependencies": {
     "express": "^4.18.2",
