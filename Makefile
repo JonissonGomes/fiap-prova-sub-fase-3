@@ -67,15 +67,23 @@ setup: install mongodb populate ## 🚀 Setup completo do projeto
 	@echo "  $(CYAN)make start$(NC)"
 
 # Configuração do MongoDB
-mongodb: ## 🗄️ Iniciar MongoDB com Docker
-	@echo "$(BLUE)🗄️ Configurando MongoDB...$(NC)"
-	@if docker ps -q -f name=$(MONGODB_CONTAINER) | grep -q .; then \
-		echo "$(YELLOW)MongoDB já está rodando$(NC)"; \
+mongodb: ## 🗄️ Verificar conexão com MongoDB
+	@echo "$(BLUE)🗄️ Verificando MongoDB...$(NC)"
+	@echo "$(YELLOW)Certifique-se de que o MongoDB está rodando localmente ou use MongoDB Atlas$(NC)"
+	@echo "$(YELLOW)URL padrão: mongodb://localhost:27017$(NC)"
+	@echo "$(YELLOW)Para usar MongoDB Atlas, configure a variável MONGODB_URL$(NC)"
+
+# Verificar se MongoDB está rodando
+check-mongodb: ## 🔍 Verificar se MongoDB está rodando
+	@echo "$(BLUE)🔍 Verificando MongoDB...$(NC)"
+	@if nc -z localhost 27017 2>/dev/null; then \
+		echo "$(GREEN)✅ MongoDB está rodando na porta 27017$(NC)"; \
 	else \
-		echo "$(YELLOW)Iniciando MongoDB...$(NC)"; \
-		docker run -d --name $(MONGODB_CONTAINER) -p $(MONGODB_PORT):27017 mongo:latest --noauth; \
-		sleep 3; \
-		echo "$(GREEN)✅ MongoDB iniciado!$(NC)"; \
+		echo "$(RED)❌ MongoDB não está rodando$(NC)"; \
+		echo "$(YELLOW)Para iniciar MongoDB local:$(NC)"; \
+		echo "$(YELLOW)  brew services start mongodb-community$(NC)"; \
+		echo "$(YELLOW)  ou$(NC)"; \
+		echo "$(YELLOW)  mongod --config /usr/local/etc/mongod.conf$(NC)"; \
 	fi
 
 # Popular dados iniciais (mantido para compatibilidade)
@@ -166,7 +174,7 @@ populate-cloud: ## ☁️ Popular banco que a API está usando
 	@cd $(BACKEND_DIR) && node scripts/populate-cloud-data.js
 
 # Iniciar todos os serviços
-start: ## 🚀 Iniciar backend e frontend
+start: check-mongodb ## 🚀 Iniciar backend e frontend
 	@echo "$(BLUE)🚀 Iniciando sistema...$(NC)"
 	@echo "$(YELLOW)Backend: http://localhost:$(BACKEND_PORT)$(NC)"
 	@echo "$(YELLOW)Frontend: http://localhost:$(FRONTEND_PORT)$(NC)"
@@ -178,29 +186,42 @@ start: ## 🚀 Iniciar backend e frontend
 # Iniciar apenas o backend
 start-backend: ## 🔧 Iniciar apenas o backend
 	@echo "$(BLUE)🔧 Iniciando backend...$(NC)"
+	@echo "$(YELLOW)Backend: http://localhost:$(BACKEND_PORT)$(NC)"
+	@echo "$(YELLOW)Health: http://localhost:$(BACKEND_PORT)/health$(NC)"
+	@echo ""
 	@cd $(BACKEND_DIR) && npm start
 
 # Iniciar apenas o frontend
 start-frontend: ## 🎨 Iniciar apenas o frontend
 	@echo "$(BLUE)🎨 Iniciando frontend...$(NC)"
-	@cd $(FRONTEND_DIR) && npm start
+	@cd $(FRONTEND_DIR) && REACT_APP_BACKEND_URL=http://localhost:3002 npm start
+
+# Build do frontend para produção
+build-frontend: ## 🏗️ Build do frontend para produção
+	@echo "$(BLUE)🏗️ Building frontend para produção...$(NC)"
+	@cd $(FRONTEND_DIR) && npm run build
+
+# Build do frontend para desenvolvimento local
+build-frontend-local: ## 🏗️ Build do frontend para desenvolvimento local
+	@echo "$(BLUE)🏗️ Building frontend para desenvolvimento local...$(NC)"
+	@cd $(FRONTEND_DIR) && npm run build:local
 
 # Parar todos os serviços
 stop: ## 🛑 Parar todos os serviços
 	@echo "$(RED)🛑 Parando serviços...$(NC)"
 	@pkill -f "node.*server.js" || true
 	@pkill -f "react-scripts" || true
+	@pkill -f "npm.*start" || true
 	@echo "$(GREEN)✅ Serviços parados!$(NC)"
 
 # Parar MongoDB
 stop-mongodb: ## 🛑 Parar MongoDB
 	@echo "$(RED)🛑 Parando MongoDB...$(NC)"
-	@docker stop $(MONGODB_CONTAINER) || true
-	@docker rm $(MONGODB_CONTAINER) || true
-	@echo "$(GREEN)✅ MongoDB parado!$(NC)"
+	@echo "$(YELLOW)Para parar MongoDB local, use: brew services stop mongodb-community$(NC)"
+	@echo "$(YELLOW)Ou pare o processo manualmente$(NC)"
 
 # Limpeza completa
-clean: stop stop-mongodb ## 🧹 Limpeza completa
+clean: stop ## 🧹 Limpeza completa
 	@echo "$(RED)🧹 Limpando projeto...$(NC)"
 	@cd $(BACKEND_DIR) && rm -rf node_modules package-lock.json
 	@cd $(FRONTEND_DIR) && rm -rf node_modules package-lock.json build
