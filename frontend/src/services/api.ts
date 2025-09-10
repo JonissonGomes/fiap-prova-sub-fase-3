@@ -19,8 +19,8 @@ import {
   RateLimitConfig
 } from '../types';
 
-// URL do backend unificado
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:3002';
+// URL do backend unificado - padrão para produção
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'https://fiap-fase-iii.onrender.com';
 
 // Configuração base do Axios
 const api = axios.create({
