@@ -4,8 +4,8 @@ FROM node:18-alpine
 # Instalar dumb-init para melhor gerenciamento de processos
 RUN apk add --no-cache dumb-init
 
-# Atualizar npm para versão mais recente e configurar
-RUN npm install -g npm@10.2.4 && \
+# Atualizar npm para versão compatível com Node.js 18
+RUN npm install -g npm@9.8.1 && \
     npm config set fund false && \
     npm config set audit false
 
@@ -19,8 +19,10 @@ WORKDIR /app
 # Copiar arquivos de dependências
 COPY package*.json .npmrc ./
 
-# Instalar dependências de produção com configurações otimizadas
-RUN npm ci --omit=dev --no-audit --no-fund && \
+# Regenerar package-lock.json e instalar dependências
+RUN rm -f package-lock.json && \
+    npm install --package-lock-only && \
+    npm ci --omit=dev --no-audit --no-fund && \
     npm cache clean --force
 
 # Copiar código da aplicação
