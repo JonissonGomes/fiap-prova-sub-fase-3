@@ -22,10 +22,6 @@ Este sistema foi desenvolvido como uma solução unificada que combina:
 ## ⚡ Início Rápido
 
 ```bash
-# Clone o repositório
-git clone <repository-url>
-cd fiap-prova-sub-fase-3
-
 # Setup completo automático
 make setup
 
@@ -34,7 +30,8 @@ make start
 ```
 
 **Acesso:**
-- 🌐 Frontend: http://localhost:3000
+- 🌐 **Frontend (Produção)**: [https://fiap-prova-sub-fase-3-front.vercel.app/login](https://fiap-prova-sub-fase-3-front.vercel.app/login)
+- 🌐 Frontend (Local): http://localhost:3000
 - 🔧 API: http://localhost:3002
 - 🔑 Credenciais: admin@vehiclesales.com / admin123
 
@@ -42,8 +39,6 @@ make start
 
 ```bash
 # 1. Clone e setup
-git clone <repository-url>
-cd fiap-prova-sub-fase-3
 make setup
 
 # 2. Iniciar sistema
@@ -321,6 +316,26 @@ REACT_APP_BACKEND_URL=http://localhost:3002
 ```
 
 ## 📚 Documentação da API
+
+### 🚀 Collection do Postman
+
+Para facilitar os testes da API, disponibilizamos uma collection completa do Postman:
+
+**📥 [Download da Collection](docs/postman_collection.json)**
+
+#### Como usar:
+1. Abra o Postman
+2. Clique em "Import" 
+3. Selecione o arquivo `docs/postman_collection.json`
+4. Configure a variável `baseUrl` para `http://localhost:3002` (ou sua URL de produção)
+5. Execute o login para obter o token automaticamente
+
+#### Funcionalidades da Collection:
+- ✅ **Autenticação completa** - Login automático com captura de tokens
+- ✅ **Todas as rotas** - Veículos, Clientes, Vendas, Rate Limiting
+- ✅ **Variáveis dinâmicas** - IDs são capturados automaticamente
+- ✅ **Health checks** - Monitoramento de saúde dos serviços
+- ✅ **Exemplos prontos** - Dados de exemplo para todos os endpoints
 
 ### Endpoints Principais
 
