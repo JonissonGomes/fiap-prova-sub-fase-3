@@ -1,0 +1,1062 @@
+{
+  "info": {
+    "name": "FIAP Vehicle Sales API",
+    "description": "API completa para sistema de vendas de veículos",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "1.0.0"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3002",
+      "type": "string"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "refreshToken",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "🔐 Authentication",
+      "item": [
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test@example.com\",\n  \"name\": \"Test User\",\n  \"password\": \"password123\",\n  \"role\": \"CUSTOMER\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register"]
+            }
+          }
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@vehiclesales.com\",\n  \"password\": \"admin123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('accessToken', response.accessToken);",
+                  "    pm.collectionVariables.set('refreshToken', response.refreshToken);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/refresh",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "refresh"]
+            }
+          }
+        },
+        {
+          "name": "Validate Token",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/validate",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "validate"]
+            }
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "logout"]
+            }
+          }
+        },
+        {
+          "name": "Get Profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "profile"]
+            }
+          }
+        },
+        {
+          "name": "Update Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Name\",\n  \"email\": \"updated@example.com\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "profile"]
+            }
+          }
+        },
+        {
+          "name": "Get All Users (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "users"]
+            }
+          }
+        },
+        {
+          "name": "Get User by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/users/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "users", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "USER_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update User (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated User Name\",\n  \"email\": \"updateduser@example.com\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/users/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "users", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "USER_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete User (Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/users/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "users", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "USER_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Auth Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "health"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🚗 Vehicles",
+      "item": [
+        {
+          "name": "Get All Vehicles",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/vehicles?skip=0&limit=10&status=DISPONÍVEL&sort=createdAt&order=desc",
+              "host": ["{{baseUrl}}"],
+              "path": ["vehicles"],
+              "query": [
+                {
+                  "key": "skip",
+                  "value": "0"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "status",
+                  "value": "DISPONÍVEL"
+                },
+                {
+                  "key": "sort",
+                  "value": "createdAt"
+                },
+                {
+                  "key": "order",
+                  "value": "desc"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Available Vehicles",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/vehicles/available",
+              "host": ["{{baseUrl}}"],
+              "path": ["vehicles", "available"]
+            }
+          }
+        },
+        {
+          "name": "Get Reserved Vehicles",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/vehicles/reserved",
+              "host": ["{{baseUrl}}"],
+              "path": ["vehicles", "reserved"]
+            }
+          }
+        },
+        {
+          "name": "Get Sold Vehicles",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/vehicles/sold",
+              "host": ["{{baseUrl}}"],
+              "path": ["vehicles", "sold"]
+            }
+          }
+        },
+        {
+          "name": "Get Vehicle by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/vehicles/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["vehicles", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "VEHICLE_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Vehicle",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"brand\": \"Toyota\",\n  \"model\": \"Corolla\",\n  \"year\": 2023,\n  \"color\": \"Prata\",\n  \"price\": 85000,\n  \"description\": \"Veículo seminovo em excelente estado\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/vehicles",
+              "host": ["{{baseUrl}}"],
+              "path": ["vehicles"]
+            }
+          }
+        },
+        {
+          "name": "Update Vehicle",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"brand\": \"Toyota\",\n  \"model\": \"Corolla\",\n  \"year\": 2023,\n  \"color\": \"Prata\",\n  \"price\": 90000,\n  \"description\": \"Veículo seminovo em excelente estado - Preço atualizado\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/vehicles/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["vehicles", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "VEHICLE_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Vehicle",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/vehicles/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["vehicles", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "VEHICLE_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Mark as Available",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/vehicles/:id/mark-as-available",
+              "host": ["{{baseUrl}}"],
+              "path": ["vehicles", ":id", "mark-as-available"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "VEHICLE_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Mark as Reserved",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/vehicles/:id/mark-as-reserved",
+              "host": ["{{baseUrl}}"],
+              "path": ["vehicles", ":id", "mark-as-reserved"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "VEHICLE_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Mark as Sold",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/vehicles/:id/mark-as-sold",
+              "host": ["{{baseUrl}}"],
+              "path": ["vehicles", ":id", "mark-as-sold"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "VEHICLE_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Vehicle Status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"VENDIDO\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/vehicles/:id/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["vehicles", ":id", "status"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "VEHICLE_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Sale Status",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"vehicleIds\": [\"VEHICLE_ID_1\", \"VEHICLE_ID_2\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/vehicles/sale-status",
+              "host": ["{{baseUrl}}"],
+              "path": ["vehicles", "sale-status"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "👥 Customers",
+      "item": [
+        {
+          "name": "Get All Customers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/customers?skip=0&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["customers"],
+              "query": [
+                {
+                  "key": "skip",
+                  "value": "0"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Customer by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/customers/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["customers", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "CUSTOMER_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Customer by CPF",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/customers/cpf/:cpf",
+              "host": ["{{baseUrl}}"],
+              "path": ["customers", "cpf", ":cpf"],
+              "variable": [
+                {
+                  "key": "cpf",
+                  "value": "12345678901"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Customer by Email",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/customers/email/:email",
+              "host": ["{{baseUrl}}"],
+              "path": ["customers", "email", ":email"],
+              "variable": [
+                {
+                  "key": "email",
+                  "value": "customer@example.com"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Search Customers (GET)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/customers/search?q=João",
+              "host": ["{{baseUrl}}"],
+              "path": ["customers", "search"],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "João"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Search Customers (POST)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"João\",\n  \"filters\": {\n    \"city\": \"São Paulo\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/customers/search",
+              "host": ["{{baseUrl}}"],
+              "path": ["customers", "search"]
+            }
+          }
+        },
+        {
+          "name": "Create Customer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"João Silva\",\n  \"email\": \"joao@example.com\",\n  \"phone\": \"(11) 99999-9999\",\n  \"cpf\": \"12345678901\",\n  \"address\": {\n    \"street\": \"Rua das Flores, 123\",\n    \"city\": \"São Paulo\",\n    \"state\": \"SP\",\n    \"zipCode\": \"01234-567\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/customers",
+              "host": ["{{baseUrl}}"],
+              "path": ["customers"]
+            }
+          }
+        },
+        {
+          "name": "Update Customer",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"João Silva Santos\",\n  \"email\": \"joao.santos@example.com\",\n  \"phone\": \"(11) 88888-8888\",\n  \"address\": {\n    \"street\": \"Rua das Flores, 456\",\n    \"city\": \"São Paulo\",\n    \"state\": \"SP\",\n    \"zipCode\": \"01234-567\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/customers/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["customers", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "CUSTOMER_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Customer",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/customers/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["customers", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "CUSTOMER_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Customer Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/customers/stats/summary",
+              "host": ["{{baseUrl}}"],
+              "path": ["customers", "stats", "summary"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "💰 Sales",
+      "item": [
+        {
+          "name": "Get All Sales",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/sales?skip=0&limit=10&status=CONCLUÍDA",
+              "host": ["{{baseUrl}}"],
+              "path": ["sales"],
+              "query": [
+                {
+                  "key": "skip",
+                  "value": "0"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "status",
+                  "value": "CONCLUÍDA"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Sale by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/sales/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["sales", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "SALE_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Sale",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"vehicleId\": \"VEHICLE_ID_HERE\",\n  \"customerId\": \"CUSTOMER_ID_HERE\",\n  \"salePrice\": 85000,\n  \"paymentMethod\": \"FINANCING\",\n  \"notes\": \"Venda realizada com sucesso\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/sales",
+              "host": ["{{baseUrl}}"],
+              "path": ["sales"]
+            }
+          }
+        },
+        {
+          "name": "Purchase Vehicle",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"vehicleId\": \"VEHICLE_ID_HERE\",\n  \"customerId\": \"CUSTOMER_ID_HERE\",\n  \"salePrice\": 85000,\n  \"paymentMethod\": \"CASH\",\n  \"notes\": \"Compra à vista\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/sales/purchase",
+              "host": ["{{baseUrl}}"],
+              "path": ["sales", "purchase"]
+            }
+          }
+        },
+        {
+          "name": "Update Sale",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"salePrice\": 90000,\n  \"paymentMethod\": \"FINANCING\",\n  \"notes\": \"Venda atualizada - Preço renegociado\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/sales/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["sales", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "SALE_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Sale Status",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"CONCLUÍDA\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/sales/:id/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["sales", ":id", "status"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "SALE_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Confirm Payment",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/sales/:id/payment/confirm",
+              "host": ["{{baseUrl}}"],
+              "path": ["sales", ":id", "payment", "confirm"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "SALE_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Mark as Canceled",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/sales/:id/mark-as-canceled",
+              "host": ["{{baseUrl}}"],
+              "path": ["sales", ":id", "mark-as-canceled"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "SALE_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Sale",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/sales/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["sales", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "SALE_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Sales Summary Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/sales/stats/summary",
+              "host": ["{{baseUrl}}"],
+              "path": ["sales", "stats", "summary"]
+            }
+          }
+        },
+        {
+          "name": "Get Monthly Sales Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/sales/stats/monthly/2024",
+              "host": ["{{baseUrl}}"],
+              "path": ["sales", "stats", "monthly", "2024"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "⚡ Rate Limiting",
+      "item": [
+        {
+          "name": "Get Rate Limit Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/rate-limit/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["rate-limit", "stats"]
+            }
+          }
+        },
+        {
+          "name": "Get Rate Limit Config",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/rate-limit/config",
+              "host": ["{{baseUrl}}"],
+              "path": ["rate-limit", "config"]
+            }
+          }
+        },
+        {
+          "name": "Update Rate Limit Config",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"windowMs\": 900000,\n  \"maxRequests\": 100\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/rate-limit/config",
+              "host": ["{{baseUrl}}"],
+              "path": ["rate-limit", "config"]
+            }
+          }
+        },
+        {
+          "name": "Reset Rate Limits",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/rate-limit/reset",
+              "host": ["{{baseUrl}}"],
+              "path": ["rate-limit", "reset"]
+            }
+          }
+        },
+        {
+          "name": "Rate Limit Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/rate-limit/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["rate-limit", "health"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🏥 Health Checks",
+      "item": [
+        {
+          "name": "Main Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
+            }
+          }
+        },
+        {
+          "name": "Auth Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "health"]
+            }
+          }
+        },
+        {
+          "name": "Rate Limit Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/rate-limit/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["rate-limit", "health"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
+
+
