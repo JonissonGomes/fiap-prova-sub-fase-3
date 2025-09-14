@@ -9,3 +9,4 @@ module.exports = {
     'no-empty-pattern': 'warn'
   }
 };
+
