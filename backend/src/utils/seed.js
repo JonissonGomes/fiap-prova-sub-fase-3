@@ -9,7 +9,6 @@ const createDefaultAdmin = async () => {
     // Verificar se o admin já existe
     const existingAdmin = await User.findOne({ email: adminEmail });
     if (existingAdmin) {
-      logger.info(`Usuário admin já existe`);
       return existingAdmin;
     }
     
@@ -23,12 +22,6 @@ const createDefaultAdmin = async () => {
     });
     
     await admin.save();
-    
-    logger.info(`Usuário admin criado com sucesso: ${adminEmail}`);
-    logger.info('Credenciais padrão:');
-    logger.info(`  Email: ${adminEmail}`);
-    logger.info(`  Senha: ${adminPassword}`);
-    logger.info('⚠️  IMPORTANTE: Altere a senha padrão em produção!');
     
     return admin;
     
@@ -48,7 +41,6 @@ const createSampleData = async () => {
     const customerCount = await Customer.countDocuments();
     
     if (vehicleCount > 0 && customerCount > 0) {
-      logger.info('Dados de exemplo já existem');
       return;
     }
     
@@ -90,7 +82,6 @@ const createSampleData = async () => {
     
     if (vehicleCount === 0) {
       await Vehicle.insertMany(sampleVehicles);
-      logger.info(`${sampleVehicles.length} veículos de exemplo criados`);
     }
     
     // Função para gerar CPF válido
@@ -142,10 +133,7 @@ const createSampleData = async () => {
     
     if (customerCount === 0) {
       await Customer.insertMany(sampleCustomers);
-      logger.info(`${sampleCustomers.length} clientes de exemplo criados`);
     }
-    
-    logger.info('Dados de exemplo criados com sucesso');
     
   } catch (error) {
     logger.error('Erro ao criar dados de exemplo:', error);

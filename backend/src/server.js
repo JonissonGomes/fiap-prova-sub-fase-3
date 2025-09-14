@@ -17,7 +17,6 @@ const PORT = process.env.PORT || 3002;
 // Middleware básico
 app.use(helmet());
 app.use(compression());
-app.use(morgan('combined'));
 
 // CORS
 const allowedOrigins = process.env.ALLOWED_ORIGINS 
@@ -119,8 +118,7 @@ async function startServer() {
     
     // Iniciar servidor
     app.listen(PORT, () => {
-      logger.info(`🚀 Servidor rodando na porta ${PORT}`);
-      logger.info(`📊 Health check: http://localhost:${PORT}/health`);
+      logger.info('🚀 Servidor rodando');
     });
     
   } catch (error) {
