@@ -268,7 +268,7 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/vehicles?skip=0&limit=10&status=DISPONÍVEL&sort=createdAt&order=desc",
+              "raw": "{{baseUrl}}/vehicles?skip=0&limit=10&status=DISPON%C3%8DVEL&sort=createdAt&order=desc",
               "host": ["{{baseUrl}}"],
               "path": ["vehicles"],
               "query": [
@@ -282,7 +282,7 @@
                 },
                 {
                   "key": "status",
-                  "value": "DISPONÍVEL"
+                  "value": "DISPON%C3%8DVEL"
                 },
                 {
                   "key": "sort",
@@ -305,6 +305,29 @@
               "raw": "{{baseUrl}}/vehicles/available",
               "host": ["{{baseUrl}}"],
               "path": ["vehicles", "available"]
+            }
+          }
+        },
+        {
+          "name": "Get Vehicles by Status (URL Encoded)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/vehicles?status=DISPON%C3%8DVEL&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["vehicles"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "DISPON%C3%8DVEL",
+                  "description": "URL encoded status - DISPONÍVEL"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
             }
           }
         },
@@ -629,7 +652,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"query\": \"João\",\n  \"filters\": {\n    \"city\": \"São Paulo\"\n  }\n}"
+              "raw": "{\n  \"cpf\": \"12345678901\",\n  \"email\": \"joao@example.com\",\n  \"phone\": \"11999999999\",\n  \"name\": \"João\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/customers/search",
@@ -650,7 +673,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"João Silva\",\n  \"email\": \"joao@example.com\",\n  \"phone\": \"(11) 99999-9999\",\n  \"cpf\": \"12345678901\",\n  \"address\": {\n    \"street\": \"Rua das Flores, 123\",\n    \"city\": \"São Paulo\",\n    \"state\": \"SP\",\n    \"zipCode\": \"01234-567\"\n  }\n}"
+              "raw": "{\n  \"name\": \"João Silva\",\n  \"email\": \"joao@example.com\",\n  \"phone\": \"(11) 99999-9999\",\n  \"cpf\": \"11144477735\",\n  \"address\": \"Rua das Flores, 123\",\n  \"city\": \"São Paulo\",\n  \"state\": \"SP\",\n  \"zip_code\": \"01234-567\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/customers",
@@ -671,7 +694,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"João Silva Santos\",\n  \"email\": \"joao.santos@example.com\",\n  \"phone\": \"(11) 88888-8888\",\n  \"address\": {\n    \"street\": \"Rua das Flores, 456\",\n    \"city\": \"São Paulo\",\n    \"state\": \"SP\",\n    \"zipCode\": \"01234-567\"\n  }\n}"
+              "raw": "{\n  \"name\": \"João Silva Santos\",\n  \"email\": \"joao.santos@example.com\",\n  \"phone\": \"(11) 88888-8888\",\n  \"address\": \"Rua das Flores, 456\",\n  \"city\": \"São Paulo\",\n  \"state\": \"SP\",\n  \"zip_code\": \"01234-567\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/customers/:id",
@@ -727,7 +750,7 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/sales?skip=0&limit=10&status=CONCLUÍDA",
+              "raw": "{{baseUrl}}/sales?skip=0&limit=10&status=PAGO",
               "host": ["{{baseUrl}}"],
               "path": ["sales"],
               "query": [
@@ -741,7 +764,7 @@
                 },
                 {
                   "key": "status",
-                  "value": "CONCLUÍDA"
+                  "value": "PAGO"
                 }
               ]
             }
@@ -777,7 +800,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"vehicleId\": \"VEHICLE_ID_HERE\",\n  \"customerId\": \"CUSTOMER_ID_HERE\",\n  \"salePrice\": 85000,\n  \"paymentMethod\": \"FINANCING\",\n  \"notes\": \"Venda realizada com sucesso\"\n}"
+              "raw": "{\n  \"vehicle_id\": \"VEHICLE_ID_HERE\",\n  \"customer_id\": \"CUSTOMER_ID_HERE\",\n  \"payment_method\": \"FINANCIAMENTO\",\n  \"discount\": 0,\n  \"notes\": \"Venda realizada com sucesso\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/sales",
@@ -798,7 +821,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"vehicleId\": \"VEHICLE_ID_HERE\",\n  \"customerId\": \"CUSTOMER_ID_HERE\",\n  \"salePrice\": 85000,\n  \"paymentMethod\": \"CASH\",\n  \"notes\": \"Compra à vista\"\n}"
+              "raw": "{\n  \"vehicle_id\": \"VEHICLE_ID_HERE\",\n  \"customer_id\": \"CUSTOMER_ID_HERE\",\n  \"payment_method\": \"DINHEIRO\",\n  \"notes\": \"Compra à vista\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/sales/purchase",
@@ -819,7 +842,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"salePrice\": 90000,\n  \"paymentMethod\": \"FINANCING\",\n  \"notes\": \"Venda atualizada - Preço renegociado\"\n}"
+              "raw": "{\n  \"payment_method\": \"FINANCIAMENTO\",\n  \"discount\": 1000,\n  \"notes\": \"Venda atualizada - Preço renegociado\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/sales/:id",
@@ -846,7 +869,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"status\": \"CONCLUÍDA\"\n}"
+              "raw": "{\n  \"status\": \"PAGO\",\n  \"notes\": \"Pagamento confirmado\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/sales/:id/status",
@@ -1058,5 +1081,7 @@
     }
   ]
 }
+
+
 
 
