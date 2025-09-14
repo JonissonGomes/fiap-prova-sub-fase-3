@@ -10,7 +10,13 @@ const router = express.Router();
 const createCustomerValidation = [
   body('name').trim().isLength({ min: 2, max: 100 }).withMessage('Nome deve ter entre 2 e 100 caracteres'),
   body('email').isEmail().normalizeEmail().withMessage('Email inválido'),
-  body('phone').isMobilePhone('pt-BR').withMessage('Telefone inválido'),
+  body('phone').custom((value) => {
+    const phone = value.replace(/[^\d]/g, '');
+    if (phone.length < 10 || phone.length > 11) {
+      throw new Error('Telefone deve ter 10 ou 11 dígitos');
+    }
+    return true;
+  }).withMessage('Telefone inválido'),
   body('cpf').isLength({ min: 11, max: 11 }).withMessage('CPF deve ter 11 dígitos'),
   body('address').optional().isLength({ max: 200 }).withMessage('Endereço muito longo'),
   body('city').optional().isLength({ max: 100 }).withMessage('Cidade muito longa'),
@@ -21,7 +27,14 @@ const createCustomerValidation = [
 const updateCustomerValidation = [
   body('name').optional().trim().isLength({ min: 2, max: 100 }).withMessage('Nome deve ter entre 2 e 100 caracteres'),
   body('email').optional().isEmail().normalizeEmail().withMessage('Email inválido'),
-  body('phone').optional().isMobilePhone('pt-BR').withMessage('Telefone inválido'),
+  body('phone').optional().custom((value) => {
+    if (!value) return true;
+    const phone = value.replace(/[^\d]/g, '');
+    if (phone.length < 10 || phone.length > 11) {
+      throw new Error('Telefone deve ter 10 ou 11 dígitos');
+    }
+    return true;
+  }).withMessage('Telefone inválido'),
   body('address').optional().isLength({ max: 200 }).withMessage('Endereço muito longo'),
   body('city').optional().isLength({ max: 100 }).withMessage('Cidade muito longa'),
   body('state').optional().isLength({ min: 2, max: 2 }).withMessage('Estado deve ter 2 caracteres'),
